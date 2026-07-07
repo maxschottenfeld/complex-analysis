@@ -1,0 +1,44 @@
+[
+  {
+    "num": "0",
+    "slug": "00-big-picture-overview",
+    "title": "The Big Picture: What Is Complex Analysis About?",
+    "hue": 355,
+    "description": "Where I started: a complex function maps a plane to a plane, so an honest graph would need four dimensions. Domain coloring and grid deformation are the workaround pictures — every later lesson leans on them."
+  },
+  {
+    "num": "1",
+    "slug": "01-complex-numbers-and-topology",
+    "title": "Complex Numbers, the Plane, and Basic Topology",
+    "hue": 55,
+    "description": "The ground floor. Arithmetic and geometry of complex numbers, polar form, roots of unity, and just enough topology — open sets, boundaries, regions — to state the later theorems honestly."
+  },
+  {
+    "num": "2",
+    "slug": "02-holomorphic-functions-and-cauchy-riemann",
+    "title": "Holomorphic Functions & the Cauchy-Riemann Equations",
+    "hue": 185,
+    "description": "The first real theorem. What complex differentiability actually demands, the Cauchy-Riemann equations that fall out of it, and why passing that test forces a map to preserve angles."
+  },
+  {
+    "num": "3",
+    "slug": "03-power-series-and-elementary-functions",
+    "title": "Power Series & Elementary Functions",
+    "hue": 215,
+    "description": "Power series take over: $e^z$ defined by its series, Euler's formula derived instead of assumed, and the logarithm turning multivalued — the first branch cut."
+  },
+  {
+    "num": "4",
+    "slug": "04-cauchys-theorem-and-integral-formula",
+    "title": "Cauchy's Theorem & the Cauchy Integral Formula",
+    "hue": 265,
+    "description": "The centerpiece. Contour integrals, deformation invariance, Cauchy's theorem, and the integral formula: the values of a holomorphic function on a boundary determine every value inside."
+  },
+  {
+    "num": "5",
+    "slug": "05-consequences-of-cauchys-formula",
+    "title": "Consequences of Cauchy's Formula",
+    "hue": 320,
+    "description": "The payoff. One formula cascades into infinite differentiability, Cauchy's estimates, Liouville's theorem, and a proof of the Fundamental Theorem of Algebra with no algebra in it."
+  }
+]

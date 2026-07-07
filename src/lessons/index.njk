@@ -1,0 +1,19 @@
+---
+layout: base.njk
+title: Lessons
+wide: true
+---
+
+<div class="page-head">
+  <p class="section-eyebrow">The path</p>
+  <h1>Lessons</h1>
+  <p class="lede">Six lessons, in the order I learned them. Each follows the same rhythm — compute a concrete example by hand, watch it move in an interactive visualization, then prove the theorem it was illustrating. Start at Lesson 0; everything after builds on what came before.</p>
+</div>
+
+<div class="lesson-path">
+  {% for lesson in lessons %}
+    {% include "lesson-card.njk" %}
+  {% endfor %}
+</div>
+
+<p class="muted lesson-path-note"><em>More is coming — Taylor and Laurent series are next on the syllabus, and lessons get added here as I finish learning them.</em></p>
