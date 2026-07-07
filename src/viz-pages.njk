@@ -10,12 +10,12 @@ eleventyComputed:
   title: "{{ viz.title }}"
 ---
 
-<div class="viz-page-header">
-  <p><a href="/visualizations/">&larr; All visualizations</a></p>
+<div class="viz-page-header" style="--h: {{ viz.hue }}">
+  <p class="crumb"><a href="/visualizations/">&larr; All visualizations</a></p>
   <h1>{{ viz.title }} <span class="viz-card-lesson">{{ viz.lesson }}</span></h1>
   <p class="viz-page-description">{{ viz.description }}</p>
 </div>
 
 <iframe class="viz-embed viz-embed-full" src="/assets/visualizations/{{ viz.slug }}.html" title="{{ viz.title }}"></iframe>
 
-<p><a href="/assets/visualizations/{{ viz.slug }}.html" target="_blank" rel="noopener">Open full screen &nearr;</a></p>
+<p class="viz-page-footer"><a href="/assets/visualizations/{{ viz.slug }}.html" target="_blank" rel="noopener">Open full screen &nearr;</a></p>
