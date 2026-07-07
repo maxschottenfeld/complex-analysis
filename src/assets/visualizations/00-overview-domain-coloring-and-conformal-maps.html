@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Complex Analysis: The Big Picture</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d29;
+    --text: #e8e9ed;
+    --muted: #9aa0b0;
+    --accent: #7aa2f7;
+    --accent2: #f7768e;
+    --border: #2a2e3f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  h2 { font-size: 1.05rem; margin: 0 0 8px 0; color: var(--accent); }
+  .subtitle { color: var(--muted); margin-top: 0; margin-bottom: 24px; font-size: 0.95rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 800px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  canvas {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #000;
+    border-radius: 6px;
+    display: block;
+    cursor: crosshair;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: center;
+  }
+  select, button {
+    background: #11141d;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  button.active, select { border-color: var(--accent); }
+  .readout {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 10px;
+    min-height: 1.4em;
+  }
+  .readout .z { color: var(--accent); }
+  .readout .fz { color: var(--accent2); }
+  .note {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .legend-bar {
+    width: 120px;
+    height: 12px;
+    border-radius: 3px;
+    background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red);
+  }
+</style>
+</head>
+<body>
+  <h2 class="visually-hidden" style="position:absolute;left:-9999px;">
+    Two interactive panels: a domain-coloring plot of a complex function on the left,
+    and a grid-deformation (conformal map) plot of the same function on the right.
+    Hover over either panel to see how the function transforms points and shapes.
+  </h2>
+
+  <h1>The Big Picture: What Does a Complex Function "Look Like"?</h1>
+  <p class="subtitle">
+    A real function f(x) is a curve. A complex function f(z) maps a 2D plane to another 2D plane —
+    so we need new tricks to visualize it. Here are the two main ones we'll use all course: <b>domain coloring</b> and <b>grid deformation</b>.
+  </p>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>1. Domain Coloring</h2>
+      <p class="note">Color = argument (angle) of f(z), brightness = how close |f(z)| is to a whole number (shows "height" contours). Hover to inspect.</p>
+      <canvas id="domainCanvas" width="400" height="400"></canvas>
+      <div class="legend">
+        <span class="legend-bar"></span>
+        <span>hue = arg(f(z)), 0 → 2π</span>
+      </div>
+      <div class="readout" id="domainReadout">Hover over the plot...</div>
+    </div>
+
+    <div class="panel">
+      <h2>2. Grid Deformation (Conformal Map)</h2>
+      <p class="note">A square grid in the input plane (left domain) gets bent into curves by f. Notice: the grid lines still cross at <b>right angles</b> — that's "conformality," a hallmark of complex differentiability.</p>
+      <canvas id="gridCanvas" width="400" height="400"></canvas>
+      <div class="readout" id="gridReadout">Hover over the plot...</div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:20px;">
+    <h2>Choose a function f(z)</h2>
+    <div class="controls" id="funcButtons"></div>
+    <p class="note" id="funcDescription"></p>
+  </div>
+
+  <script>
+    // ---------- Complex arithmetic ----------
+    const C = {
+      add: (a,b) => [a[0]+b[0], a[1]+b[1]],
+      sub: (a,b) => [a[0]-b[0], a[1]-b[1]],
+      mul: (a,b) => [a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]],
+      div: (a,b) => {
+        const d = b[0]*b[0]+b[1]*b[1];
+        return [(a[0]*b[0]+a[1]*b[1])/d, (a[1]*b[0]-a[0]*b[1])/d];
+      },
+      abs: (a) => Math.hypot(a[0], a[1]),
+      arg: (a) => Math.atan2(a[1], a[0]),
+      exp: (a) => {
+        const r = Math.exp(a[0]);
+        return [r*Math.cos(a[1]), r*Math.sin(a[1])];
+      },
+      sin: (a) => {
+        // sin(x+iy) = sin x cosh y + i cos x sinh y
+        return [Math.sin(a[0])*Math.cosh(a[1]), Math.cos(a[0])*Math.sinh(a[1])];
+      },
+      sq: (a) => C.mul(a,a),
+      inv: (a) => C.div([1,0], a),
+      cube: (a) => C.mul(C.mul(a,a), a)
+    };
+
+    const FUNCTIONS = {
+      'z^2': {
+        f: (z) => C.sq(z),
+        desc: 'f(z) = z². Doubles angles and squares the modulus. Notice the grid lines still meet at right angles everywhere except z=0 — where the derivative vanishes and conformality breaks down.'
+      },
+      '1/z': {
+        f: (z) => C.inv(z),
+        desc: 'f(z) = 1/z. Inverts and reflects. Sends the unit circle to itself, the inside of the unit circle to the outside (and vice versa). Undefined at z=0 — a pole.'
+      },
+      'e^z': {
+        f: (z) => C.exp(z),
+        desc: 'f(z) = eᶻ. Vertical lines (constant Re(z)) map to circles; horizontal lines (constant Im(z)) map to rays from the origin. This is why the complex exponential is periodic in the imaginary direction (period 2πi) — something that has no real analogue.'
+      },
+      'sin(z)': {
+        f: (z) => C.sin(z),
+        desc: 'f(z) = sin(z). On the real axis this is the familiar bounded sine wave. Off the real axis, sin grows like cosh/sinh — complex sine is unbounded! Real intuition about sine being "between -1 and 1" completely fails off the real line.'
+      },
+      'z^3': {
+        f: (z) => C.cube(z),
+        desc: 'f(z) = z³. Triples angles, cubes modulus. At z=0 the map is 3-to-1 locally — three different directions get mapped to the same direction, which is why conformality fails there.'
+      }
+    };
+
+    let currentFunc = 'z^2';
+
+    // ---------- Domain coloring ----------
+    const domainCanvas = document.getElementById('domainCanvas');
+    const dctx = domainCanvas.getContext('2d');
+    const W = domainCanvas.width, H = domainCanvas.height;
+    const VIEW = 2.5; // plot from -VIEW to +VIEW in both axes
+
+    function pixelToZ(px, py) {
+      const x = (px / W) * 2*VIEW - VIEW;
+      const y = VIEW - (py / H) * 2*VIEW;
+      return [x, y];
+    }
+
+    function hsvToRgb(h, s, v) {
+      const i = Math.floor(h*6);
+      const f = h*6 - i;
+      const p = v*(1-s), q = v*(1-f*s), t = v*(1-(1-f)*s);
+      let r,g,b;
+      switch (i % 6) {
+        case 0: r=v; g=t; b=p; break;
+        case 1: r=q; g=v; b=p; break;
+        case 2: r=p; g=v; b=t; break;
+        case 3: r=p; g=q; b=v; break;
+        case 4: r=t; g=p; b=v; break;
+        case 5: r=v; g=p; b=q; break;
+      }
+      return [r*255, g*255, b*255];
+    }
+
+    function drawDomainColoring() {
+      const fn = FUNCTIONS[currentFunc].f;
+      const img = dctx.createImageData(W, H);
+      for (let py = 0; py < H; py++) {
+        for (let px = 0; px < W; px++) {
+          const z = pixelToZ(px, py);
+          let w;
+          try { w = fn(z); } catch(e) { w = [NaN, NaN]; }
+          const mag = C.abs(w);
+          const arg = C.arg(w);
+          const hue = (arg + Math.PI) / (2*Math.PI); // 0..1
+          // brightness oscillates with log(modulus) to show "contour rings"
+          const logMag = Math.log(mag + 1e-9);
+          const frac = logMag - Math.floor(logMag);
+          const brightness = 0.5 + 0.4 * Math.sin(frac * 2 * Math.PI) ;
+          const v = isFinite(brightness) ? Math.max(0.15, Math.min(1, brightness + 0.4)) : 1;
+          const [r,g,b] = hsvToRgb(isFinite(hue)?hue:0, 0.85, isFinite(v)?v:1);
+          const idx = (py*W+px)*4;
+          img.data[idx] = r;
+          img.data[idx+1] = g;
+          img.data[idx+2] = b;
+          img.data[idx+3] = 255;
+        }
+      }
+      dctx.putImageData(img, 0, 0);
+
+      // draw axes
+      dctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      dctx.lineWidth = 1;
+      dctx.beginPath();
+      dctx.moveTo(W/2, 0); dctx.lineTo(W/2, H);
+      dctx.moveTo(0, H/2); dctx.lineTo(W, H/2);
+      dctx.stroke();
+    }
+
+    domainCanvas.addEventListener('mousemove', (e) => {
+      const rect = domainCanvas.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width * W;
+      const py = (e.clientY - rect.top) / rect.height * H;
+      const z = pixelToZ(px, py);
+      const fn = FUNCTIONS[currentFunc].f;
+      let w;
+      try { w = fn(z); } catch(e) { w = [NaN, NaN]; }
+      const fmt = (n) => (Math.abs(n) < 0.001 ? '0.000' : n.toFixed(3));
+      document.getElementById('domainReadout').innerHTML =
+        `<span class="z">z = ${fmt(z[0])} + ${fmt(z[1])}i</span> &nbsp;→&nbsp; ` +
+        `<span class="fz">f(z) = ${fmt(w[0])} + ${fmt(w[1])}i</span>` +
+        ` &nbsp;|f(z)| = ${fmt(C.abs(w))}, arg = ${fmt(C.arg(w))} rad`;
+    });
+
+    // ---------- Grid deformation ----------
+    const gridCanvas = document.getElementById('gridCanvas');
+    const gctx = gridCanvas.getContext('2d');
+
+    function zToPixel(z, view) {
+      const px = (z[0] + view) / (2*view) * W;
+      const py = (view - z[1]) / (2*view) * H;
+      return [px, py];
+    }
+
+    function drawGridDeformation() {
+      gctx.fillStyle = '#000';
+      gctx.fillRect(0,0,W,H);
+      const fn = FUNCTIONS[currentFunc].f;
+      const inputView = 2.0;
+      const outputView = 4.0; // output often needs a wider view
+      const lines = 9; // number of grid lines each direction
+      const steps = 60; // resolution along each line
+
+      gctx.lineWidth = 1.3;
+
+      // vertical lines (constant real part) -> color by index
+      for (let i = 0; i <= lines; i++) {
+        const x = -inputView + (2*inputView) * i / lines;
+        gctx.strokeStyle = `hsl(${(i/lines)*300}, 70%, 60%)`;
+        gctx.beginPath();
+        for (let j = 0; j <= steps; j++) {
+          const y = -inputView + (2*inputView) * j / steps;
+          let w;
+          try { w = fn([x,y]); } catch(e) { w = [NaN,NaN]; }
+          const [px, py] = zToPixel(w, outputView);
+          if (j === 0) gctx.moveTo(px, py); else gctx.lineTo(px, py);
+        }
+        gctx.stroke();
+      }
+
+      // horizontal lines (constant imag part) -> different hue range
+      for (let i = 0; i <= lines; i++) {
+        const y = -inputView + (2*inputView) * i / lines;
+        gctx.strokeStyle = `hsl(${180 + (i/lines)*150}, 70%, 55%)`;
+        gctx.beginPath();
+        for (let j = 0; j <= steps; j++) {
+          const x = -inputView + (2*inputView) * j / steps;
+          let w;
+          try { w = fn([x,y]); } catch(e) { w = [NaN,NaN]; }
+          const [px, py] = zToPixel(w, outputView);
+          if (j === 0) gctx.moveTo(px, py); else gctx.lineTo(px, py);
+        }
+        gctx.stroke();
+      }
+
+      // axes
+      gctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      gctx.lineWidth = 1;
+      const [ox, oy] = zToPixel([0,0], outputView);
+      gctx.beginPath();
+      gctx.moveTo(ox, 0); gctx.lineTo(ox, H);
+      gctx.moveTo(0, oy); gctx.lineTo(W, oy);
+      gctx.stroke();
+    }
+
+    gridCanvas.addEventListener('mousemove', (e) => {
+      const rect = gridCanvas.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width * W;
+      const py = (e.clientY - rect.top) / rect.height * H;
+      const outputView = 4.0;
+      const x = (px/W)*2*outputView - outputView;
+      const y = outputView - (py/H)*2*outputView;
+      document.getElementById('gridReadout').textContent =
+        `Output-plane point under cursor ≈ ${x.toFixed(2)} + ${y.toFixed(2)}i`;
+    });
+
+    // ---------- Function picker ----------
+    const btnContainer = document.getElementById('funcButtons');
+    Object.keys(FUNCTIONS).forEach((name) => {
+      const btn = document.createElement('button');
+      btn.textContent = name;
+      btn.onclick = () => {
+        currentFunc = name;
+        document.querySelectorAll('#funcButtons button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        redraw();
+      };
+      if (name === currentFunc) btn.classList.add('active');
+      btnContainer.appendChild(btn);
+    });
+
+    function redraw() {
+      drawDomainColoring();
+      drawGridDeformation();
+      document.getElementById('funcDescription').textContent = FUNCTIONS[currentFunc].desc;
+    }
+
+    redraw();
+  </script>
+</body>
+</html>

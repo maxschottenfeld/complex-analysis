@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From CIF to the Fundamental Theorem of Algebra</title>
+<style>
+  :root {
+    --surface-primary: #ffffff;
+    --surface-secondary: #f5f5f5;
+    --text-primary: #222222;
+    --text-secondary: #666666;
+    --text-accent: #6366f1;
+    --text-success: #16a34a;
+    --text-danger: #dc2626;
+    --text-aha: #b45309;
+    --border-default: #cccccc;
+    --shade-region: rgba(99, 102, 241, 0.14);
+    --aha-bg: #fffbeb;
+    --aha-border: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--surface-primary);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  i.mv { font-family: Georgia, 'Times New Roman', serif; font-style: italic; }
+  .page { display: flex; gap: 22px; max-width: 1240px; width: 100%; align-items: flex-start; }
+  .main { flex: 1 1 auto; min-width: 0; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin: 0 0 10px; }
+
+  /* ---------- sidebar ---------- */
+  .side {
+    flex: 0 0 272px; width: 272px;
+    position: sticky; top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  #sideToggle { display: none; }
+  .card {
+    border: 1px solid #e5e5ee;
+    border-radius: 12px;
+    padding: 13px 15px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    background: var(--surface-primary);
+    box-shadow: 0 1px 3px rgba(30, 30, 70, 0.05);
+  }
+  .card h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+  .node { display: flex; gap: 10px; cursor: pointer; padding: 6px; border-radius: 8px; align-items: flex-start; }
+  .node:hover { background: var(--surface-secondary); }
+  .node .dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--border-default); background: #fff;
+    margin-top: 2px; flex: 0 0 auto;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    font-size: 9px; line-height: 10px; text-align: center; color: #fff;
+  }
+  .node.active .dot { border-color: var(--text-accent); background: var(--text-accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22); }
+  .node.done .dot { border-color: var(--text-success); background: var(--text-success); }
+  .node.done .dot::after { content: '\2713'; }
+  .node .lbl { font-size: 13px; line-height: 1.25; }
+  .node .sub { display: block; font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+  .node.active .lbl { font-weight: 700; color: var(--text-accent); }
+  .conn { width: 2px; height: 12px; background: var(--border-default); margin-left: 12px; }
+  .conn.done { background: var(--text-success); }
+
+  details.explore { border-color: #ddd; }
+  details.explore > summary {
+    cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text-accent);
+    list-style-position: outside;
+  }
+  details.explore > summary .opt { display: block; font-weight: 400; font-size: 11px; color: var(--text-secondary); }
+  details.explore[open] > summary { margin-bottom: 8px; }
+  details.explore > summary:hover { color: #4f46e5; }
+  .expcv { background: var(--surface-secondary); border-radius: 8px; display: block; margin: 6px 0; }
+  .radio-row { display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; margin: 6px 0; }
+  .radio-row label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+
+  /* ---------- sections ---------- */
+  .sec { margin: 0 0 34px; scroll-margin-top: 14px; }
+  .sec-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 4px; }
+  .sec-head h2 { font-size: 18px; margin: 0; letter-spacing: -0.01em; }
+  .sec-head .chip {
+    font-size: 11px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 999px; padding: 2px 10px; letter-spacing: 0.03em;
+    box-shadow: 0 1px 3px rgba(99, 102, 241, 0.35);
+  }
+  .sec-head .dep { font-size: 11.5px; color: var(--text-secondary); font-style: italic; }
+  .sec-sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 12px; }
+  .duo { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .vizcol { flex: 0 1 auto; display: flex; flex-direction: column; gap: 8px; min-width: 300px; }
+  .proof { flex: 1 1 340px; min-width: 320px; }
+  canvas.plane { background: var(--surface-secondary); border: 1px solid #e8e8f0; border-radius: 12px; touch-action: none; display: block; }
+  .caption { font-size: 12px; color: var(--text-secondary); }
+
+  .readout {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap;
+    font-family: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+    font-size: 14px; font-weight: 600; color: #1d1d30;
+    padding: 7px 11px;
+    border-radius: 8px;
+    background: #f7f7fb;
+    border: 1px solid #ebebf3;
+    margin: 5px 0;
+  }
+  .readout.block { display: block; }
+  .readout .lbl {
+    color: var(--text-secondary); font-weight: 400; font-size: 12.5px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .readout .lbl i.mv { font-size: 13.5px; }
+  .readout sub, .readout sup { font-size: 0.72em; }
+  .btn {
+    padding: 6px 12px; font-size: 13px; border-radius: 6px;
+    border: 1px solid var(--border-default);
+    background: var(--surface-primary); color: var(--text-primary);
+    cursor: pointer;
+  }
+  .btn { transition: border-color 0.15s, color 0.15s, filter 0.15s; }
+  .btn:hover:not(:disabled):not(.primary):not(.active) { border-color: var(--text-accent); color: var(--text-accent); }
+  .btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.primary { background: var(--text-accent); color: #fff; border-color: var(--text-accent); }
+  .btn.mini { padding: 4px 9px; font-size: 12px; }
+  .btn.mini.active { background: var(--text-accent); color: #fff; border-color: var(--text-accent); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .step-ind { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+  input[type=range] { width: 100%; accent-color: var(--text-accent); }
+
+  .why {
+    border-left: 3px solid var(--text-accent);
+    padding: 7px 10px;
+    background: var(--surface-secondary);
+    border-radius: 0 6px 6px 0;
+    font-size: 12.8px;
+    margin-top: 6px;
+  }
+  .why b.tag { color: var(--text-accent); }
+  .note { font-size: 12.5px; color: var(--text-secondary); }
+  .hint { font-size: 12px; color: var(--text-secondary); font-style: italic; }
+
+  .chain { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+  .chain-box {
+    border: 1.5px solid var(--text-accent);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: Georgia, serif;
+    font-size: 15px;
+    text-align: center;
+    background: #fdfdff;
+    box-shadow: 0 1px 2px rgba(99, 102, 241, 0.10);
+  }
+  .chain-arrow { text-align: center; color: var(--text-secondary); font-size: 12px; padding: 2px 0; }
+  .chain-arrow .arr { color: var(--text-accent); font-size: 16px; display: block; line-height: 1; }
+  .chain-box.result { border-width: 2.5px; background: rgba(99,102,241,0.07); font-size: 16px; }
+  .frac { display: inline-block; text-align: center; vertical-align: -0.7em; line-height: 1.1; font-size: 0.92em; }
+  .frac .num { display: block; border-bottom: 1px solid currentColor; padding: 0 3px; }
+  .frac .den { display: block; padding: 0 3px; }
+  .strike { position: relative; white-space: nowrap; }
+  .strike::after {
+    content: ''; position: absolute; left: -2px; right: -2px; top: 48%;
+    border-top: 2px solid var(--text-danger); transform: rotate(-14deg);
+  }
+
+  /* ---------- progressive steps ---------- */
+  .steps { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+  .step {
+    display: none; opacity: 0; transform: translateY(10px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    font-size: 13.5px; line-height: 1.5;
+  }
+  .step.shown { display: block; }
+  .step.vis { opacity: 1; transform: none; }
+  .step.aha {
+    border-left: 3px solid var(--aha-border);
+    background: var(--aha-bg);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 12px;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .step.aha .ahatag {
+    display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.07em;
+    color: var(--text-aha); text-transform: uppercase; margin-bottom: 3px;
+  }
+  .step.aha.vis { animation: ahaGlow 1.7s ease; }
+  @keyframes ahaGlow {
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
+    70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+    100% { box-shadow: none; }
+  }
+  .step.from-prev { transform: translateY(-14px); }
+  .step.from-prev .chain-box { border-style: dashed; background: var(--surface-secondary); opacity: 0.95; }
+  .carry-lbl {
+    display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-accent); font-weight: 700; margin-bottom: 3px;
+  }
+  .gauge { height: 12px; border-radius: 6px; background: var(--surface-secondary); overflow: hidden; margin: 4px 0; }
+  .gauge > div { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 6px; transition: width 0.12s linear; }
+  .exbars { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+  .exbar-row { display: flex; align-items: center; gap: 8px; font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 12.5px; }
+  .exbar-row .g { flex: 1; }
+  .bridge {
+    margin-top: 12px; font-size: 14.5px; font-style: italic; color: var(--text-aha);
+    text-align: center; font-family: Georgia, serif;
+  }
+  .closing-chain { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 12px 0; }
+  .closing-chain .cbox {
+    border: 2px solid var(--text-success); border-radius: 8px; padding: 6px 10px;
+    font-size: 12.5px; font-weight: 600; color: var(--text-success); background: #f0fdf4;
+    text-align: center;
+  }
+  .closing-chain .carr { color: var(--text-secondary); font-size: 15px; }
+  .aside-box { border: 1px dashed var(--border-default); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+
+  details.legend {
+    border: 1px dashed #d9d9e6; border-radius: 10px;
+    padding: 8px 12px; background: #fbfbfe; font-size: 12.5px;
+  }
+  details.legend > summary {
+    cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text-secondary);
+    letter-spacing: 0.02em; text-transform: uppercase;
+  }
+  details.legend > summary:hover { color: var(--text-accent); }
+  details.legend[open] > summary { margin-bottom: 6px; color: var(--text-accent); }
+  .legend ul { list-style: none; margin: 0; padding: 0; }
+  .legend li { display: flex; gap: 9px; align-items: flex-start; margin: 6px 0; line-height: 1.45; color: #3a3a4a; }
+  .sw { flex: 0 0 20px; height: 15px; margin-top: 2px; position: relative; }
+  .sw-grid {
+    background: linear-gradient(90deg, rgba(0,0,0,0.14) 1px, transparent 1px) 0 0/6px 100%,
+                linear-gradient(0deg, rgba(0,0,0,0.14) 1px, transparent 1px) 0 0/100% 6px;
+    border: 1px solid rgba(0,0,0,0.12); border-radius: 3px; background-color: var(--surface-secondary);
+  }
+  .sw-curve { border-top: 3px solid var(--text-accent); border-radius: 2px; height: 0; margin-top: 8px; }
+  .sw-dashcirc { width: 13px; height: 13px; border: 2px dashed var(--text-accent); border-radius: 50%; }
+  .sw-dot::after {
+    content: ''; position: absolute; left: 4px; top: 2px; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--text-danger); border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+  }
+  .sw-heat { background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(99,102,241,0.85)); border-radius: 3px; }
+  .sw-ticks { background: linear-gradient(90deg, rgba(99,102,241,0.7) 2px, transparent 2px) 0 0/5px 100%; border-radius: 2px; }
+  .sw-hue { flex-basis: 15px; width: 15px; height: 15px; border-radius: 50%;
+    background: conic-gradient(#e64, #dd4, #4c4, #4cc, #44e, #c4c, #e64); margin-left: 2px; }
+  .sw-dark { flex-basis: 15px; width: 15px; height: 15px; border-radius: 50%;
+    background: radial-gradient(circle, #101018 20%, #a78bfa 85%); margin-left: 2px; }
+  .sw-ring { flex-basis: 13px; width: 13px; height: 13px; border: 2px dashed #fff; border-radius: 50%;
+    background: #4c1d95; margin-left: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); }
+  .sw-gauge { background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 6px; height: 8px; margin-top: 5px; }
+  .sw-wash { background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3); border-radius: 3px; }
+  .sw-txt {
+    font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 9.5px; font-weight: 700;
+    color: var(--text-success); text-align: center; line-height: 15px; white-space: nowrap;
+  }
+  .sw-eq {
+    font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 700;
+    color: var(--text-secondary); text-align: center; line-height: 15px;
+  }
+  @media (max-width: 1020px) {
+    .page { display: block; }
+    #sideToggle {
+      display: block; position: fixed; top: 10px; right: 10px; z-index: 60;
+      background: var(--text-accent); color: #fff; border: none; border-radius: 8px;
+      padding: 8px 12px; font-size: 13px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .side {
+      position: fixed; top: 0; right: 0; height: 100vh; max-height: 100vh; width: 300px;
+      background: #fff; z-index: 55; padding: 52px 12px 12px; margin: 0;
+      transform: translateX(105%); transition: transform 0.25s ease;
+      box-shadow: -4px 0 18px rgba(0,0,0,0.15); border-radius: 0;
+    }
+    .side.open { transform: none; }
+  }
+</style>
+</head>
+<body>
+<button id="sideToggle">Chain &#9662;</button>
+<div class="page">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="side" id="side">
+    <div class="card">
+      <h3>The chain</h3>
+      <div id="track">
+        <div class="node done" data-target="sec0">
+          <span class="dot"></span>
+          <span class="lbl">Cauchy Integral Formula<span class="sub">Node 0 &middot; given (Lesson 4)</span></span>
+        </div>
+        <div class="conn done"></div>
+        <div class="node" data-target="sec1">
+          <span class="dot"></span>
+          <span class="lbl">Differentiation formulas<span class="sub">&sect;1 &middot; uses CIF</span></span>
+        </div>
+        <div class="conn"></div>
+        <div class="node" data-target="sec2">
+          <span class="dot"></span>
+          <span class="lbl">Cauchy&rsquo;s estimates<span class="sub">&sect;2 &middot; uses &sect;1</span></span>
+        </div>
+        <div class="conn"></div>
+        <div class="node" data-target="sec3">
+          <span class="dot"></span>
+          <span class="lbl">Liouville&rsquo;s theorem<span class="sub">&sect;3 &middot; uses &sect;2</span></span>
+        </div>
+        <div class="conn"></div>
+        <div class="node" data-target="sec4">
+          <span class="dot"></span>
+          <span class="lbl">Fundamental Theorem of Algebra<span class="sub">&sect;4 &middot; uses &sect;3</span></span>
+        </div>
+      </div>
+    </div>
+
+    <details class="explore card" id="expL">
+      <summary>Explore &mdash; why must <i class="mv">R</i> grow, not shrink?<span class="opt">optional &middot; goes with &sect;3 Liouville</span></summary>
+      <div class="note">The estimate <i class="mv">|f&prime;(z</i><sub>0</sub><i>)| &le; M/R</i> only squeezes if <i class="mv">M</i> stays put while <i class="mv">R</i> grows. Compare:</div>
+      <div class="radio-row">
+        <label><input type="radio" name="expLmode" value="b" checked> bounded entire <i class="mv">f</i> &nbsp;(<i class="mv">M</i> = 10, fixed)</label>
+        <label><input type="radio" name="expLmode" value="u0"> <i class="mv">f</i>(<i class="mv">z</i>) = <i class="mv">z</i>&sup2;, centered at <i class="mv">z</i><sub>0</sub> = 0</label>
+        <label><input type="radio" name="expLmode" value="u1"> <i class="mv">f</i>(<i class="mv">z</i>) = <i class="mv">z</i>&sup2;, centered at <i class="mv">z</i><sub>0</sub> = 1</label>
+      </div>
+      <canvas id="cvExpL" class="expcv" width="240" height="150"></canvas>
+      <div class="caption">Reading the plot: log&ndash;log axes; each curve is the bound <i class="mv">M</i>(<i class="mv">R</i>)/<i class="mv">R</i> as a function of <i class="mv">R</i>. Purple = the case selected above, grey = the other two, red dot = the slider&rsquo;s current <i class="mv">R</i>. A case only &ldquo;squeezes&rdquo; if its curve dives to 0.</div>
+      <input type="range" id="expLR" min="-1.3" max="2.3" step="0.01" value="0">
+      <div class="readout" id="expLro1"><span class="lbl"><i class="mv">R</i> =</span><span></span></div>
+      <div class="readout" id="expLro2"><span class="lbl"><i class="mv">M</i> on <i class="mv">C</i><sub><i class="mv">R</i></sub> =</span><span></span></div>
+      <div class="readout" id="expLro3"><span class="lbl">bound <i class="mv">M</i>/<i class="mv">R</i> =</span><span></span></div>
+      <div class="why" id="expLconc"></div>
+      <div class="note" style="margin-top:6px;"><b>The real point:</b> only for a <em>bounded entire</em> <i class="mv">f</i> is <i class="mv">M</i> fixed, independent of <i class="mv">R</i>. That is why large <i class="mv">R</i> is the engine of Liouville &mdash; for unbounded <i class="mv">f</i>, <i class="mv">M</i>(<i class="mv">R</i>) grows and the squeeze never happens, at either end.</div>
+    </details>
+
+    <details class="explore card" id="expF">
+      <summary>Explore &mdash; try another polynomial<span class="opt">optional &middot; goes with &sect;4 FTA</span></summary>
+      <div class="note">FTA says <em>every</em> nonconstant polynomial has a root. Pick one &mdash; dark points are its roots.</div>
+      <select id="expFsel" style="width:100%; margin:6px 0; padding:5px; font-size:13px;">
+        <option value="0">p(z) = z&sup3; + 1</option>
+        <option value="1">p(z) = z&sup2; + 1</option>
+        <option value="2">p(z) = z&#8308; &minus; 1</option>
+        <option value="3">p(z) = z&sup3; &minus; 2z + 2</option>
+      </select>
+      <canvas id="cvExpF" class="expcv" width="240" height="240"></canvas>
+      <div class="caption">Same coloring as &sect;4: hue = arg&thinsp;<i class="mv">p</i>(<i class="mv">z</i>), dark = |<i class="mv">p</i>| near 0. White dots mark the computed roots.</div>
+      <div class="readout block" id="expFroots" style="font-size:12px; line-height:1.6; font-weight:400;"></div>
+      <div class="note">Roots found numerically (Durand&ndash;Kerner) &mdash; degree <i class="mv">n</i> polynomial, <i class="mv">n</i> roots with multiplicity, exactly as FTA (applied repeatedly) guarantees.</div>
+    </details>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="main">
+    <h1>From CIF to the Fundamental Theorem of Algebra</h1>
+    <p class="subtitle">Lesson 5, Segments 1&ndash;4 &mdash; one cumulative chain. Each result is proved using <em>only</em> the one before it. Scroll down; use <b>Next step</b> in each section to build the proof.</p>
+
+    <!-- ============ NODE 0 : ANCHOR ============ -->
+    <section class="sec" id="sec0" data-sec="0">
+      <div class="card" style="border-width:2px;">
+        <div class="sec-head" style="margin-bottom:6px;">
+          <span class="chip">Node 0</span>
+          <h2>Starting point &mdash; already derived</h2>
+        </div>
+        <div class="chain-box result">
+          <i class="mv">f</i>(<i class="mv">z</i><sub>0</sub>) &nbsp;=&nbsp; <span class="frac"><span class="num">1</span><span class="den">2&pi;i</span></span> &#8750;<sub><i class="mv">&gamma;</i></sub> <span class="frac"><span class="num"><i class="mv">f</i>(<i class="mv">z</i>)</span><span class="den"><i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub></span></span> <i class="mv">dz</i>
+        </div>
+        <div class="note" style="margin-top:8px;">
+          The Cauchy Integral Formula: for <i class="mv">f</i> holomorphic on and inside a simple closed contour <i class="mv">&gamma;</i>, the values of <i class="mv">f</i> on <i class="mv">&gamma;</i> determine its value at every interior point. Derived step by step in
+          <a href="04-contour-deformation-and-cif.html" style="color:var(--text-accent);">04 &middot; Contour deformation &amp; the CIF</a>.
+          Everything on this page descends from this one formula.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SECTION 1 ============ -->
+    <section class="sec" id="sec1" data-sec="1">
+      <div class="sec-head">
+        <span class="chip">&sect;1</span>
+        <h2>Cauchy&rsquo;s differentiation formulas</h2>
+        <span class="dep">uses: CIF (Node 0)</span>
+      </div>
+      <p class="sec-sub">Differentiate the CIF under the integral sign, with respect to <i class="mv">z</i><sub>0</sub> &mdash; one derivative at a time.</p>
+      <div class="duo">
+        <div class="vizcol">
+          <canvas id="cv1" class="plane" width="430" height="360"></canvas>
+          <div class="caption">Shading = |<i class="mv">f</i>(<i class="mv">z</i>)/(<i class="mv">z</i>&minus;<i class="mv">z</i><sub>0</sub>)<sup><i class="mv">n</i>+1</sup>| for <i class="mv">f</i>(<i class="mv">z</i>) = <i class="mv">e<sup>z</sup></i>. Drag <i class="mv">z</i><sub>0</sub>. Higher <i class="mv">n</i> &rArr; the integrand&rsquo;s weight concentrates ever more tightly at <i class="mv">z</i><sub>0</sub>.</div>
+          <details class="legend" open>
+            <summary>What am I looking at?</summary>
+            <ul>
+              <li><span class="sw sw-grid"></span><span>The complex plane &mdash; every point is an input <i class="mv">z</i>. Axes are Re and Im; faint gridlines every &frac12;.</span></li>
+              <li><span class="sw sw-curve"></span><span>The contour <i class="mv">&gamma;</i> (arrowhead = counterclockwise). This is the path the integral &#8750;<sub><i class="mv">&gamma;</i></sub> travels &mdash; the formula only ever <em>reads</em> <i class="mv">f</i> on this circle.</span></li>
+              <li><span class="sw sw-dot"></span><span><i class="mv">z</i><sub>0</sub>, draggable &mdash; the point whose derivatives the formula computes. It is also the singularity: the (<i class="mv">z</i>&minus;<i class="mv">z</i><sub>0</sub>)<sup><i class="mv">n</i>+1</sup> in the denominator blows up exactly there.</span></li>
+              <li><span class="sw sw-heat"></span><span>Purple shading = |<i class="mv">e<sup>z</sup></i>/(<i class="mv">z</i>&minus;<i class="mv">z</i><sub>0</sub>)<sup><i class="mv">n</i>+1</sup>|, the integrand&rsquo;s magnitude &mdash; deeper purple, bigger. Step <i class="mv">n</i> up: the weight clamps tighter around <i class="mv">z</i><sub>0</sub>. Higher derivatives are more <em>local</em> information, and the integrand concentrates to match.</span></li>
+              <li><span class="sw sw-eq">&asymp;</span><span>The readouts below evaluate the contour integral numerically and compare it to the true derivative <i class="mv">e</i><sup><i class="mv">z</i><sub>0</sub></sup>. They agree wherever you drag <i class="mv">z</i><sub>0</sub> &mdash; the formula demonstrated, not just asserted.</span></li>
+            </ul>
+          </details>
+          <div class="btn-row">
+            <span class="note" style="margin-right:2px;"><i class="mv">n</i> =</span>
+            <button class="btn mini nbtn active" data-n="0">0</button>
+            <button class="btn mini nbtn" data-n="1">1</button>
+            <button class="btn mini nbtn" data-n="2">2</button>
+            <button class="btn mini nbtn" data-n="3">3</button>
+          </div>
+          <div class="readout" id="ro1num"><span class="lbl"><i class="mv">n</i>!/(2&pi;i) &#8750;<sub><i class="mv">&gamma;</i></sub>&thinsp;<i class="mv">e</i><sup><i class="mv">z</i></sup>/(<i class="mv">z</i>&minus;<i class="mv">z</i><sub>0</sub>)<sup><i class="mv">n</i>+1</sup>&thinsp;<i class="mv">dz</i> &nbsp;(numeric) =</span><span></span></div>
+          <div class="readout" id="ro1exact"><span class="lbl">exact: &nbsp;<i class="mv">f</i><sup>(<i class="mv">n</i>)</sup>(<i class="mv">z</i><sub>0</sub>) = <i class="mv">e</i><sup><i class="mv">z</i><sub>0</sub></sup> =</span><span></span></div>
+        </div>
+        <div class="proof card">
+          <div class="btn-row" style="justify-content:space-between;">
+            <span class="step-ind" id="s1ind"></span>
+            <span class="btn-row">
+              <button class="btn" data-play="1">&#9654; Play</button>
+              <button class="btn primary" data-next="1">Next step &rarr;</button>
+              <button class="btn" data-reset="1">&#8634;</button>
+            </span>
+          </div>
+          <div class="steps" id="s1steps">
+            <div class="step from-prev">
+              <span class="carry-lbl">Carried over &mdash; node 0 (CIF)</span>
+              <div class="chain-box"><i class="mv">f</i>(<i class="mv">z</i><sub>0</sub>) = <span class="frac"><span class="num">1</span><span class="den">2&pi;i</span></span> &#8750;<sub><i class="mv">&gamma;</i></sub> <span class="frac"><span class="num"><i class="mv">f</i>(<i class="mv">z</i>)</span><span class="den"><i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub></span></span> <i class="mv">dz</i></div>
+            </div>
+            <div class="step" data-act="n1">
+              Differentiate both sides with respect to <i class="mv">z</i><sub>0</sub> (the integral is over <i class="mv">z</i>, so <i class="mv">z</i><sub>0</sub> only appears in the denominator):
+              <div class="chain-box" style="margin-top:6px;"><i class="mv">f</i>&prime;(<i class="mv">z</i><sub>0</sub>) = <span class="frac"><span class="num">1</span><span class="den">2&pi;i</span></span> &#8750;<sub><i class="mv">&gamma;</i></sub> <span class="frac"><span class="num"><i class="mv">f</i>(<i class="mv">z</i>)</span><span class="den">(<i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub>)&sup2;</span></span> <i class="mv">dz</i></div>
+              <div class="why"><b class="tag">Reason:</b> <i class="mv">&part;/&part;z</i><sub>0</sub> (<i class="mv">z</i>&minus;<i class="mv">z</i><sub>0</sub>)<sup>&minus;1</sup> = (<i class="mv">z</i>&minus;<i class="mv">z</i><sub>0</sub>)<sup>&minus;2</sup></div>
+            </div>
+            <div class="step" data-act="n2">
+              Differentiate again &mdash; each pass pulls down one more factor:
+              <div class="chain-box" style="margin-top:6px;"><i class="mv">f</i>&Prime;(<i class="mv">z</i><sub>0</sub>) = <span class="frac"><span class="num">2</span><span class="den">2&pi;i</span></span> &#8750;<sub><i class="mv">&gamma;</i></sub> <span class="frac"><span class="num"><i class="mv">f</i>(<i class="mv">z</i>)</span><span class="den">(<i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub>)&sup3;</span></span> <i class="mv">dz</i></div>
+              <div class="why"><b class="tag">Reason:</b> <i class="mv">&part;/&part;z</i><sub>0</sub> (<i class="mv">z</i>&minus;<i class="mv">z</i><sub>0</sub>)<sup>&minus;2</sup> = 2(<i class="mv">z</i>&minus;<i class="mv">z</i><sub>0</sub>)<sup>&minus;3</sup></div>
+            </div>
+            <div class="step" data-act="n3">
+              And again &mdash; the factors accumulate: 1, then 1&middot;2, then 1&middot;2&middot;3&hellip;
+              <div class="chain-box" style="margin-top:6px;"><i class="mv">f</i>&#8244;(<i class="mv">z</i><sub>0</sub>) = <span class="frac"><span class="num">3!</span><span class="den">2&pi;i</span></span> &#8750;<sub><i class="mv">&gamma;</i></sub> <span class="frac"><span class="num"><i class="mv">f</i>(<i class="mv">z</i>)</span><span class="den">(<i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub>)&#8308;</span></span> <i class="mv">dz</i></div>
+            </div>
+            <div class="step">
+              The pattern, for every <i class="mv">n</i> &ge; 0:
+              <div class="chain-box result" style="margin-top:6px;"><i class="mv">f</i><sup>(<i class="mv">n</i>)</sup>(<i class="mv">z</i><sub>0</sub>) = <span class="frac"><span class="num"><i class="mv">n</i>!</span><span class="den">2&pi;i</span></span> &#8750;<sub><i class="mv">&gamma;</i></sub> <span class="frac"><span class="num"><i class="mv">f</i>(<i class="mv">z</i>)</span><span class="den">(<i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub>)<sup><i class="mv">n</i>+1</sup></span></span> <i class="mv">dz</i></div>
+            </div>
+            <div class="step aha">
+              <span class="ahatag">The consequence</span>
+              The right-hand side exists as soon as <i class="mv">f</i> is holomorphic on <i class="mv">&gamma;</i> and its interior &mdash; nothing about higher derivatives was ever assumed. So <i class="mv">f</i><sup>(<i class="mv">n</i>)</sup>(<i class="mv">z</i><sub>0</sub>) exists for <em>every</em> <i class="mv">n</i>: <b>holomorphic &rArr; infinitely differentiable, automatically.</b>
+              <div class="note" style="margin-top:4px;">Zero real-variable analogue: a real function can be differentiable exactly once. Complex differentiability once buys you all derivatives forever.</div>
+            </div>
+            <div class="step" data-act="check">
+              <b>Consistency check</b> (today&rsquo;s example): <i class="mv">f</i>(<i class="mv">z</i>) = <i class="mv">e<sup>z</sup></i>, <i class="mv">z</i><sub>0</sub> = 0, <i class="mv">n</i> = 1. The formula predicts <i class="mv">f</i>&prime;(0) = <i class="mv">e</i><sup>0</sup> = 1 &mdash; and the numerically computed integral on the left agrees. Check the readouts under the plot.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SECTION 2 ============ -->
+    <section class="sec" id="sec2" data-sec="2">
+      <div class="sec-head">
+        <span class="chip">&sect;2</span>
+        <h2>Cauchy&rsquo;s estimates</h2>
+        <span class="dep">uses: differentiation formulas (&sect;1)</span>
+      </div>
+      <p class="sec-sub">Take <i class="mv">&gamma;</i> = <i class="mv">C<sub>R</sub></i>, a circle of radius <i class="mv">R</i> around <i class="mv">z</i><sub>0</sub>, and simply <em>bound the size</em> of the integral in &sect;1&rsquo;s formula.</p>
+      <div class="duo">
+        <div class="vizcol">
+          <canvas id="cv2" class="plane" width="430" height="360"></canvas>
+          <div class="caption">Ticks = |<i class="mv">f</i>| sampled on <i class="mv">C<sub>R</sub></i> (here <i class="mv">f</i> = <i class="mv">e<sup>z</sup></i>, <i class="mv">z</i><sub>0</sub> = 0). Red dot = where |<i class="mv">f</i>| is largest: that value is <i class="mv">M</i>.</div>
+          <details class="legend" open>
+            <summary>What am I looking at?</summary>
+            <ul>
+              <li><span class="sw sw-curve"></span><span><i class="mv">C</i><sub><i class="mv">R</i></sub> &mdash; the contour: a circle of radius <i class="mv">R</i> (set by the slider) centered at <i class="mv">z</i><sub>0</sub> = 0. On it, |<i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub>| = <i class="mv">R</i> exactly &mdash; that&rsquo;s what makes circles the right contour for estimates.</span></li>
+              <li><span class="sw sw-ticks"></span><span>Each tick points outward from the circle with length &prop; |<i class="mv">f</i>| at that point. Here <i class="mv">f</i> = <i class="mv">e<sup>z</sup></i> and |<i class="mv">e<sup>z</sup></i>| = <i class="mv">e</i><sup>Re <i class="mv">z</i></sup>, so the samples swell toward the circle&rsquo;s right edge.</span></li>
+              <li><span class="sw sw-dot"></span><span>The largest sample. Its value is <i class="mv">M</i> &mdash; the &ldquo;M&rdquo; of the ML-estimate. Every other point on the circle is &le; <i class="mv">M</i>, which is the only fact the proof uses.</span></li>
+              <li><span class="sw sw-eq">&le;</span><span>The readouts assemble the estimate from its three raw parts: the max <i class="mv">M</i>, the length 2&pi;<i class="mv">R</i>, and the finished bound <i class="mv">M</i>/<i class="mv">R</i>. Slide <i class="mv">R</i> and watch all three move together.</span></li>
+            </ul>
+          </details>
+          <input type="range" id="r2slider" min="0.4" max="3.1" step="0.01" value="1.5">
+          <div class="readout" id="ro2M"><span class="lbl"><i class="mv">M</i> = max |<i class="mv">f</i>| on <i class="mv">C</i><sub><i class="mv">R</i></sub> =</span><span></span></div>
+          <div class="readout" id="ro2len"><span class="lbl">length(<i class="mv">C</i><sub><i class="mv">R</i></sub>) = 2&pi;<i class="mv">R</i> =</span><span></span></div>
+          <div class="readout" id="ro2bound"><span class="lbl">bound (<i class="mv">n</i> = 1): &nbsp;|<i class="mv">f</i>&prime;(<i class="mv">z</i><sub>0</sub>)| &le; <i class="mv">M</i>/<i class="mv">R</i> =</span><span></span></div>
+          <div class="note">(<i class="mv">n</i> = 1 shown; the same works for every <i class="mv">n</i>.)</div>
+        </div>
+        <div class="proof card">
+          <div class="btn-row" style="justify-content:space-between;">
+            <span class="step-ind" id="s2ind"></span>
+            <span class="btn-row">
+              <button class="btn" data-play="2">&#9654; Play</button>
+              <button class="btn primary" data-next="2">Next step &rarr;</button>
+              <button class="btn" data-reset="2">&#8634;</button>
+            </span>
+          </div>
+          <div class="steps" id="s2steps">
+            <div class="step from-prev">
+              <span class="carry-lbl">Carried over &mdash; &sect;1&rsquo;s result</span>
+              <div class="chain-box"><i class="mv">f</i><sup>(<i class="mv">n</i>)</sup>(<i class="mv">z</i><sub>0</sub>) = <span class="frac"><span class="num"><i class="mv">n</i>!</span><span class="den">2&pi;i</span></span> &#8750;<sub><i class="mv">&gamma;</i></sub> <span class="frac"><span class="num"><i class="mv">f</i>(<i class="mv">z</i>)</span><span class="den">(<i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub>)<sup><i class="mv">n</i>+1</sup></span></span> <i class="mv">dz</i></div>
+            </div>
+            <div class="step">
+              Choose the contour to be <i class="mv">C<sub>R</sub></i>: the circle of radius <i class="mv">R</i> centered at <i class="mv">z</i><sub>0</sub>. Suppose |<i class="mv">f</i>(<i class="mv">z</i>)| &le; <i class="mv">M</i> for all <i class="mv">z</i> on <i class="mv">C<sub>R</sub></i>. On this circle, |<i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub>| = <i class="mv">R</i> exactly &mdash; so the integrand&rsquo;s size is at most <i class="mv">M</i>/<i class="mv">R</i><sup><i class="mv">n</i>+1</sup>.
+            </div>
+            <div class="step">
+              Apply the <b>ML-estimate</b> (Lesson 4&rsquo;s workhorse):
+              <div class="chain-box" style="margin-top:6px;">|&#8750;<sub><i class="mv">&gamma;</i></sub> <i class="mv">h</i>(<i class="mv">z</i>)&thinsp;<i class="mv">dz</i>| &nbsp;&le;&nbsp; max<sub><i class="mv">&gamma;</i></sub>|<i class="mv">h</i>| &nbsp;&middot;&nbsp; length(<i class="mv">&gamma;</i>)</div>
+              <div class="why"><b class="tag">Reason:</b> the triangle inequality for integrals &mdash; a sum of small things is small.</div>
+            </div>
+            <div class="step">
+              Plug everything in, and <em>don&rsquo;t simplify yet</em> &mdash; one honest, unsimplified fraction:
+              <div class="chain-box" style="margin-top:6px;">|<i class="mv">f</i><sup>(<i class="mv">n</i>)</sup>(<i class="mv">z</i><sub>0</sub>)| &nbsp;&le;&nbsp; <span class="frac"><span class="num"><i class="mv">n</i>! &middot; <i class="mv">M</i> &middot; 2&pi;<i class="mv">R</i></span><span class="den">2&pi; &middot; <i class="mv">R</i><sup><i class="mv">n</i>+1</sup></span></span></div>
+              <div class="note" style="margin-top:4px;"><i class="mv">n</i>!/2&pi; from the formula (|<i class="mv">i</i>| = 1) &middot; <i class="mv">M</i>/<i class="mv">R</i><sup><i class="mv">n</i>+1</sup> is max|integrand| &middot; 2&pi;<i class="mv">R</i> is the length.</div>
+            </div>
+            <div class="step aha">
+              <span class="ahatag">Cancel &mdash; watch each factor go</span>
+              The 2&pi;&rsquo;s cancel, and one power of <i class="mv">R</i> cancels:
+              <div class="chain-box" style="margin-top:6px;">|<i class="mv">f</i><sup>(<i class="mv">n</i>)</sup>(<i class="mv">z</i><sub>0</sub>)| &le; <span class="frac"><span class="num"><i class="mv">n</i>! &middot; <i class="mv">M</i> &middot; <span class="strike">2&pi;</span><span class="strike"><i class="mv">R</i></span></span><span class="den"><span class="strike">2&pi;</span> &middot; <i class="mv">R</i><sup><i class="mv">n</i>+1</sup></span></span> <span style="color:var(--text-secondary); font-size:0.85em;">(R<sup>n+1</sup> &rarr; R<sup>n</sup>)</span></div>
+              <div class="chain-box result" style="margin-top:6px;">|<i class="mv">f</i><sup>(<i class="mv">n</i>)</sup>(<i class="mv">z</i><sub>0</sub>)| &nbsp;&le;&nbsp; <span class="frac"><span class="num"><i class="mv">n</i>!&thinsp;<i class="mv">M</i></span><span class="den"><i class="mv">R<sup>n</sup></i></span></span></div>
+            </div>
+            <div class="step">
+              <b>Feel the bound shrink</b> (today&rsquo;s numbers, <i class="mv">n</i> = 1, <i class="mv">M</i> = 10 fixed):
+              <div class="exbars">
+                <div class="exbar-row"><span>R = 100</span><span class="g gauge"><div style="width:100%; background:var(--text-accent);"></div></span><span>|f&prime;| &le; 0.1</span></div>
+                <div class="exbar-row"><span>R = 10,000</span><span class="g gauge"><div style="width:1%; background:var(--text-accent);"></div></span><span>|f&prime;| &le; 0.001</span></div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="bridge">The bigger the circle, the smaller the bound&hellip; so what happens if <i class="mv">R</i> keeps growing &mdash; forever? &darr;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SECTION 3 ============ -->
+    <section class="sec" id="sec3" data-sec="3">
+      <div class="sec-head">
+        <span class="chip">&sect;3</span>
+        <h2>Liouville&rsquo;s theorem</h2>
+        <span class="dep">uses: Cauchy&rsquo;s estimates (&sect;2)</span>
+      </div>
+      <p class="sec-sub">Now let <i class="mv">f</i> be <b>entire</b> (holomorphic on all of &#8450;) and <b>bounded</b> (|<i class="mv">f</i>| &le; <i class="mv">M</i> everywhere, one fixed <i class="mv">M</i>) &mdash; and let the circle grow without limit.</p>
+      <div class="duo">
+        <div class="vizcol">
+          <canvas id="cv3" class="plane" width="460" height="380"></canvas>
+          <div class="btn-row">
+            <button class="btn primary" id="btn3play">&#9654; Grow R &rarr; &infin;</button>
+            <button class="btn" id="btn3sweep" disabled>Sweep z&#8320; across &#8450;</button>
+            <button class="btn" id="btn3reset">&#8634; Reset</button>
+          </div>
+          <div class="readout" id="ro3R"><span class="lbl"><i class="mv">R</i> =</span><span>1.5</span></div>
+          <div class="readout" id="ro3b"><span class="lbl">|<i class="mv">f</i>&prime;(<i class="mv">z</i><sub>0</sub>)| &le; <i class="mv">M</i>/<i class="mv">R</i> = 10/<i class="mv">R</i> =</span><span>6.667</span></div>
+          <div class="gauge" id="g3"><div style="width:67%;"></div></div>
+          <div class="caption">The gauge is the bound <i class="mv">M</i>/<i class="mv">R</i>. Because <i class="mv">f</i> is entire, <em>no singularity ever stops the circle</em> &mdash; <i class="mv">R</i> is free to grow forever.</div>
+          <details class="legend" open>
+            <summary>What am I looking at?</summary>
+            <ul>
+              <li><span class="sw sw-dot"></span><span><i class="mv">z</i><sub>0</sub> &mdash; the point where |<i class="mv">f</i>&prime;| is being squeezed. It is arbitrary, and the sweep phase makes that literal by moving it everywhere.</span></li>
+              <li><span class="sw sw-dashcirc"></span><span><i class="mv">C</i><sub><i class="mv">R</i></sub> mid-growth. The drawing compresses distance so that <i class="mv">R</i> &rarr; &infin; stays on screen &mdash; the circle creeps toward the edge while the true <i class="mv">R</i> (see readout) runs off to infinity.</span></li>
+              <li><span class="sw sw-gauge"></span><span>The gauge is the live value of the bound <i class="mv">M</i>/<i class="mv">R</i> = 10/<i class="mv">R</i>. &ldquo;The squeeze&rdquo; is literally this bar draining to zero &mdash; and |<i class="mv">f</i>&prime;(<i class="mv">z</i><sub>0</sub>)| is trapped beneath it the whole way down.</span></li>
+              <li><span class="sw sw-txt">f&prime;=0</span><span>The conclusion, stamped at every point the sweep visits: the identical argument runs at each one, because nothing about it depended on where <i class="mv">z</i><sub>0</sub> was.</span></li>
+              <li><span class="sw sw-wash"></span><span>The final purple wash: <i class="mv">f</i>&prime; &equiv; 0 on all of &#8450;, so <i class="mv">f</i> cannot change &mdash; one constant value across the entire plane.</span></li>
+            </ul>
+          </details>
+        </div>
+        <div class="proof card">
+          <div class="btn-row" style="justify-content:space-between;">
+            <span class="step-ind" id="s3ind"></span>
+            <span class="btn-row">
+              <button class="btn" data-play="3">&#9654; Play</button>
+              <button class="btn primary" data-next="3">Next step &rarr;</button>
+              <button class="btn" data-reset="3">&#8634;</button>
+            </span>
+          </div>
+          <div class="steps" id="s3steps">
+            <div class="step from-prev">
+              <span class="carry-lbl">Carried over &mdash; &sect;2&rsquo;s result, at n = 1</span>
+              <div class="chain-box">|<i class="mv">f</i>&prime;(<i class="mv">z</i><sub>0</sub>)| &nbsp;&le;&nbsp; <span class="frac"><span class="num">1! &middot; <i class="mv">M</i></span><span class="den"><i class="mv">R</i>&sup1;</span></span> &nbsp;=&nbsp; <span class="frac"><span class="num"><i class="mv">M</i></span><span class="den"><i class="mv">R</i></span></span></div>
+            </div>
+            <div class="step">
+              <b>Hypotheses.</b> <i class="mv">f</i> is <em>entire</em>: holomorphic on all of &#8450;, so the circle <i class="mv">C<sub>R</sub></i> is legal for <em>every</em> radius <i class="mv">R</i> &mdash; there is no singularity to avoid. And <i class="mv">f</i> is <em>bounded</em>: |<i class="mv">f</i>(<i class="mv">z</i>)| &le; <i class="mv">M</i> with the <em>same fixed M</em> on every circle, no matter how large.
+              <div class="why"><b class="tag">Key:</b> both hypotheses are doing real work &mdash; entirety frees <i class="mv">R</i>, boundedness pins <i class="mv">M</i>.</div>
+            </div>
+            <div class="step aha" data-act="squeeze">
+              <span class="ahatag">The squeeze &mdash; the aha of the whole lesson</span>
+              Fix <i class="mv">z</i><sub>0</sub>. The estimate holds for <em>every</em> <i class="mv">R</i> simultaneously:
+              <div class="chain-box" style="margin-top:6px;">0 &nbsp;&le;&nbsp; |<i class="mv">f</i>&prime;(<i class="mv">z</i><sub>0</sub>)| &nbsp;&le;&nbsp; <span class="frac"><span class="num"><i class="mv">M</i></span><span class="den"><i class="mv">R</i></span></span> &nbsp;&xrarr;&nbsp; 0 &nbsp;&nbsp;as&nbsp; <i class="mv">R</i> &rarr; &infin;</div>
+              A fixed nonnegative number squeezed below every <i class="mv">M</i>/<i class="mv">R</i> has no choice: &nbsp;<b>|<i class="mv">f</i>&prime;(<i class="mv">z</i><sub>0</sub>)| = 0.</b> &nbsp;(Watch the gauge on the left run to zero.)
+            </div>
+            <div class="step" data-act="sweep">
+              But <i class="mv">z</i><sub>0</sub> was <em>arbitrary</em> &mdash; nothing in the argument used where it sits. Run the same squeeze at every point of the plane:
+              <div class="chain-box" style="margin-top:6px;"><i class="mv">f</i>&prime;(<i class="mv">z</i><sub>0</sub>) = 0 &nbsp;for all <i class="mv">z</i><sub>0</sub> &nbsp;&rArr;&nbsp; <i class="mv">f</i>&prime; &equiv; 0 &nbsp;&rArr;&nbsp; <i class="mv">f</i> is constant</div>
+            </div>
+            <div class="step">
+              <div class="chain-box result"><b>Liouville:</b> a bounded entire function is constant.</div>
+            </div>
+            <div class="step">
+              <div class="aside-box">
+                <b>Sit with the strangeness.</b> sin&thinsp;<i class="mv">z</i> and cos&thinsp;<i class="mv">z</i> are bounded and non-constant on &#8477;&hellip; doesn&rsquo;t that contradict Liouville? No &mdash; bounded on &#8477; is not bounded on &#8450;. Off the real axis, |sin(<i class="mv">iy</i>)| = sinh&thinsp;<i class="mv">y</i> &rarr; &infin;:
+                <canvas id="cv3s" class="expcv" width="260" height="110" style="margin-top:6px;"></canvas>
+                <div class="note">Liouville doesn&rsquo;t just tolerate this blow-up &mdash; it <em>forces</em> it. A bounded, non-constant entire function is not allowed to exist. <span class="hint">(Curious why the squeeze needs <i class="mv">R</i> large, not small? Open the sidebar card &ldquo;why must R grow&rdquo;.)</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SECTION 4 ============ -->
+    <section class="sec" id="sec4" data-sec="4">
+      <div class="sec-head">
+        <span class="chip">&sect;4</span>
+        <h2>The Fundamental Theorem of Algebra</h2>
+        <span class="dep">uses: Liouville (&sect;3)</span>
+      </div>
+      <p class="sec-sub">Every nonconstant polynomial over &#8450; has a root. There is no easy real-variable proof &mdash; but from Liouville it takes five lines, by contradiction.</p>
+      <div class="duo">
+        <div class="vizcol">
+          <canvas id="cv4" class="plane" width="400" height="400"></canvas>
+          <div class="caption">Domain coloring of <i class="mv">p</i>(<i class="mv">z</i>) = <i class="mv">z</i>&sup3; + 1 &mdash; hue = arg&thinsp;<i class="mv">p</i>, dark = |<i class="mv">p</i>| small. The three dark points are the roots: <i class="mv">e</i><sup>i&pi;/3</sup>, &minus;1, <i class="mv">e</i><sup>i5&pi;/3</sup> &mdash; the cube roots of &minus;1, Lesson 1&rsquo;s roots-of-unity picture rotated by &pi;/3.</div>
+          <details class="legend" open>
+            <summary>What am I looking at?</summary>
+            <ul>
+              <li><span class="sw sw-hue"></span><span>Domain coloring: every pixel is an input <i class="mv">z</i>, painted by the <em>output</em> <i class="mv">p</i>(<i class="mv">z</i>). Hue encodes arg&thinsp;<i class="mv">p</i>(<i class="mv">z</i>) &mdash; the angle of the output.</span></li>
+              <li><span class="sw sw-dark"></span><span>Brightness encodes |<i class="mv">p</i>(<i class="mv">z</i>)|: darker = closer to 0. A root is where <i class="mv">p</i> = 0 &mdash; so the roots are the dark points where all the hues collide.</span></li>
+              <li><span class="sw sw-ring"></span><span>The dashed white ring is |<i class="mv">z</i>| = <i class="mv">r</i>, from the slider. The readout tracks max |1/<i class="mv">p</i>| on that ring &mdash; it collapses toward 0 as <i class="mv">r</i> grows. That is precisely the &ldquo;<i class="mv">f</i> = 1/<i class="mv">p</i> is bounded&rdquo; step of the proof, made visible.</span></li>
+              <li><span class="sw sw-eq">3&times;</span><span>Degree check: walk once around the outer edge of the picture and the hues cycle through the full color wheel three times &mdash; deg&thinsp;<i class="mv">p</i> = 3, one full cycle per root.</span></li>
+            </ul>
+          </details>
+          <input type="range" id="r4slider" min="0.5" max="8" step="0.05" value="1.8">
+          <div class="readout" id="ro4"><span class="lbl">max |1/<i class="mv">p</i>(<i class="mv">z</i>)| on |<i class="mv">z</i>| = <i class="mv">r</i> =</span><span></span></div>
+          <div class="gauge" id="g4"><div></div></div>
+          <div class="caption">Slide <i class="mv">r</i> outward: |<i class="mv">p</i>| &rarr; &infin;, so |1/<i class="mv">p</i>| &rarr; 0 &mdash; the fact that makes <i class="mv">f</i> = 1/<i class="mv">p</i> bounded in the proof.</div>
+        </div>
+        <div class="proof card">
+          <div class="btn-row" style="justify-content:space-between;">
+            <span class="step-ind" id="s4ind"></span>
+            <span class="btn-row">
+              <button class="btn" data-play="4">&#9654; Play</button>
+              <button class="btn primary" data-next="4">Next step &rarr;</button>
+              <button class="btn" data-reset="4">&#8634;</button>
+            </span>
+          </div>
+          <div class="steps" id="s4steps">
+            <div class="step from-prev">
+              <span class="carry-lbl">Carried over &mdash; &sect;3&rsquo;s result</span>
+              <div class="chain-box"><b>Liouville:</b> bounded + entire &rArr; constant</div>
+            </div>
+            <div class="step">
+              <b>Setup.</b> Let <i class="mv">p</i>(<i class="mv">z</i>) = <i class="mv">a<sub>n</sub>z<sup>n</sup></i> + &hellip; + <i class="mv">a</i><sub>0</sub>, with <i class="mv">n</i> &ge; 1 and <i class="mv">a<sub>n</sub></i> &ne; 0. <b>Suppose, for contradiction, that <i class="mv">p</i>(<i class="mv">z</i>) &ne; 0 for every <i class="mv">z</i> &isin; &#8450;.</b>
+            </div>
+            <div class="step">
+              <div class="chain">
+                <div class="chain-box"><i class="mv">f</i>(<i class="mv">z</i>) = 1/<i class="mv">p</i>(<i class="mv">z</i>) &nbsp;is entire</div>
+                <div class="chain-arrow"><span class="arr">&darr;</span>quotient of holomorphic functions with a never-vanishing denominator</div>
+              </div>
+            </div>
+            <div class="step" data-act="radial">
+              <div class="chain">
+                <div class="chain-box"><i class="mv">f</i> &nbsp;is bounded on all of &#8450;</div>
+                <div class="chain-arrow"><span class="arr">&darr;</span>leading term dominates: |<i class="mv">p</i>(<i class="mv">z</i>)| &rarr; &infin; as |<i class="mv">z</i>| &rarr; &infin;, so |<i class="mv">f</i>| &rarr; 0 outside a big disk; on the closed disk, <i class="mv">f</i> is continuous, hence bounded. (Watch the slider readout on the left.)</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="chain">
+                <div class="chain-box"><i class="mv">f</i> entire + bounded &nbsp;&rArr;<sub>&sect;3</sub>&nbsp; <i class="mv">f</i> constant &nbsp;&rArr;&nbsp; <i class="mv">p</i> constant</div>
+                <div class="chain-arrow"><span class="arr">&darr;</span>Liouville &mdash; the previous section, doing all the work</div>
+              </div>
+            </div>
+            <div class="step aha">
+              <span class="ahatag">Contradiction</span>
+              But <i class="mv">p</i> has degree <i class="mv">n</i> &ge; 1 with <i class="mv">a<sub>n</sub></i> &ne; 0 &mdash; <i class="mv">p</i> is <em>not</em> constant. The assumption &ldquo;<i class="mv">p</i> has no root&rdquo; has destroyed itself.
+              <div class="chain-box result" style="margin-top:6px;"><b>FTA:</b> every nonconstant polynomial over &#8450; has at least one root.</div>
+            </div>
+            <div class="step">
+              For <i class="mv">p</i>(<i class="mv">z</i>) = <i class="mv">z</i>&sup3; + 1: the guaranteed roots are the three dark points on the left &mdash; and factoring one out and repeating gives all <i class="mv">n</i> roots of any degree-<i class="mv">n</i> polynomial. <span class="hint">Try other polynomials in the sidebar card.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CLOSING ============ -->
+    <section class="sec" id="close">
+      <div class="card" style="border-width:2px; text-align:center;">
+        <h2 style="font-size:16px; margin:0 0 4px;">The whole chain, complete</h2>
+        <div class="closing-chain">
+          <span class="cbox">CIF</span><span class="carr">&rarr;</span>
+          <span class="cbox">Differentiation<br>formulas</span><span class="carr">&rarr;</span>
+          <span class="cbox">Cauchy&rsquo;s<br>estimates</span><span class="carr">&rarr;</span>
+          <span class="cbox">Liouville</span><span class="carr">&rarr;</span>
+          <span class="cbox">FTA</span>
+        </div>
+        <div class="note" style="max-width:560px; margin:0 auto;">
+          From one formula &mdash; the Cauchy Integral Formula &mdash; to one of the most famous theorems in mathematics, in four steps, each a handful of lines. Not four separate facts: one continuous idea. That a statement about polynomials with <em>no easy real proof</em> falls out of contour integration is the whole case for complex analysis.
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+'use strict';
+var TAU = Math.PI * 2;
+
+/* ---------- shared helpers (same conventions as viz 04) ---------- */
+function fmtNum(x, d) {
+  d = (d === undefined) ? 3 : d;
+  if (Math.abs(x) < 0.5 * Math.pow(10, -d)) x = 0;
+  return x.toFixed(d);
+}
+function fmtC(re, im, d) {
+  d = (d === undefined) ? 3 : d;
+  var tol = 0.5 * Math.pow(10, -d);
+  var zr = Math.abs(re) < tol, zi = Math.abs(im) < tol;
+  if (zr && zi) return '0';
+  if (zi) return fmtNum(re, d);
+  var istr = fmtNum(Math.abs(im), d) + 'i';
+  if (zr) return (im < 0 ? '−' : '') + istr;
+  return fmtNum(re, d) + (im < 0 ? ' − ' : ' + ') + istr;
+}
+function setupCanvas(cv) {
+  var dpr = window.devicePixelRatio || 1;
+  var W = cv.width, H = cv.height;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  cv.width = W * dpr; cv.height = H * dpr;
+  var ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx: ctx, W: W, H: H };
+}
+function drawPlane(ctx, W, H, S, cx, cy) {
+  ctx.clearRect(0, 0, W, H);
+  var X = function (x) { return cx + x * S; }, Y = function (y) { return cy - y * S; };
+  var xmin = -cx / S, xmax = (W - cx) / S, ymin = -(H - cy) / S, ymax = cy / S;
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  var x, y;
+  for (x = Math.ceil(xmin * 2) / 2; x <= xmax; x += 0.5) {
+    ctx.beginPath(); ctx.moveTo(X(x), 0); ctx.lineTo(X(x), H); ctx.stroke();
+  }
+  for (y = Math.ceil(ymin * 2) / 2; y <= ymax; y += 0.5) {
+    ctx.beginPath(); ctx.moveTo(0, Y(y)); ctx.lineTo(W, Y(y)); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.font = '11px -apple-system, sans-serif';
+  for (x = Math.ceil(xmin); x <= xmax; x++) {
+    if (x === 0) continue;
+    ctx.fillText(String(x), X(x) + 3, cy + 13);
+    ctx.beginPath(); ctx.moveTo(X(x), cy - 3); ctx.lineTo(X(x), cy + 3); ctx.stroke();
+  }
+  for (y = Math.ceil(ymin); y <= ymax; y++) {
+    if (y === 0) continue;
+    ctx.fillText(y + 'i', cx + 6, Y(y) + 4);
+    ctx.beginPath(); ctx.moveTo(cx - 3, Y(y)); ctx.lineTo(cx + 3, Y(y)); ctx.stroke();
+  }
+  ctx.font = 'italic 12px Georgia, serif';
+  ctx.fillText('Re', W - 22, cy - 6);
+  ctx.fillText('Im', cx + 8, 14);
+}
+function arrowAt(ctx, px, py, ux, uy, color) {
+  var sz = 7;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(px + ux * sz, py + uy * sz);
+  ctx.lineTo(px - ux * sz * 0.6 - uy * sz * 0.6, py - uy * sz * 0.6 + ux * sz * 0.6);
+  ctx.lineTo(px - ux * sz * 0.6 + uy * sz * 0.6, py - uy * sz * 0.6 - ux * sz * 0.6);
+  ctx.closePath(); ctx.fill();
+}
+/* complex ops on [re, im] */
+function cmul(a, b) { return [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]]; }
+function cdiv(a, b) {
+  var d = b[0] * b[0] + b[1] * b[1];
+  return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d];
+}
+function cabs(a) { return Math.hypot(a[0], a[1]); }
+function cexp(a) { var m = Math.exp(a[0]); return [m * Math.cos(a[1]), m * Math.sin(a[1])]; }
+function cpowInt(a, n) {
+  var r = [1, 0], i;
+  for (i = 0; i < n; i++) r = cmul(r, a);
+  return r;
+}
+function factorial(n) { var r = 1, i; for (i = 2; i <= n; i++) r *= i; return r; }
+function hsl2rgb(h, s, l) {
+  var c = (1 - Math.abs(2 * l - 1)) * s;
+  var hp = ((h % 360) + 360) % 360 / 60;
+  var xx = c * (1 - Math.abs(hp % 2 - 1));
+  var r = 0, g = 0, b = 0;
+  if (hp < 1) { r = c; g = xx; } else if (hp < 2) { r = xx; g = c; }
+  else if (hp < 3) { g = c; b = xx; } else if (hp < 4) { g = xx; b = c; }
+  else if (hp < 5) { r = xx; b = c; } else { r = c; b = xx; }
+  var m = l - c / 2;
+  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
+
+/* ---------- step engine ---------- */
+var SECS = {};
+var ACT = { 1: {}, 2: {}, 3: {}, 4: {} };
+function markDone(id) {
+  var node = document.querySelector('.node[data-target="sec' + id + '"]');
+  if (node) node.classList.add('done');
+  var nodes = Array.prototype.slice.call(document.querySelectorAll('#track .node'));
+  var conns = Array.prototype.slice.call(document.querySelectorAll('#track .conn'));
+  nodes.forEach(function (n, i) {
+    if (n.classList.contains('done') && i > 0 && conns[i - 1]) conns[i - 1].classList.add('done');
+  });
+}
+function initSteps(id) {
+  var wrap = document.getElementById('s' + id + 'steps');
+  var steps = Array.prototype.slice.call(wrap.querySelectorAll('.step'));
+  var ind = document.getElementById('s' + id + 'ind');
+  var btnN = document.querySelector('[data-next="' + id + '"]');
+  var btnP = document.querySelector('[data-play="' + id + '"]');
+  var btnR = document.querySelector('[data-reset="' + id + '"]');
+  var st = { shown: 0, playing: false, timer: null };
+  function upd() {
+    ind.textContent = 'step ' + st.shown + ' / ' + steps.length;
+    btnN.disabled = st.shown >= steps.length;
+    if (st.shown >= steps.length) markDone(id);
+  }
+  function reveal() {
+    if (st.shown >= steps.length) return null;
+    var el = steps[st.shown];
+    st.shown++;
+    el.classList.add('shown');
+    /* force layout so the transition runs */
+    void el.offsetWidth;
+    el.classList.add('vis');
+    var act = el.getAttribute('data-act');
+    if (act && ACT[id] && ACT[id][act]) { try { ACT[id][act](); } catch (e) {} }
+    if (el.classList.contains('aha') && st.shown < steps.length) {
+      btnN.disabled = true;
+      setTimeout(function () { if (!btnN.disabled || st.shown < steps.length) btnN.disabled = st.shown >= steps.length; }, 950);
+    }
+    upd();
+    return el;
+  }
+  function stopPlay() {
+    st.playing = false;
+    if (st.timer) { clearTimeout(st.timer); st.timer = null; }
+    btnP.innerHTML = '&#9654; Play';
+  }
+  function playTick() {
+    if (!st.playing) return;
+    var el = reveal();
+    if (!el || st.shown >= steps.length) { stopPlay(); upd(); return; }
+    var delay = el.classList.contains('aha') ? 3400 : 1500;
+    st.timer = setTimeout(playTick, delay);
+  }
+  btnN.addEventListener('click', function () { stopPlay(); reveal(); });
+  btnP.addEventListener('click', function () {
+    if (st.playing) { stopPlay(); return; }
+    st.playing = true;
+    btnP.innerHTML = '&#10074;&#10074;';
+    playTick();
+  });
+  btnR.addEventListener('click', function () {
+    stopPlay();
+    steps.forEach(function (s) { s.classList.remove('shown', 'vis'); });
+    st.shown = 0;
+    reveal(); /* restore the carried-over box */
+    upd();
+  });
+  upd();
+  SECS[id] = {
+    shownCount: function () { return st.shown; },
+    reveal: reveal
+  };
+}
+[1, 2, 3, 4].forEach(initSteps);
+
+/* auto-reveal the carried-over box when a section first scrolls into view */
+if ('IntersectionObserver' in window) {
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      var id = parseInt(en.target.getAttribute('data-sec'), 10);
+      if (id >= 1 && SECS[id] && SECS[id].shownCount() === 0) SECS[id].reveal();
+    });
+  }, { threshold: 0.12 });
+  Array.prototype.forEach.call(document.querySelectorAll('.sec[data-sec]'), function (s) { io.observe(s); });
+} else {
+  [1, 2, 3, 4].forEach(function (id) { SECS[id].reveal(); });
+}
+
+/* ---------- chain tracker: active on scroll, click to jump ---------- */
+var trackNodes = Array.prototype.slice.call(document.querySelectorAll('#track .node'));
+trackNodes.forEach(function (n) {
+  n.addEventListener('click', function () {
+    var t = document.getElementById(n.getAttribute('data-target'));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (window.innerWidth <= 1020) document.getElementById('side').classList.remove('open');
+  });
+});
+function updActive() {
+  var secIds = ['sec0', 'sec1', 'sec2', 'sec3', 'sec4'];
+  var cur = 0, i;
+  for (i = 0; i < secIds.length; i++) {
+    var el = document.getElementById(secIds[i]);
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.42) cur = i;
+  }
+  trackNodes.forEach(function (n, j) { n.classList.toggle('active', j === cur); });
+  var closeEl = document.getElementById('close');
+  if (closeEl.getBoundingClientRect().top < window.innerHeight * 0.85) {
+    trackNodes.forEach(function (n) { n.classList.add('done'); });
+    markDone(0);
+  }
+}
+window.addEventListener('scroll', updActive, { passive: true });
+window.addEventListener('resize', updActive);
+updActive();
+
+/* ---------- mobile sidebar drawer ---------- */
+document.getElementById('sideToggle').addEventListener('click', function () {
+  document.getElementById('side').classList.toggle('open');
+});
+</script>
+
+<script>
+'use strict';
+/* ================= SECTION 1: differentiation formulas ================= */
+(function () {
+  var cv = document.getElementById('cv1');
+  var c = setupCanvas(cv), ctx = c.ctx, W = c.W, H = c.H;
+  var S = 78, cx = W / 2, cy = H / 2;
+  var X = function (x) { return cx + x * S; }, Y = function (y) { return cy - y * S; };
+  var iX = function (px) { return (px - cx) / S; }, iY = function (py) { return (cy - py) / S; };
+  var GR = 1.75;                     /* contour radius */
+  var z0 = [0.0, 0.0], n = 0, dragging = false;
+  var roN = document.querySelector('#ro1num span:last-child');
+  var roE = document.querySelector('#ro1exact span:last-child');
+
+  function integrandMag(x, y) {
+    var m = Math.exp(x);                       /* |e^z| */
+    var d = Math.hypot(x - z0[0], y - z0[1]);
+    if (d < 1e-4) d = 1e-4;
+    return m / Math.pow(d, n + 1);
+  }
+  function numericDeriv() {
+    /* (n!/2pi i) oint e^z/(z-z0)^{n+1} dz over the circle GR */
+    var N = 900, sum = [0, 0], k;
+    for (k = 0; k < N; k++) {
+      var th = TAU * k / N;
+      var g = [GR * Math.cos(th), GR * Math.sin(th)];
+      var gp = [-GR * Math.sin(th) * TAU / N, GR * Math.cos(th) * TAU / N]; /* gamma' dt */
+      var den = cpowInt([g[0] - z0[0], g[1] - z0[1]], n + 1);
+      var val = cmul(cdiv(cexp(g), den), gp);
+      sum[0] += val[0]; sum[1] += val[1];
+    }
+    /* divide by 2pi i, multiply n! */
+    var res = cdiv(sum, [0, TAU]);
+    return [res[0] * factorial(n), res[1] * factorial(n)];
+  }
+  function render() {
+    drawPlane(ctx, W, H, S, cx, cy);
+    /* heat pass: adaptive normalization by 95th percentile */
+    var B = 5, vals = [], px, py;
+    for (py = 0; py < H; py += B) {
+      for (px = 0; px < W; px += B) {
+        vals.push(integrandMag(iX(px + B / 2), iY(py + B / 2)));
+      }
+    }
+    var sorted = vals.slice().sort(function (a, b) { return a - b; });
+    var P = sorted[Math.floor(sorted.length * 0.95)] || 1;
+    if (P <= 0) P = 1;
+    var i = 0;
+    for (py = 0; py < H; py += B) {
+      for (px = 0; px < W; px += B) {
+        var a = Math.min(0.82, 0.82 * Math.pow(vals[i++] / P, 0.55));
+        if (a > 0.02) {
+          ctx.fillStyle = 'rgba(99,102,241,' + a.toFixed(3) + ')';
+          ctx.fillRect(px, py, B, B);
+        }
+      }
+    }
+    /* contour gamma */
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(X(0), Y(0), GR * S, 0, TAU);
+    ctx.stroke();
+    arrowAt(ctx, X(GR * Math.cos(0.5)), Y(GR * Math.sin(0.5)), -Math.sin(0.5), -Math.cos(0.5), '#6366f1');
+    ctx.fillStyle = '#6366f1';
+    ctx.font = 'italic 13px Georgia, serif';
+    ctx.fillText('γ', X(GR * 0.72), Y(GR * 0.8));
+    /* z0 marker (draggable) */
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.arc(X(z0[0]), Y(z0[1]), 5, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(X(z0[0]), Y(z0[1]), 5, 0, TAU); ctx.stroke();
+    ctx.fillStyle = '#dc2626';
+    ctx.font = 'italic 12px Georgia, serif';
+    ctx.fillText('z₀', X(z0[0]) + 8, Y(z0[1]) - 6);
+    /* n badge */
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.font = '600 12px -apple-system, sans-serif';
+    var SUPS = ['¹', '²', '³', '⁴'];
+    ctx.fillText('n = ' + n + '    integrand:  eᶻ/(z−z₀)' + SUPS[n], 10, H - 10);
+    /* readouts */
+    var num = numericDeriv();
+    roN.textContent = fmtC(num[0], num[1]);
+    var ex = cexp(z0);
+    roE.textContent = fmtC(ex[0], ex[1]) + '  ✓';
+  }
+  function setN(k) {
+    n = k;
+    Array.prototype.forEach.call(document.querySelectorAll('.nbtn'), function (b) {
+      b.classList.toggle('active', parseInt(b.getAttribute('data-n'), 10) === k);
+    });
+    render();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.nbtn'), function (b) {
+    b.addEventListener('click', function () { setN(parseInt(b.getAttribute('data-n'), 10)); });
+  });
+  function evPos(e) {
+    var r = cv.getBoundingClientRect();
+    var t = (e.touches && e.touches[0]) || e;
+    return [t.clientX - r.left, t.clientY - r.top];
+  }
+  function down(e) {
+    var p = evPos(e);
+    if (Math.hypot(p[0] - X(z0[0]), p[1] - Y(z0[1])) < 16) { dragging = true; e.preventDefault(); }
+  }
+  function move(e) {
+    if (!dragging) return;
+    var p = evPos(e);
+    var nx = iX(p[0]), ny = iY(p[1]);
+    var d = Math.hypot(nx, ny);
+    if (d > GR - 0.25) { nx *= (GR - 0.25) / d; ny *= (GR - 0.25) / d; }
+    z0 = [nx, ny];
+    render();
+    e.preventDefault();
+  }
+  function up() { dragging = false; }
+  cv.addEventListener('mousedown', down);
+  cv.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', up);
+  cv.addEventListener('touchstart', down, { passive: false });
+  cv.addEventListener('touchmove', move, { passive: false });
+  window.addEventListener('touchend', up);
+  ACT[1].n1 = function () { setN(1); };
+  ACT[1].n2 = function () { setN(2); };
+  ACT[1].n3 = function () { setN(3); };
+  ACT[1].check = function () { z0 = [0, 0]; setN(1); };
+  render();
+})();
+
+/* ================= SECTION 2: Cauchy's estimates ================= */
+(function () {
+  var cv = document.getElementById('cv2');
+  var c = setupCanvas(cv), ctx = c.ctx, W = c.W, H = c.H;
+  var S = 52, cx = W / 2, cy = H / 2;
+  var X = function (x) { return cx + x * S; }, Y = function (y) { return cy - y * S; };
+  var slider = document.getElementById('r2slider');
+  var roM = document.querySelector('#ro2M span:last-child');
+  var roL = document.querySelector('#ro2len span:last-child');
+  var roB = document.querySelector('#ro2bound span:last-child');
+
+  function render() {
+    var R = parseFloat(slider.value);
+    drawPlane(ctx, W, H, S, cx, cy);
+    /* circle C_R */
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(X(0), Y(0), R * S, 0, TAU); ctx.stroke();
+    /* |f| ticks: f = e^z, |f| on circle = e^{R cos th} */
+    var Nt = 72, maxv = -1, maxth = 0, k;
+    var mags = [];
+    for (k = 0; k < Nt; k++) {
+      var th = TAU * k / Nt;
+      var v = Math.exp(R * Math.cos(th));
+      mags.push(v);
+      if (v > maxv) { maxv = v; maxth = th; }
+    }
+    var tickMax = 26;
+    for (k = 0; k < Nt; k++) {
+      var th2 = TAU * k / Nt;
+      var len = tickMax * (mags[k] / maxv);
+      var ux = Math.cos(th2), uy = Math.sin(th2);
+      ctx.strokeStyle = 'rgba(99,102,241,0.65)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(X(R * ux), Y(R * uy));
+      ctx.lineTo(X(R * ux) + ux * len, Y(R * uy) - uy * len);
+      ctx.stroke();
+    }
+    /* max marker M */
+    var mx = X(R * Math.cos(maxth)) + Math.cos(maxth) * (tickMax + 4);
+    var my = Y(R * Math.sin(maxth)) - Math.sin(maxth) * (tickMax + 4);
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath(); ctx.arc(mx, my, 5, 0, TAU); ctx.fill();
+    ctx.font = '600 12px -apple-system, sans-serif';
+    ctx.fillText('M', mx + 7, my + 4);
+    /* z0 */
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(X(0), Y(0), 4, 0, TAU); ctx.fill();
+    ctx.font = 'italic 12px Georgia, serif';
+    ctx.fillText('z₀', X(0) + 7, Y(0) - 5);
+    ctx.fillStyle = '#6366f1';
+    ctx.font = 'italic 14px Georgia, serif';
+    ctx.fillText('C', 10, 19);
+    ctx.font = 'italic 10px Georgia, serif';
+    ctx.fillText('R', 19, 23);
+    ctx.font = '12px -apple-system, sans-serif';
+    ctx.fillText('R = ' + fmtNum(R, 2), 31, 19);
+    roM.textContent = fmtNum(maxv, 3);
+    roL.textContent = fmtNum(TAU * R, 3);
+    roB.textContent = fmtNum(maxv / R, 3);
+  }
+  slider.addEventListener('input', render);
+  render();
+})();
+
+/* ================= SECTION 3: Liouville ================= */
+(function () {
+  var cv = document.getElementById('cv3');
+  var c = setupCanvas(cv), ctx = c.ctx, W = c.W, H = c.H;
+  var S = 80, cx = W / 2, cy = H / 2;
+  var X = function (x) { return cx + x * S; }, Y = function (y) { return cy - y * S; };
+  var M = 10, Pmax = Math.min(W, H) / 2 - 14;
+  var st = { R: 1.5, z0: [0.35, 0.25], phase: 'idle', stamps: [], flood: 0, anim: null };
+  var roR = document.querySelector('#ro3R span:last-child');
+  var roB = document.querySelector('#ro3b span:last-child');
+  var g3 = document.querySelector('#g3 > div');
+  var bPlay = document.getElementById('btn3play');
+  var bSweep = document.getElementById('btn3sweep');
+  var bReset = document.getElementById('btn3reset');
+
+  function rpx(R) { return Pmax * R / (R + 2.5); }
+  function render() {
+    drawPlane(ctx, W, H, S, cx, cy);
+    /* flood overlay when constant */
+    if (st.flood > 0) {
+      ctx.fillStyle = 'rgba(99,102,241,' + (0.13 * st.flood).toFixed(3) + ')';
+      ctx.fillRect(0, 0, W, H);
+    }
+    /* stamps of f'(z)=0 */
+    ctx.font = '600 11px -apple-system, sans-serif';
+    st.stamps.forEach(function (p) {
+      ctx.fillStyle = 'rgba(22,163,74,0.85)';
+      ctx.fillText("f′=0", X(p[0]) - 11, Y(p[1]) + 4);
+    });
+    /* growing circle */
+    if (st.phase !== 'done') {
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash(st.phase === 'squeeze' ? [7, 5] : []);
+      ctx.beginPath();
+      ctx.arc(X(st.z0[0]), Y(st.z0[1]), rpx(st.R), 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#6366f1';
+      ctx.font = 'italic 12px Georgia, serif';
+      var lx = X(st.z0[0]) + rpx(st.R) * 0.71;
+      var lyC = Y(st.z0[1]) - rpx(st.R) * 0.71;
+      ctx.font = 'italic 13px Georgia, serif';
+      ctx.fillText('C', lx, lyC);
+      ctx.font = 'italic 9px Georgia, serif';
+      ctx.fillText('R', lx + 8, lyC + 3);
+    }
+    /* z0 */
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath(); ctx.arc(X(st.z0[0]), Y(st.z0[1]), 5, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#dc2626';
+    ctx.font = 'italic 12px Georgia, serif';
+    ctx.fillText('z₀', X(st.z0[0]) + 8, Y(st.z0[1]) - 6);
+    if (st.phase === 'squeezed' || st.phase === 'sweep' || st.phase === 'done') {
+      ctx.fillStyle = '#16a34a';
+      ctx.font = '700 13px -apple-system, sans-serif';
+      ctx.fillText("|f′(z₀)| = 0", X(st.z0[0]) + 10, Y(st.z0[1]) + 16);
+    }
+    if (st.phase === 'done') {
+      ctx.fillStyle = '#6366f1';
+      ctx.font = '700 15px -apple-system, sans-serif';
+      var msg = "f′ ≡ 0 everywhere  ⇒  f is constant";
+      ctx.fillText(msg, (W - ctx.measureText(msg).width) / 2, 26);
+    }
+    var bound = M / st.R;
+    roR.textContent = (st.R >= 99999) ? '→ ∞' : fmtNum(st.R, st.R > 100 ? 0 : 2);
+    roB.textContent = (bound < 0.0005) ? '→ 0   ⇒  |f′(z₀)| = 0' : fmtNum(bound, 4);
+    g3.style.width = Math.min(100, (bound / (M / 1.5)) * 100) + '%';
+    g3.style.background = bound < 0.02 ? '#16a34a' : 'linear-gradient(90deg, #6366f1, #8b5cf6)';
+  }
+  function stopAnim() { if (st.anim) { cancelAnimationFrame(st.anim); st.anim = null; } }
+  function playSqueeze() {
+    stopAnim();
+    st.phase = 'squeeze';
+    var t0 = performance.now(), dur = 4200;
+    function frame(t) {
+      var u = Math.min(1, (t - t0) / dur);
+      var e = u * u * (3 - 2 * u); /* smoothstep */
+      st.R = 1.5 * Math.pow(10, 5 * e);
+      render();
+      if (u < 1) { st.anim = requestAnimationFrame(frame); }
+      else { st.R = 1e9; st.phase = 'squeezed'; bSweep.disabled = false; render(); }
+    }
+    st.anim = requestAnimationFrame(frame);
+  }
+  function sweep() {
+    stopAnim();
+    st.phase = 'sweep';
+    var pts = [], x, y;
+    for (y = 1.6; y >= -1.6; y -= 0.8) {
+      for (x = -2.4; x <= 2.4; x += 0.8) {
+        if (Math.hypot(x - st.z0[0], y - st.z0[1]) > 0.3) pts.push([x, y]);
+      }
+    }
+    var i = 0;
+    function tick() {
+      if (i < pts.length) {
+        st.stamps.push(pts[i]);
+        st.z0 = pts[i];
+        i++;
+        render();
+        setTimeout(tick, i < 8 ? 130 : 55);
+      } else {
+        st.phase = 'done';
+        var t0 = performance.now();
+        function ff(t) {
+          st.flood = Math.min(1, (t - t0) / 900);
+          render();
+          if (st.flood < 1) st.anim = requestAnimationFrame(ff);
+        }
+        st.anim = requestAnimationFrame(ff);
+      }
+    }
+    tick();
+  }
+  function reset() {
+    stopAnim();
+    st.R = 1.5; st.z0 = [0.35, 0.25]; st.phase = 'idle'; st.stamps = []; st.flood = 0;
+    bSweep.disabled = true;
+    render();
+  }
+  bPlay.addEventListener('click', playSqueeze);
+  bSweep.addEventListener('click', sweep);
+  bReset.addEventListener('click', reset);
+  ACT[3].squeeze = playSqueeze;
+  ACT[3].sweep = function () { if (st.phase === 'squeezed' || st.phase === 'idle') { if (st.phase === 'idle') { st.R = 1e9; st.phase = 'squeezed'; } sweep(); } };
+  render();
+
+  /* sinh aside plot */
+  var cvs = document.getElementById('cv3s');
+  var cs = setupCanvas(cvs), sctx = cs.ctx, sW = cs.W, sH = cs.H;
+  (function () {
+    sctx.clearRect(0, 0, sW, sH);
+    var ymax = 4, vmax = Math.sinh(ymax);
+    var px = function (y) { return 30 + (sW - 40) * y / ymax; };
+    var pv = function (v) { return sH - 16 - (sH - 30) * v / vmax; };
+    sctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    sctx.lineWidth = 1;
+    sctx.beginPath(); sctx.moveTo(30, 8); sctx.lineTo(30, sH - 16); sctx.lineTo(sW - 8, sH - 16); sctx.stroke();
+    /* |sin| <= 1 band on R */
+    sctx.strokeStyle = 'rgba(22,163,74,0.8)';
+    sctx.setLineDash([4, 4]);
+    sctx.beginPath(); sctx.moveTo(30, pv(1)); sctx.lineTo(sW - 8, pv(1)); sctx.stroke();
+    sctx.setLineDash([]);
+    sctx.fillStyle = 'rgba(22,163,74,1)';
+    sctx.font = '10px -apple-system, sans-serif';
+    sctx.fillText('|sin x| ≤ 1 on ℝ', 34, pv(1) - 4);
+    /* sinh curve */
+    sctx.strokeStyle = '#dc2626';
+    sctx.lineWidth = 2;
+    sctx.beginPath();
+    var y;
+    for (y = 0; y <= ymax; y += 0.05) {
+      var vx = px(y), vy = pv(Math.sinh(y));
+      if (y === 0) sctx.moveTo(vx, vy); else sctx.lineTo(vx, vy);
+    }
+    sctx.stroke();
+    sctx.fillStyle = '#dc2626';
+    sctx.fillText('|sin(iy)| = sinh y → ∞', sW - 130, 16);
+    sctx.fillStyle = 'rgba(0,0,0,0.5)';
+    sctx.fillText('y', sW - 14, sH - 4);
+  })();
+})();
+</script>
+
+<script>
+'use strict';
+/* ---------- polynomial helpers (shared by section 4 + explore card) ---------- */
+function polyval(co, z) {
+  /* co = [a0..an] real; Horner in complex z */
+  var r = [0, 0], i;
+  for (i = co.length - 1; i >= 0; i--) {
+    r = cmul(r, z);
+    r[0] += co[i];
+  }
+  return r;
+}
+function polyRoots(co) {
+  /* Durand-Kerner; co = [a0..an], an != 0 */
+  var n = co.length - 1, i, j, it;
+  var an = co[n];
+  var c = co.map(function (a) { return a / an; });
+  var rs = [], p = [1, 0], seed = [0.4, 0.9];
+  for (i = 0; i < n; i++) { p = cmul(p, seed); rs.push(p.slice()); }
+  for (it = 0; it < 220; it++) {
+    var moved = 0;
+    for (i = 0; i < n; i++) {
+      var num = polyval(c, rs[i]);
+      var den = [1, 0];
+      for (j = 0; j < n; j++) {
+        if (j === i) continue;
+        den = cmul(den, [rs[i][0] - rs[j][0], rs[i][1] - rs[j][1]]);
+      }
+      var d = cdiv(num, den);
+      rs[i] = [rs[i][0] - d[0], rs[i][1] - d[1]];
+      moved += cabs(d);
+    }
+    if (moved < 1e-12) break;
+  }
+  return rs;
+}
+function paintDomainColor(cv, co, range) {
+  /* plain (non-dpr) canvas; hue = arg p, dark where |p| small */
+  var ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height;
+  var img = ctx.createImageData(W, H);
+  var d = img.data, px, py;
+  for (py = 0; py < H; py++) {
+    var y = range - 2 * range * py / H;
+    for (px = 0; px < W; px++) {
+      var x = -range + 2 * range * px / W;
+      var v = polyval(co, [x, y]);
+      var m = cabs(v);
+      var hue = Math.atan2(v[1], v[0]) * 180 / Math.PI;
+      var L = 0.22 + 0.62 * (m / (m + 1.8));
+      /* subtle modulus banding */
+      if (m > 1e-9) {
+        var band = Math.log(m) / Math.LN2;
+        band = band - Math.floor(band);
+        L *= 0.94 + 0.06 * band;
+      }
+      var rgb = hsl2rgb(hue, 0.55, Math.min(0.88, L));
+      var k = (py * W + px) * 4;
+      d[k] = rgb[0]; d[k + 1] = rgb[1]; d[k + 2] = rgb[2]; d[k + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  /* light axes */
+  var cx = W / 2, cy = H / 2, Spx = W / (2 * range);
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+  var t;
+  for (t = -Math.floor(range); t <= Math.floor(range); t++) {
+    if (t === 0) continue;
+    ctx.beginPath(); ctx.moveTo(cx + t * Spx, cy - 3); ctx.lineTo(cx + t * Spx, cy + 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 3, cy + t * Spx); ctx.lineTo(cx + 3, cy + t * Spx); ctx.stroke();
+  }
+  return { ctx: ctx, W: W, H: H, cx: cx, cy: cy, Spx: Spx };
+}
+function markRoots(g, roots, withLabels, labels) {
+  var i;
+  for (i = 0; i < roots.length; i++) {
+    var rx = g.cx + roots[i][0] * g.Spx, ry = g.cy - roots[i][1] * g.Spx;
+    g.ctx.fillStyle = '#fff';
+    g.ctx.beginPath(); g.ctx.arc(rx, ry, 4.5, 0, TAU); g.ctx.fill();
+    g.ctx.strokeStyle = '#222';
+    g.ctx.lineWidth = 1.6;
+    g.ctx.beginPath(); g.ctx.arc(rx, ry, 4.5, 0, TAU); g.ctx.stroke();
+    if (withLabels && labels && labels[i]) {
+      var lbl = labels[i];
+      g.ctx.fillStyle = '#fff';
+      g.ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+      g.ctx.lineWidth = 3;
+      if (lbl.indexOf('^') >= 0) {
+        var parts = lbl.split('^');
+        g.ctx.font = 'italic 13px Georgia, serif';
+        var bw = g.ctx.measureText(parts[0]).width;
+        g.ctx.strokeText(parts[0], rx + 8, ry - 6);
+        g.ctx.fillText(parts[0], rx + 8, ry - 6);
+        g.ctx.font = 'italic 9.5px Georgia, serif';
+        g.ctx.strokeText(parts[1], rx + 9 + bw, ry - 11);
+        g.ctx.fillText(parts[1], rx + 9 + bw, ry - 11);
+      } else {
+        g.ctx.font = 'italic 12px Georgia, serif';
+        g.ctx.strokeText(lbl, rx + 8, ry - 6);
+        g.ctx.fillText(lbl, rx + 8, ry - 6);
+      }
+    }
+  }
+}
+
+/* ================= SECTION 4: FTA ================= */
+(function () {
+  var cv = document.getElementById('cv4');
+  /* undo the .plane styling assumption: paint directly, no dpr scaling */
+  var co = [1, 0, 0, 1]; /* z^3 + 1 */
+  var RANGE = 2.2;
+  var s3 = Math.sqrt(3) / 2;
+  var roots = [[0.5, s3], [-1, 0], [0.5, -s3]];
+  var labels = ['e^iπ/3', '−1', 'e^i5π/3'];
+  var base = null, g = null;
+  function paint() {
+    g = paintDomainColor(cv, co, RANGE);
+    markRoots(g, roots, true, labels);
+    base = g.ctx.getImageData(0, 0, g.W, g.H);
+  }
+  paint();
+  var slider = document.getElementById('r4slider');
+  var ro4 = document.querySelector('#ro4 span:last-child');
+  var g4 = document.querySelector('#g4 > div');
+  var base4 = null;
+  function maxInv(r) {
+    var best = 0, k;
+    for (k = 0; k < 720; k++) {
+      var th = TAU * k / 720;
+      var m = cabs(polyval(co, [r * Math.cos(th), r * Math.sin(th)]));
+      var v = m < 1e-9 ? 1e9 : 1 / m;
+      if (v > best) best = v;
+    }
+    return best;
+  }
+  function update() {
+    var r = parseFloat(slider.value);
+    if (base4 === null) base4 = maxInv(0.5);
+    g.ctx.putImageData(base, 0, 0);
+    /* ring |z| = r if visible */
+    if (r <= RANGE * 1.35) {
+      g.ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      g.ctx.lineWidth = 2;
+      g.ctx.setLineDash([6, 5]);
+      g.ctx.beginPath(); g.ctx.arc(g.cx, g.cy, r * g.Spx, 0, TAU); g.ctx.stroke();
+      g.ctx.setLineDash([]);
+    } else {
+      g.ctx.fillStyle = '#fff';
+      g.ctx.font = '600 11px -apple-system, sans-serif';
+      g.ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      g.ctx.lineWidth = 3;
+      var t = '|z| = ' + fmtNum(r, 1) + '  (beyond view)';
+      g.ctx.strokeText(t, 10, 18); g.ctx.fillText(t, 10, 18);
+    }
+    var v = maxInv(r);
+    ro4.textContent = fmtNum(v, 4) + (r > 6 ? '   → 0' : '');
+    g4.style.width = Math.min(100, v / base4 * 100) + '%';
+    g4.style.background = v < 0.05 ? '#16a34a' : 'linear-gradient(90deg, #6366f1, #8b5cf6)';
+  }
+  slider.addEventListener('input', update);
+  update();
+  ACT[4].radial = function () {
+    var t0 = performance.now(), dur = 2600;
+    var from = 0.8, to = 8;
+    slider.value = from;
+    function fr(t) {
+      var u = Math.min(1, (t - t0) / dur);
+      slider.value = (from + (to - from) * u * u).toFixed(2);
+      update();
+      if (u < 1) requestAnimationFrame(fr);
+    }
+    requestAnimationFrame(fr);
+  };
+})();
+
+/* ================= EXPLORE CARD: Liouville (why R must grow) ================= */
+(function () {
+  var det = document.getElementById('expL');
+  var cv = document.getElementById('cvExpL');
+  var slider = document.getElementById('expLR');
+  var ro1 = document.querySelector('#expLro1 span:last-child');
+  var ro2 = document.querySelector('#expLro2 span:last-child');
+  var ro3 = document.querySelector('#expLro3 span:last-child');
+  var conc = document.getElementById('expLconc');
+  var CONC = {
+    b: '<b class="tag">Bounded entire:</b> M = 10 no matter the circle. Bound 10/R → 0 as R → ∞ — the squeeze fires, f′(z₀) = 0.',
+    u0: '<b class="tag">z², center 0:</b> M(R) = R² grows with R. Bound = R²/R = R. It happens to shrink as R → 0 too — a coincidence of this center (f(0) = 0) — and blows up as R → ∞. No squeeze from large R.',
+    u1: '<b class="tag">z², center 1:</b> M(R) = (1+R)². Bound = (1+R)²/R → ∞ at both ends — no shrinkage at all, at any radius.'
+  };
+  function mode() {
+    var r = document.querySelector('input[name="expLmode"]:checked');
+    return r ? r.value : 'b';
+  }
+  function MB(md, R) {
+    if (md === 'b') return [10, 10 / R];
+    if (md === 'u0') return [R * R, R];
+    return [(1 + R) * (1 + R), (1 + R) * (1 + R) / R];
+  }
+  var inited = false, c = null, ctx = null;
+  function render() {
+    if (!inited) { c = setupCanvas(cv); ctx = c.ctx; inited = true; }
+    var W = c.W, H = c.H;
+    ctx.clearRect(0, 0, W, H);
+    var x0 = -1.3, x1 = 2.3, y0 = -2.5, y1 = 3.2;
+    var px = function (lx) { return 26 + (W - 32) * (lx - x0) / (x1 - x0); };
+    var py = function (ly) { return H - 16 - (H - 24) * (ly - y0) / (y1 - y0); };
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(26, 4); ctx.lineTo(26, H - 16); ctx.lineTo(W - 4, H - 16); ctx.stroke();
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.font = '9px -apple-system, sans-serif';
+    ctx.fillText('log R →', W - 44, H - 5);
+    ctx.save();
+    ctx.translate(8, 60); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('log bound', 0, 0);
+    ctx.restore();
+    var md = mode(), modes = ['b', 'u0', 'u1'], mi;
+    for (mi = 0; mi < 3; mi++) {
+      var m2 = modes[mi];
+      ctx.strokeStyle = (m2 === md) ? '#6366f1' : 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = (m2 === md) ? 2.4 : 1.4;
+      ctx.beginPath();
+      var lx, first = true;
+      for (lx = x0; lx <= x1; lx += 0.02) {
+        var R = Math.pow(10, lx);
+        var b = MB(m2, R)[1];
+        var ly = Math.max(y0, Math.min(y1, Math.log(b) / Math.LN10));
+        if (first) { ctx.moveTo(px(lx), py(ly)); first = false; }
+        else ctx.lineTo(px(lx), py(ly));
+      }
+      ctx.stroke();
+    }
+    /* current R marker */
+    var lxc = parseFloat(slider.value);
+    var Rc = Math.pow(10, lxc);
+    var mb = MB(md, Rc);
+    var lyc = Math.max(y0, Math.min(y1, Math.log(mb[1]) / Math.LN10));
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath(); ctx.arc(px(lxc), py(lyc), 4, 0, TAU); ctx.fill();
+    ro1.textContent = Rc >= 100 ? fmtNum(Rc, 0) : fmtNum(Rc, 2);
+    ro2.textContent = mb[0] >= 1000 ? mb[0].toExponential(2) : fmtNum(mb[0], 2) + (md === 'b' ? '  (fixed)' : '  (grows!)');
+    ro3.textContent = mb[1] >= 1000 ? mb[1].toExponential(2) : fmtNum(mb[1], 3);
+    conc.innerHTML = CONC[md];
+  }
+  det.addEventListener('toggle', function () { if (det.open) render(); });
+  slider.addEventListener('input', render);
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="expLmode"]'), function (r) {
+    r.addEventListener('change', render);
+  });
+})();
+
+/* ================= EXPLORE CARD: FTA (try another polynomial) ================= */
+(function () {
+  var det = document.getElementById('expF');
+  var cv = document.getElementById('cvExpF');
+  var sel = document.getElementById('expFsel');
+  var out = document.getElementById('expFroots');
+  var POLYS = [
+    { co: [1, 0, 0, 1], name: 'z³ + 1' },
+    { co: [1, 0, 1], name: 'z² + 1' },
+    { co: [-1, 0, 0, 0, 1], name: 'z⁴ − 1' },
+    { co: [2, -2, 0, 1], name: 'z³ − 2z + 2' }
+  ];
+  var painted = false;
+  function render() {
+    var p = POLYS[parseInt(sel.value, 10)];
+    var g = paintDomainColor(cv, p.co, 2.1);
+    var rs = polyRoots(p.co);
+    markRoots(g, rs, false, null);
+    var html = 'roots of ' + p.name + ':<br>';
+    rs.sort(function (a, b) { return b[1] - a[1]; });
+    rs.forEach(function (r) { html += '&nbsp;&nbsp;z = ' + fmtC(r[0], r[1], 3) + '<br>'; });
+    out.innerHTML = html;
+    painted = true;
+  }
+  det.addEventListener('toggle', function () { if (det.open && !painted) render(); });
+  sel.addEventListener('change', render);
+})();
+</script>
+</body>
+</html>

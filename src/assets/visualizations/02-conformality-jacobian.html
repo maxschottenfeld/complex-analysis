@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conformality & the Jacobian</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d29;
+    --text: #e8e9ed;
+    --muted: #9aa0b0;
+    --accent: #7aa2f7;
+    --accent2: #f7768e;
+    --border: #2a2e3f;
+    --grid: #232838;
+    --axis: #3a4055;
+    --coral: #f7768e;
+    --cyan: #7dcfff;
+    --coral-img: #c96b78;
+    --cyan-img: #6aa4bf;
+    --ok: #9ece6a;
+    --warn: #e0af68;
+    --bad: #f7768e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+  .fn-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+  .fn-row .lbl { font-size:13px; color:var(--muted); margin-right:4px; }
+  .fn-btn {
+    padding:6px 14px; font-size:14px; border-radius:6px;
+    border:1px solid var(--border); background:var(--panel); color:var(--text);
+    cursor:pointer; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .fn-btn:hover { border-color: var(--accent); }
+  .fn-btn.active { background: var(--accent); color:#0f1117; border-color:var(--accent); font-weight:600; }
+
+  .panels { display:flex; gap:14px; flex-wrap:wrap; }
+  .panel {
+    flex:1 1 320px; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:12px;
+  }
+  .panel h2 { font-size:14px; margin:0 0 8px; color:var(--accent); font-weight:600; }
+  .panel h2 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--text); }
+  svg { width:100%; height:auto; display:block; background:#0b0d14; border-radius:6px; touch-action:none; }
+
+  .readouts {
+    margin-top:14px; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:14px;
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px 20px;
+  }
+  .ro { font-size:13px; }
+  .ro .k { color:var(--muted); }
+  .ro .v { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:15px; color:var(--text); }
+  .ro .v.coral { color:var(--coral); }
+  .ro .v.cyan { color:var(--cyan); }
+
+  .verdict {
+    margin-top:12px; padding:11px 14px; border-radius:8px; font-size:14px;
+    background:#11141d; border:1px solid var(--border);
+  }
+  .verdict.ok  { border-color:var(--ok);  color:var(--ok); }
+  .verdict.bad { border-color:var(--bad); color:var(--bad); }
+  .verdict.warn{ border-color:var(--warn);color:var(--warn);}
+
+  .note { color:var(--muted); font-size:13px; margin-top:14px; line-height:1.6; }
+  .note code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--text); background:#11141d; padding:1px 5px; border-radius:4px; }
+  .handle { cursor:grab; }
+  .handle:active { cursor:grabbing; }
+  .ang-label { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Conformality &amp; the Jacobian</h1>
+  <p class="sub">Lesson 2 · why holomorphic functions preserve angles — and where they don't</p>
+
+  <h1 class="sr-only">Interactive: drag a base point and two tangent vectors in the z-plane; see their images under f and whether the angle between them is preserved.</h1>
+
+  <div class="fn-row">
+    <span class="lbl">f(z) =</span>
+    <button class="fn-btn" data-fn="sq">z²</button>
+    <button class="fn-btn" data-fn="conj">z̄</button>
+    <button class="fn-btn" data-fn="exp">eᶻ</button>
+    <button class="fn-btn" data-fn="cube">z³</button>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>z-plane &nbsp;<span style="color:var(--muted);font-weight:400">(input)</span></h2>
+      <svg id="left" viewBox="0 0 360 360" aria-label="input plane"></svg>
+    </div>
+    <div class="panel">
+      <h2>w-plane &nbsp;<span class="mono">w = f(z)</span></h2>
+      <svg id="right" viewBox="0 0 360 360" aria-label="output plane"></svg>
+    </div>
+  </div>
+
+  <div class="readouts">
+    <div class="ro"><div class="k">base point z₀</div><div class="v" id="ro-z0">—</div></div>
+    <div class="ro"><div class="k">f(z₀)</div><div class="v" id="ro-fz0">—</div></div>
+    <div class="ro"><div class="k">input angle ∠(v₁,v₂)</div><div class="v" id="ro-angin">—</div></div>
+    <div class="ro"><div class="k">output angle ∠(f′v₁,f′v₂)</div><div class="v" id="ro-angout">—</div></div>
+    <div class="ro"><div class="k">rotation arg(f′(z₀))</div><div class="v" id="ro-arg">—</div></div>
+    <div class="ro"><div class="k">scale |f′(z₀)|</div><div class="v" id="ro-mag">—</div></div>
+  </div>
+
+  <div class="verdict" id="verdict">—</div>
+
+  <p class="note">
+    Drag the white dot <b>z₀</b> and the two vector tips (<span style="color:var(--coral)">coral</span> /
+    <span style="color:var(--cyan)">cyan</span>) on the left. The right panel shows each vector multiplied by the
+    derivative <code>f′(z₀)</code> as a complex number — a <i>rotation</i> by <code>arg(f′)</code> and a
+    <i>scaling</i> by <code>|f′|</code>. Because the same rotation hits both vectors, the angle between them is
+    unchanged: that's conformality. For <code>z̄</code> the local map is a <i>reflection</i> (Jacobian
+    <code>[[1,0],[0,−1]]</code>), which flips orientation and reverses the angle. Where <code>f′(z₀)=0</code>
+    (origin for z², z³) the map collapses and angles are destroyed.
+  </p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const SZ = 360, C = SZ/2;
+  const SVGNS = "http://www.w3.org/2000/svg";
+
+  // ---------- complex helpers ----------
+  const cx = (re,im)=>({re,im});
+  const cmul = (a,b)=>cx(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re);
+  const cexp = (z)=>{ const e=Math.exp(z.re); return cx(e*Math.cos(z.im), e*Math.sin(z.im)); };
+  const cabs = (z)=>Math.hypot(z.re,z.im);
+  const carg = (z)=>Math.atan2(z.im,z.re);
+
+  // ---------- function definitions ----------
+  // each: f(z), fp(z) [derivative as complex, or null if non-holomorphic],
+  //       jac(v) [how a tangent vector v transforms — used for z̄], label
+  const FUNCS = {
+    sq:   { f:z=>cmul(z,z),               fp:z=>cmul(cx(2,0),z),                holo:true,  name:"z²" },
+    cube: { f:z=>cmul(cmul(z,z),z),       fp:z=>cmul(cx(3,0),cmul(z,z)),        holo:true,  name:"z³" },
+    exp:  { f:z=>cexp(z),                 fp:z=>cexp(z),                        holo:true,  name:"eᶻ" },
+    conj: { f:z=>cx(z.re,-z.im),          fp:null,                              holo:false, name:"z̄",
+            // Jacobian is reflection across real axis: (vx,vy) -> (vx,-vy)
+            jac:v=>cx(v.re,-v.im) }
+  };
+
+  let curFn = "sq";
+
+  // ---------- state (math coordinates) ----------
+  // left plane spans [-LSPAN, LSPAN] in both axes
+  const LSPAN = 2.5;
+  let z0 = cx(1.0, 0.6);
+  // two tangent vectors stored as math-space offsets from z0
+  let v1 = cx(0.9, 0.0);
+  let v2 = cx(0.3, 0.85);
+
+  // ---------- coordinate transforms (left panel: fixed) ----------
+  const Lsc = C/LSPAN; // px per math unit
+  const Lx = re => C + re*Lsc;
+  const Ly = im => C - im*Lsc;
+  const Linv = (sx,sy)=>cx((sx-C)/Lsc, -(sy-C)/Lsc);
+
+  // right panel scale is dynamic (set per render)
+  let Rcx=C, Rcy=C, Rsc=Lsc, Rspan=LSPAN;
+
+  // ---------- svg builders ----------
+  function el(tag, attrs){ const e=document.createElementNS(SVGNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+  function drawGrid(svg, originReMathToPx, scale, spanMin, spanMaxRe, cxpx, cypx){
+    // draw light grid lines every unit within the visible viewBox
+    const lines = el("g",{});
+    // vertical & horizontal at integer math coords visible in box
+    // figure out math range visible: from px 0..SZ
+    const reLo = (0 - cxpx)/scale, reHi = (SZ - cxpx)/scale;
+    const imHi = (cypx - 0)/scale, imLo = (cypx - SZ)/scale;
+    const step = niceStep(Math.max(reHi-reLo, imHi-imLo));
+    for(let v=Math.ceil(reLo/step)*step; v<=reHi; v+=step){
+      const x = cxpx + v*scale;
+      lines.appendChild(el("line",{x1:x,y1:0,x2:x,y2:SZ,stroke:"var(--grid)","stroke-width":1}));
+    }
+    for(let v=Math.ceil(imLo/step)*step; v<=imHi; v+=step){
+      const y = cypx - v*scale;
+      lines.appendChild(el("line",{x1:0,y1:y,x2:SZ,y2:y,stroke:"var(--grid)","stroke-width":1}));
+    }
+    // axes
+    lines.appendChild(el("line",{x1:0,y1:cypx,x2:SZ,y2:cypx,stroke:"var(--axis)","stroke-width":1.4}));
+    lines.appendChild(el("line",{x1:cxpx,y1:0,x2:cxpx,y2:SZ,stroke:"var(--axis)","stroke-width":1.4}));
+    svg.appendChild(lines);
+  }
+  function niceStep(range){
+    const raw = range/6;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const n = raw/pow;
+    let m;
+    if(n<1.5) m=1; else if(n<3) m=2; else if(n<7) m=5; else m=10;
+    return m*pow;
+  }
+
+  // arrow from (x0,y0) to (x1,y1)
+  function arrow(svg, x0,y0,x1,y1, color, width){
+    const ang = Math.atan2(y1-y0, x1-x0);
+    const ah = 9, aw = 5;
+    svg.appendChild(el("line",{x1:x0,y1:y0,x2:x1,y2:y1,stroke:color,"stroke-width":width,"stroke-linecap":"round"}));
+    const p = el("path",{d:
+      `M ${x1} ${y1} L ${x1-ah*Math.cos(ang-0.4)} ${y1-ah*Math.sin(ang-0.4)} `+
+      `L ${x1-ah*Math.cos(ang+0.4)} ${y1-ah*Math.sin(ang+0.4)} Z`, fill:color});
+    svg.appendChild(p);
+  }
+
+  // signed angle arc between two directions (a1->a2) drawn at center cxpx,cypx with radius r
+  function angleArc(svg, cxpx, cypx, a1, a2, r, color){
+    // draw minor arc from a1 to a2
+    let d = a2 - a1;
+    while(d> Math.PI) d-=2*Math.PI;
+    while(d<-Math.PI) d+=2*Math.PI;
+    const end = a1 + d;
+    const large = 0; // always minor arc (|d|<=pi)
+    const sweep = d>0 ? 0 : 1; // svg y is down; positive math angle => ccw on screen => sweep 0
+    const x0 = cxpx + r*Math.cos(a1), y0 = cypx - r*Math.sin(a1);
+    const x1 = cxpx + r*Math.cos(end), y1 = cypx - r*Math.sin(end);
+    svg.appendChild(el("path",{d:`M ${x0} ${y0} A ${r} ${r} 0 ${large} ${sweep} ${x1} ${y1}`,
+      fill:"none", stroke:color, "stroke-width":2}));
+    return Math.abs(d);
+  }
+
+  // ---------- math: angle between two vectors (signed, degrees) ----------
+  function angleBetween(a,b){ // a,b complex; returns signed degrees in (-180,180]
+    let d = carg(b) - carg(a);
+    while(d> Math.PI) d-=2*Math.PI;
+    while(d<=-Math.PI) d+=2*Math.PI;
+    return d*180/Math.PI;
+  }
+
+  // ---------- image of a tangent vector under f at z0 ----------
+  function imageVec(v){
+    const F = FUNCS[curFn];
+    if(F.holo){ return cmul(F.fp(z0), v); }
+    else { return F.jac(v); }
+  }
+
+  // ---------- render ----------
+  const left = document.getElementById("left");
+  const right = document.getElementById("right");
+
+  function clear(svg){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+
+  function fmt(x){ return (Math.abs(x)<1e-9?0:x).toFixed(2); }
+  function fmtC(z){ const im=z.im; return `${fmt(z.re)} ${im>=0?'+':'−'} ${fmt(Math.abs(im))}i`; }
+
+  function render(){
+    const F = FUNCS[curFn];
+
+    // ---- LEFT PANEL ----
+    clear(left);
+    drawGrid(left, null, Lsc, null, null, C, C);
+    const z0x=Lx(z0.re), z0y=Ly(z0.im);
+    const t1=cx(z0.re+v1.re, z0.im+v1.im), t2=cx(z0.re+v2.re, z0.im+v2.im);
+    const t1x=Lx(t1.re), t1y=Ly(t1.im), t2x=Lx(t2.re), t2y=Ly(t2.im);
+    // angle arc at z0
+    const aIn = angleArc(left, z0x, z0y, carg(v1), carg(v2), 34, "var(--muted)");
+    arrow(left, z0x,z0y, t1x,t1y, "var(--coral)", 2.5);
+    arrow(left, z0x,z0y, t2x,t2y, "var(--cyan)", 2.5);
+    // input angle label
+    const inDeg = Math.abs(angleBetween(v1,v2));
+    const labA = (carg(v1)+carg(v2))/2;
+    left.appendChild(txt(z0x + 50*Math.cos(labA), z0y - 50*Math.sin(labA),
+      inDeg.toFixed(1)+"°", "var(--text)"));
+    // draggable handles
+    left.appendChild(el("circle",{cx:t1x,cy:t1y,r:6,fill:"var(--coral)","class":"handle","data-h":"v1"}));
+    left.appendChild(el("circle",{cx:t2x,cy:t2y,r:6,fill:"var(--cyan)","class":"handle","data-h":"v2"}));
+    const z0dot = el("circle",{cx:z0x,cy:z0y,r:6.5,fill:"#fff",stroke:"#0b0d14","stroke-width":2,"class":"handle","data-h":"z0"});
+    left.appendChild(z0dot);
+    left.appendChild(txt(z0x+12, z0y-10, "z₀", "var(--muted)", "start"));
+
+    // ---- compute images ----
+    const w0 = F.f(z0);
+    const iv1 = imageVec(v1), iv2 = imageVec(v2);
+
+    // choose right-panel scale so w0 and both image arrowheads fit
+    const pts = [w0, cx(w0.re+iv1.re, w0.im+iv1.im), cx(w0.re+iv2.re, w0.im+iv2.im)];
+    let maxAbs = 0.001;
+    pts.forEach(p=>{ maxAbs=Math.max(maxAbs, Math.abs(p.re), Math.abs(p.im)); });
+    Rspan = Math.max(maxAbs*1.25, 0.5);
+    Rsc = C/Rspan; Rcx=C; Rcy=C;
+    // center on origin but if w0 far, keep origin visible while fitting — origin-centered is clearest for arg
+
+    // ---- RIGHT PANEL ----
+    clear(right);
+    drawGrid(right, null, Rsc, null, null, Rcx, Rcy);
+    const w0x=Rcx+w0.re*Rsc, w0y=Rcy-w0.im*Rsc;
+    const i1x=Rcx+(w0.re+iv1.re)*Rsc, i1y=Rcy-(w0.im+iv1.im)*Rsc;
+    const i2x=Rcx+(w0.re+iv2.re)*Rsc, i2y=Rcy-(w0.im+iv2.im)*Rsc;
+    angleArc(right, w0x, w0y, carg(iv1), carg(iv2), 30, "var(--muted)");
+    arrow(right, w0x,w0y, i1x,i1y, "var(--coral-img)", 2.5);
+    arrow(right, w0x,w0y, i2x,i2y, "var(--cyan-img)", 2.5);
+    const outDeg = Math.abs(angleBetween(iv1,iv2));
+    const labB = (carg(iv1)+carg(iv2))/2;
+    right.appendChild(txt(w0x + 46*Math.cos(labB), w0y - 46*Math.sin(labB),
+      isFinite(outDeg)?outDeg.toFixed(1)+"°":"—", "var(--text)"));
+    right.appendChild(el("circle",{cx:w0x,cy:w0y,r:5,fill:"#fff",stroke:"#0b0d14","stroke-width":2}));
+    right.appendChild(txt(w0x+11, w0y-9, "f(z₀)", "var(--muted)", "start"));
+
+    // conformal indicator near f(z0)
+    let badge, cls;
+    const fpAbs = F.holo ? cabs(F.fp(z0)) : 1;
+    if(!F.holo){
+      badge="✗ not conformal (reflection)"; cls="bad";
+    } else if(fpAbs < 1e-3){
+      badge="⚠ f′(z₀)=0 — angles collapse"; cls="warn";
+    } else if(Math.abs(inDeg-outDeg) < 0.5){
+      badge="✓ conformal"; cls="ok";
+    } else {
+      badge="✗ not conformal"; cls="bad";
+    }
+    right.appendChild(txt(w0x, w0y+24, badge,
+      cls==="ok"?"var(--ok)":cls==="warn"?"var(--warn)":"var(--bad)", "middle", 12));
+
+    // ---- READOUTS ----
+    setRO("ro-z0", fmtC(z0));
+    setRO("ro-fz0", fmtC(w0));
+    setRO("ro-angin", inDeg.toFixed(1)+"°");
+    setRO("ro-angout", isFinite(outDeg)?outDeg.toFixed(1)+"°":"—");
+    if(F.holo){
+      const fp = F.fp(z0);
+      setRO("ro-arg", (carg(fp)*180/Math.PI).toFixed(1)+"°");
+      setRO("ro-mag", cabs(fp).toFixed(3));
+    } else {
+      setRO("ro-arg", "n/a (reflection)");
+      setRO("ro-mag", "1.000 (det = −1)");
+    }
+
+    // ---- verdict text ----
+    const vEl = document.getElementById("verdict");
+    vEl.className = "verdict "+cls;
+    if(!F.holo){
+      vEl.innerHTML = `<b>z̄ is nowhere holomorphic.</b> The local map reflects across the real axis, so the `+
+        `signed angle reverses: input ${signedStr(angleBetween(v1,v2))}, output ${signedStr(angleBetween(iv1,iv2))}. `+
+        `Magnitudes are preserved (it's a rigid flip) but orientation is not — so it is <b>not conformal</b>.`;
+    } else if(fpAbs<1e-3){
+      vEl.innerHTML = `<b>f′(z₀) ≈ 0.</b> The linearization collapses (Jacobian is singular), so tangent directions `+
+        `get crushed together. Conformality fails exactly at these critical points — the "pinch" you saw in Lesson 0.`;
+    } else {
+      vEl.innerHTML = `<b>Conformal here.</b> f′(z₀) rotates every tangent vector by `+
+        `${(carg(F.fp(z0))*180/Math.PI).toFixed(1)}° and scales by ${cabs(F.fp(z0)).toFixed(3)}. `+
+        `Same rotation on both vectors ⇒ the angle between them is unchanged (${inDeg.toFixed(1)}° → ${outDeg.toFixed(1)}°).`;
+    }
+  }
+
+  function signedStr(d){ return (d>=0?"+":"")+d.toFixed(1)+"°"; }
+  function txt(x,y,s,color,anchor,size){
+    const t=el("text",{x:x,y:y,fill:color||"var(--text)","text-anchor":anchor||"middle",
+      "font-size":size||13,"font-family":"ui-monospace, Menlo, monospace","class":"ang-label"});
+    t.textContent=s; return t;
+  }
+  function setRO(id,val){ document.getElementById(id).textContent=val; }
+
+  // ---------- dragging ----------
+  let drag=null;
+  function svgPoint(svg, evt){
+    const r=svg.getBoundingClientRect();
+    const sx=(evt.clientX-r.left)*SZ/r.width;
+    const sy=(evt.clientY-r.top)*SZ/r.height;
+    return {sx,sy};
+  }
+  left.addEventListener("pointerdown", e=>{
+    const h=e.target.getAttribute && e.target.getAttribute("data-h");
+    if(!h) return;
+    drag=h; left.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  left.addEventListener("pointermove", e=>{
+    if(!drag) return;
+    const {sx,sy}=svgPoint(left,e);
+    const m=Linv(sx,sy);
+    if(drag==="z0"){
+      // clamp to visible span
+      z0=cx(clamp(m.re,-LSPAN,LSPAN), clamp(m.im,-LSPAN,LSPAN));
+    } else if(drag==="v1"){
+      v1=cx(m.re-z0.re, m.im-z0.im);
+      if(cabs(v1)<0.05) v1=cx(0.05,0);
+    } else if(drag==="v2"){
+      v2=cx(m.re-z0.re, m.im-z0.im);
+      if(cabs(v2)<0.05) v2=cx(0,0.05);
+    }
+    render();
+  });
+  left.addEventListener("pointerup", ()=>{ drag=null; });
+  left.addEventListener("pointercancel", ()=>{ drag=null; });
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+
+  // ---------- function buttons ----------
+  document.querySelectorAll(".fn-btn").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      curFn=b.getAttribute("data-fn");
+      document.querySelectorAll(".fn-btn").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      render();
+    });
+  });
+  document.querySelector('.fn-btn[data-fn="sq"]').classList.add("active");
+
+  render();
+})();
+</script>
+</body>
+</html>

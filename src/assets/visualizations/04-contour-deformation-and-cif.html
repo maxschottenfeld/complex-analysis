@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contour Deformation &amp; the Cauchy Integral Formula</title>
+<style>
+  :root {
+    --surface-primary: #ffffff;
+    --surface-secondary: #f5f5f5;
+    --text-primary: #222222;
+    --text-secondary: #666666;
+    --text-accent: #6366f1;
+    --text-success: #16a34a;
+    --text-danger: #dc2626;
+    --border-default: #cccccc;
+    --shade-region: rgba(99, 102, 241, 0.14);
+    --shade-between: rgba(22, 163, 74, 0.18);
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--surface-primary);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  .wrap { max-width: 1060px; width: 100%; }
+  h1 { font-size: 19px; margin: 0 0 2px; }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin: 0 0 14px; }
+  i.mv { font-family: Georgia, 'Times New Roman', serif; font-style: italic; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab-btn {
+    padding: 8px 16px; font-size: 14px; border-radius: 8px;
+    border: 1px solid var(--border-default);
+    background: var(--surface-primary); color: var(--text-primary);
+    cursor: pointer;
+  }
+  .tab-btn.active { background: var(--text-accent); color: #fff; border-color: var(--text-accent); }
+  .panel { display: none; }
+  .panel.active { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  canvas {
+    background: var(--surface-secondary);
+    border-radius: 10px;
+    touch-action: none;
+    flex: 0 0 auto;
+    cursor: default;
+  }
+  .sidebar { flex: 1 1 300px; min-width: 300px; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
+  .card {
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+  .readout {
+    font-family: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+    font-size: 14px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--surface-secondary);
+    transition: background 0.35s;
+    margin: 4px 0;
+  }
+  .readout.flash { background: #fde68a; transition: none; }
+  .readout .lbl { color: var(--text-secondary); font-size: 12px; }
+  .btn {
+    padding: 6px 12px; font-size: 13px; border-radius: 6px;
+    border: 1px solid var(--border-default);
+    background: var(--surface-primary); color: var(--text-primary);
+    cursor: pointer;
+  }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.primary { background: var(--text-accent); color: #fff; border-color: var(--text-accent); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .preset-btn.active { background: var(--text-accent); color: #fff; border-color: var(--text-accent); }
+  .why {
+    border-left: 3px solid var(--text-accent);
+    padding: 8px 10px;
+    background: var(--surface-secondary);
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+  }
+  .why b.tag { color: var(--text-accent); }
+  .step-ind { font-size: 13px; font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--text-accent); }
+  table.samples { border-collapse: collapse; width: 100%; font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 12.5px; }
+  table.samples td, table.samples th { padding: 3px 6px; text-align: left; border-bottom: 1px solid var(--surface-secondary); }
+  table.samples th { color: var(--text-secondary); font-weight: 500; font-size: 11.5px; }
+  .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+  .target-row td { font-weight: 700; border-top: 2px solid var(--border-default); }
+  .chain { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+  .chain-box {
+    border: 1.5px solid var(--text-accent);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: Georgia, serif;
+    font-size: 15px;
+    text-align: center;
+    background: #fff;
+  }
+  .chain-arrow { text-align: center; color: var(--text-secondary); font-size: 12px; padding: 2px 0; }
+  .chain-arrow .arr { color: var(--text-accent); font-size: 16px; display: block; line-height: 1; }
+  .chain-box.result { border-width: 2.5px; background: rgba(99,102,241,0.07); font-size: 16px; }
+  .frac { display: inline-block; text-align: center; vertical-align: -0.7em; line-height: 1.1; font-size: 0.92em; }
+  .frac .num { display: block; border-bottom: 1px solid currentColor; padding: 0 3px; }
+  .frac .den { display: block; padding: 0 3px; }
+  .note { font-size: 12.5px; color: var(--text-secondary); }
+  .hint { font-size: 12px; color: var(--text-secondary); font-style: italic; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Contour Deformation &amp; the Cauchy Integral Formula</h1>
+  <p class="subtitle">Lesson 4 &mdash; Cauchy&rsquo;s theorem &amp; the integral formula. Contour integral: &int;<sub><i class="mv">&gamma;</i></sub><i class="mv">f</i>(<i class="mv">z</i>)&thinsp;<i class="mv">dz</i> := &int;<sub><i class="mv">a</i></sub><sup><i class="mv">b</i></sup><i class="mv">f</i>(<i class="mv">&gamma;</i>(<i class="mv">t</i>))<i class="mv">&gamma;&prime;</i>(<i class="mv">t</i>)&thinsp;<i class="mv">dt</i></p>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabBtn1">1 &middot; Deformation explorer</button>
+    <button class="tab-btn" id="tabBtn2">2 &middot; CIF derivation walkthrough</button>
+  </div>
+
+  <!-- ============ PANEL 1 ============ -->
+  <div class="panel active" id="panel1">
+    <canvas id="cv1" width="620" height="520"></canvas>
+    <div class="sidebar">
+      <div class="card">
+        <h3>&oint;<sub><i class="mv">&gamma;</i></sub> <i class="mv">dz</i>/<i class="mv">z</i> &nbsp;(singularity at <i class="mv">z</i> = 0)</h3>
+        <div class="readout" id="p1winding"><span class="lbl">winding number around 0: &nbsp;</span><span></span></div>
+        <div class="readout" id="p1integral"><span class="lbl">&oint;<sub>&gamma;</sub> dz/z = 2&pi;i &times; n = &nbsp;</span><span></span></div>
+        <div class="hint">Drag the control points. Pull the loop across the &times; at <i class="mv">z</i> = 0 and watch the value jump.</div>
+      </div>
+      <div class="card">
+        <div class="btn-row">
+          <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input type="checkbox" id="p1compare"> Compare to a deformed version
+          </label>
+        </div>
+        <div id="p1compareInfo" style="display:none; margin-top:10px;">
+          <div class="readout" id="p1integral2"><span class="lbl">&oint;<sub>&gamma;&prime;</sub> dz/z = &nbsp;</span><span></span></div>
+          <div class="why" id="p1compareWhy"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Why deformation invariance holds</h3>
+        If <i class="mv">f</i> is holomorphic on the region between two closed contours <i class="mv">&gamma;</i><sub>1</sub>, <i class="mv">&gamma;</i><sub>2</sub> (no singularities in between), then
+        &oint;<sub><i class="mv">&gamma;</i>1</sub><i class="mv">f</i>&thinsp;<i class="mv">dz</i> = &oint;<sub><i class="mv">&gamma;</i>2</sub><i class="mv">f</i>&thinsp;<i class="mv">dz</i>.
+        <div class="why" style="margin-top:8px;"><b class="tag">Reason:</b> apply Cauchy&ndash;Goursat to the boundary of the in-between region &mdash; <i class="mv">&gamma;</i><sub>1</sub> together with &minus;<i class="mv">&gamma;</i><sub>2</sub> bounds a region where <i class="mv">f</i> is holomorphic, so the integral over that whole boundary is 0.</div>
+        <div class="note" style="margin-top:8px;">The integral only changes when the contour <em>crosses</em> the singularity &mdash; each crossing changes the winding number by &plusmn;1, and the value by &plusmn;2&pi;i.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 2 ============ -->
+  <div class="panel" id="panel2">
+    <canvas id="cv2" width="620" height="520"></canvas>
+    <div class="sidebar">
+      <div class="card">
+        <h3>Preset (today&rsquo;s worked examples)</h3>
+        <div class="btn-row">
+          <button class="btn preset-btn active" data-p="0"><i class="mv">f</i>(<i class="mv">z</i>) = 1</button>
+          <button class="btn preset-btn" data-p="1"><i class="mv">f</i>(<i class="mv">z</i>) = <i class="mv">z</i></button>
+          <button class="btn preset-btn" data-p="2"><i class="mv">f</i>(<i class="mv">z</i>) = <i class="mv">e</i><sup><i class="mv">z</i></sup></button>
+        </div>
+        <div class="note" id="p2presetNote" style="margin-top:8px;"></div>
+      </div>
+      <div class="card">
+        <div class="btn-row" style="justify-content:space-between;">
+          <span class="step-ind" id="p2stepInd"></span>
+          <span>
+            <button class="btn" id="p2prev">&larr; Prev</button>
+            <button class="btn primary" id="p2next">Next &rarr;</button>
+          </span>
+        </div>
+        <div class="why" id="p2caption" style="margin-top:10px;"></div>
+      </div>
+      <div class="card" id="p2epsCard">
+        <h3>Shrink <i class="mv">C</i><sub>&epsilon;</sub></h3>
+        <input type="range" id="p2eps" min="0" max="1000" value="850">
+        <div class="btn-row" style="margin-top:4px; justify-content:space-between;">
+          <span class="readout" style="margin:0;" id="p2epsVal"></span>
+          <span>
+            <button class="btn" id="p2play">&#9654; Play &epsilon;&rarr;0</button>
+            <button class="btn" id="p2reset">Reset &epsilon;</button>
+          </span>
+        </div>
+      </div>
+      <div class="card" id="p2sampleCard">
+        <h3>Continuity in action: <i class="mv">f</i> sampled on <i class="mv">C</i><sub>&epsilon;</sub></h3>
+        <table class="samples" id="p2table"></table>
+        <div class="readout" id="p2dev" style="margin-top:6px;"></div>
+      </div>
+      <div class="card" id="p2intCard">
+        <h3>The integral (computed numerically)</h3>
+        <div class="readout" id="p2int"><span class="lbl">&oint;<sub>C&epsilon;</sub> g&thinsp;dz = i&int;&#8320;&sup2;&#960; f(z&#8320;+&epsilon;e<sup>i&theta;</sup>)&thinsp;d&theta; = &nbsp;</span><span></span></div>
+        <div class="readout" id="p2target"><span class="lbl">2&pi;i &middot; f(z&#8320;) = &nbsp;</span><span></span></div>
+        <div class="note">These agree at <em>every</em> &epsilon; &mdash; deformation invariance demonstrated, not just asserted.</div>
+      </div>
+      <div class="card" id="p2chainCard">
+        <h3>Unwinding back to <i class="mv">f</i>(<i class="mv">z</i>&#8320;) &mdash; the whole chain</h3>
+        <div class="chain">
+          <div class="chain-box">&oint;<sub>&gamma;</sub> <span class="frac"><span class="num"><i class="mv">f</i>(<i class="mv">z</i>)</span><span class="den"><i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub></span></span> <i class="mv">dz</i> &nbsp;=&nbsp; &oint;<sub>&gamma;</sub> <i class="mv">g</i>(<i class="mv">z</i>)&thinsp;<i class="mv">dz</i></div>
+          <div class="chain-arrow"><span class="arr">&darr;</span>substitute <i class="mv">g</i>&rsquo;s definition: <i class="mv">g</i>(<i class="mv">z</i>) = <i class="mv">f</i>(<i class="mv">z</i>)/(<i class="mv">z</i>&minus;<i class="mv">z</i><sub>0</sub>) &mdash; same integral, new name</div>
+          <div class="chain-box">&oint;<sub>&gamma;</sub> <i class="mv">g</i>&thinsp;<i class="mv">dz</i> &nbsp;=&nbsp; &oint;<sub><i class="mv">C</i>&epsilon;</sub> <i class="mv">g</i>&thinsp;<i class="mv">dz</i> &nbsp;=&nbsp; 2&pi;i&thinsp;<i class="mv">f</i>(<i class="mv">z</i><sub>0</sub>)</div>
+          <div class="chain-arrow"><span class="arr">&darr;</span>shrink to <i class="mv">C</i><sub>&epsilon;</sub> (Cauchy&ndash;Goursat), then let &epsilon;&rarr;0 (continuity of <i class="mv">f</i> at <i class="mv">z</i><sub>0</sub>) &mdash; then divide both sides by 2&pi;i</div>
+          <div class="chain-box result"><i class="mv">f</i>(<i class="mv">z</i><sub>0</sub>) &nbsp;=&nbsp; <span class="frac"><span class="num">1</span><span class="den">2&pi;i</span></span> &oint;<sub>&gamma;</sub> <span class="frac"><span class="num"><i class="mv">f</i>(<i class="mv">z</i>)</span><span class="den"><i class="mv">z</i> &minus; <i class="mv">z</i><sub>0</sub></span></span> <i class="mv">dz</i></div>
+        </div>
+        <div class="readout" id="p2chainNum" style="margin-top:8px;"></div>
+        <div class="note" style="margin-top:6px;">The integral <em>recovers the value of f at z&#8320;</em> from f&rsquo;s values on a curve that never touches z&#8320;. That&rsquo;s the CIF.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const TAU = Math.PI * 2;
+
+/* ---------- shared helpers ---------- */
+function fmtNum(x, d) {
+  d = (d === undefined) ? 3 : d;
+  if (Math.abs(x) < 0.5 * Math.pow(10, -d)) x = 0;
+  return x.toFixed(d);
+}
+function fmtC(re, im, d) {
+  d = (d === undefined) ? 3 : d;
+  const tol = 0.5 * Math.pow(10, -d);
+  const zr = Math.abs(re) < tol, zi = Math.abs(im) < tol;
+  if (zr && zi) return '0';
+  if (zi) return fmtNum(re, d);
+  const istr = fmtNum(Math.abs(im), d) + 'i';
+  if (zr) return (im < 0 ? '−' : '') + istr;
+  return fmtNum(re, d) + (im < 0 ? ' − ' : ' + ') + istr;
+}
+/* closed Catmull-Rom spline through pts, res samples per segment */
+function catmullClosed(pts, res) {
+  const n = pts.length, out = [];
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+    for (let j = 0; j < res; j++) {
+      const t = j / res, t2 = t * t, t3 = t2 * t;
+      out.push([
+        0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+        0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
+      ]);
+    }
+  }
+  return out;
+}
+/* winding number of closed sample loop around (px,py) */
+function winding(s, px, py) {
+  let tot = 0;
+  for (let i = 0; i < s.length; i++) {
+    const a = s[i], b = s[(i + 1) % s.length];
+    const ax = a[0] - px, ay = a[1] - py, bx = b[0] - px, by = b[1] - py;
+    tot += Math.atan2(ax * by - ay * bx, ax * bx + ay * by);
+  }
+  return Math.round(tot / TAU);
+}
+function distToLoop(s, px, py) {
+  let m = Infinity;
+  for (let i = 0; i < s.length; i++) {
+    const d = Math.hypot(s[i][0] - px, s[i][1] - py);
+    if (d < m) m = d;
+  }
+  return m;
+}
+function setupCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.width, H = cv.height;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  cv.width = W * dpr; cv.height = H * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx: ctx, W: W, H: H };
+}
+function drawPlane(ctx, W, H, S, cx, cy) {
+  ctx.clearRect(0, 0, W, H);
+  const X = x => cx + x * S, Y = y => cy - y * S;
+  const xmin = -cx / S, xmax = (W - cx) / S, ymin = -(H - cy) / S, ymax = cy / S;
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  for (let x = Math.ceil(xmin * 2) / 2; x <= xmax; x += 0.5) {
+    ctx.beginPath(); ctx.moveTo(X(x), 0); ctx.lineTo(X(x), H); ctx.stroke();
+  }
+  for (let y = Math.ceil(ymin * 2) / 2; y <= ymax; y += 0.5) {
+    ctx.beginPath(); ctx.moveTo(0, Y(y)); ctx.lineTo(W, Y(y)); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.font = '11px -apple-system, sans-serif';
+  for (let x = Math.ceil(xmin); x <= xmax; x++) {
+    if (x === 0) continue;
+    ctx.fillText(String(x), X(x) + 3, cy + 13);
+    ctx.beginPath(); ctx.moveTo(X(x), cy - 3); ctx.lineTo(X(x), cy + 3); ctx.stroke();
+  }
+  for (let y = Math.ceil(ymin); y <= ymax; y++) {
+    if (y === 0) continue;
+    ctx.fillText(y + 'i', cx + 6, Y(y) + 4);
+    ctx.beginPath(); ctx.moveTo(cx - 3, Y(y)); ctx.lineTo(cx + 3, Y(y)); ctx.stroke();
+  }
+  ctx.font = 'italic 12px Georgia, serif';
+  ctx.fillText('Re', W - 22, cy - 6);
+  ctx.fillText('Im', cx + 8, 14);
+}
+function pathFrom(ctx, s, X, Y) {
+  ctx.beginPath();
+  ctx.moveTo(X(s[0][0]), Y(s[0][1]));
+  for (let i = 1; i < s.length; i++) ctx.lineTo(X(s[i][0]), Y(s[i][1]));
+  ctx.closePath();
+}
+/* small arrowhead showing orientation at sample index i */
+function arrowAt(ctx, s, i, X, Y, color) {
+  const a = s[i], b = s[(i + 2) % s.length];
+  const dx = X(b[0]) - X(a[0]), dy = Y(b[1]) - Y(a[1]);
+  const L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+  const px = X(a[0]), py = Y(a[1]), sz = 7;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(px + ux * sz, py + uy * sz);
+  ctx.lineTo(px - ux * sz * 0.6 - uy * sz * 0.6, py - uy * sz * 0.6 + ux * sz * 0.6);
+  ctx.lineTo(px - ux * sz * 0.6 + uy * sz * 0.6, py - uy * sz * 0.6 - ux * sz * 0.6);
+  ctx.closePath(); ctx.fill();
+}
+
+/* ================= PANEL 1 ================= */
+(function () {
+  const cv = document.getElementById('cv1');
+  const c = setupCanvas(cv), ctx = c.ctx, W = c.W, H = c.H;
+  const S = 90, cx = W / 2, cy = H / 2;
+  const X = x => cx + x * S, Y = y => cy - y * S;
+  const iX = px => (px - cx) / S, iY = py => (cy - py) / S;
+
+  /* 8 control points on a circle centered at (0.9, 0.1), r = 1.7 — encloses 0 */
+  let pts = [];
+  for (let k = 0; k < 8; k++) {
+    const a = TAU * k / 8;
+    pts.push([0.9 + 1.7 * Math.cos(a), 0.1 + 1.7 * Math.sin(a)]);
+  }
+  let dragging = -1, compare = false, lastN = null, flashT = 0;
+
+  const elN = document.querySelector('#p1winding span:last-child');
+  const elI = document.querySelector('#p1integral span:last-child');
+  const elI2 = document.querySelector('#p1integral2 span:last-child');
+  const elWhy = document.getElementById('p1compareWhy');
+  const roN = document.getElementById('p1winding');
+  const roI = document.getElementById('p1integral');
+
+  function compareCenter(n) {
+    if (n !== 0) return [0, 0];              /* shrink toward the singularity */
+    let sx = 0, sy = 0;                       /* singularity outside: shrink toward centroid */
+    pts.forEach(p => { sx += p[0]; sy += p[1]; });
+    return [sx / pts.length, sy / pts.length];
+  }
+
+  function draw() {
+    drawPlane(ctx, W, H, S, cx, cy);
+    const samp = catmullClosed(pts, 32);
+    const n = winding(samp, 0, 0);
+
+    /* interior shading */
+    pathFrom(ctx, samp, X, Y);
+    ctx.fillStyle = 'var(--shade-region)';
+    ctx.fillStyle = 'rgba(99,102,241,0.13)';
+    ctx.fill('evenodd');
+
+    /* compare contour + between-region */
+    if (compare) {
+      const cc = compareCenter(n);
+      const pts2 = pts.map(p => [cc[0] + 0.55 * (p[0] - cc[0]), cc[1] + 0.55 * (p[1] - cc[1])]);
+      const samp2 = catmullClosed(pts2, 32);
+      /* region between: evenodd of both loops */
+      ctx.beginPath();
+      ctx.moveTo(X(samp[0][0]), Y(samp[0][1]));
+      for (let i = 1; i < samp.length; i++) ctx.lineTo(X(samp[i][0]), Y(samp[i][1]));
+      ctx.closePath();
+      ctx.moveTo(X(samp2[0][0]), Y(samp2[0][1]));
+      for (let i = 1; i < samp2.length; i++) ctx.lineTo(X(samp2[i][0]), Y(samp2[i][1]));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(22,163,74,0.18)';
+      ctx.fill('evenodd');
+
+      ctx.setLineDash([6, 5]);
+      pathFrom(ctx, samp2, X, Y);
+      ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.setLineDash([]);
+      arrowAt(ctx, samp2, 32, X, Y, '#16a34a');
+      ctx.fillStyle = '#16a34a';
+      ctx.font = 'italic 15px Georgia, serif';
+      ctx.fillText('γ′', X(samp2[48][0]) + 6, Y(samp2[48][1]) - 6);
+
+      const n2 = winding(samp2, 0, 0);
+      elI2.textContent = fmtC(0, n2 * TAU) + '   (winding ' + n2 + ')';
+      elWhy.innerHTML = (n2 === n)
+        ? '<b class="tag">No singularity in the shaded region</b> between <i class="mv">γ</i> and <i class="mv">γ</i>′ → Cauchy–Goursat on its boundary (<i class="mv">γ</i> together with −<i class="mv">γ</i>′) ⇒ <b>same integral.</b>'
+        : '<b class="tag" style="color:var(--text-danger)">The singularity lies between the contours</b> → Cauchy–Goursat does <em>not</em> apply to the in-between region, and the integrals differ.';
+    }
+
+    /* main contour */
+    pathFrom(ctx, samp, X, Y);
+    ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 2.5; ctx.stroke();
+    arrowAt(ctx, samp, 0, X, Y, '#6366f1');
+    ctx.fillStyle = '#6366f1';
+    ctx.font = 'italic 17px Georgia, serif';
+    ctx.fillText('γ', X(pts[1][0]) + 10, Y(pts[1][1]) - 10);
+
+    /* control points */
+    pts.forEach((p, i) => {
+      ctx.beginPath();
+      ctx.arc(X(p[0]), Y(p[1]), i === dragging ? 7 : 5.5, 0, TAU);
+      ctx.fillStyle = '#6366f1'; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    });
+
+    /* singularity at 0 */
+    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(X(0) - 6, Y(0) - 6); ctx.lineTo(X(0) + 6, Y(0) + 6);
+    ctx.moveTo(X(0) - 6, Y(0) + 6); ctx.lineTo(X(0) + 6, Y(0) - 6);
+    ctx.stroke();
+    ctx.fillStyle = '#dc2626';
+    ctx.font = 'italic 13px Georgia, serif';
+    ctx.fillText('singularity of 1/z', X(0) + 10, Y(0) + 18);
+
+    /* readouts */
+    elN.textContent = 'n = ' + n;
+    elI.textContent = fmtC(0, n * TAU);
+    if (lastN !== null && n !== lastN) {
+      flashT = performance.now();
+      roN.classList.add('flash'); roI.classList.add('flash');
+      setTimeout(() => { roN.classList.remove('flash'); roI.classList.remove('flash'); }, 500);
+    }
+    lastN = n;
+  }
+
+  function ptAt(e) {
+    const r = cv.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  }
+  cv.addEventListener('pointerdown', e => {
+    const p = ptAt(e);
+    for (let i = 0; i < pts.length; i++) {
+      if (Math.hypot(X(pts[i][0]) - p[0], Y(pts[i][1]) - p[1]) < 14) {
+        dragging = i;
+        cv.setPointerCapture(e.pointerId);
+        break;
+      }
+    }
+    draw();
+  });
+  cv.addEventListener('pointermove', e => {
+    const p = ptAt(e);
+    if (dragging >= 0) {
+      pts[dragging] = [iX(p[0]), iY(p[1])];
+      draw();
+    } else {
+      let hover = false;
+      for (let i = 0; i < pts.length; i++)
+        if (Math.hypot(X(pts[i][0]) - p[0], Y(pts[i][1]) - p[1]) < 14) hover = true;
+      cv.style.cursor = hover ? 'grab' : 'default';
+    }
+  });
+  cv.addEventListener('pointerup', () => { dragging = -1; draw(); });
+
+  document.getElementById('p1compare').addEventListener('change', e => {
+    compare = e.target.checked;
+    document.getElementById('p1compareInfo').style.display = compare ? 'block' : 'none';
+    draw();
+  });
+
+  draw();
+  window.__redrawP1 = draw;
+})();
+
+/* ================= PANEL 2 ================= */
+(function () {
+  const cv = document.getElementById('cv2');
+  const c = setupCanvas(cv), ctx = c.ctx, W = c.W, H = c.H;
+  const cx = W / 2, cy = H / 2;
+
+  const PRESETS = [
+    {
+      label: 'f(z) = 1', R: 1, z0: [0, 0],
+      f: z => [1, 0],
+      fname: 'f(z) = 1',
+      note: 'Segment 1’s original mystery: ∮<sub>|z|=1</sub> dz/z = 2πi. The CIF explains it — it’s 2πi·f(0) for f ≡ 1.'
+    },
+    {
+      label: 'f(z) = z', R: 1, z0: [0, 0],
+      f: z => [z[0], z[1]],
+      fname: 'f(z) = z',
+      note: 'With z₀ = 0: g(z) = z/z ≡ 1 away from 0 — the singularity is removable, so Cauchy’s theorem alone gives 0. CIF agrees: 2πi·f(0) = 0.'
+    },
+    {
+      label: 'f(z) = e^z', R: 2, z0: [1, 0],
+      f: z => { const m = Math.exp(z[0]); return [m * Math.cos(z[1]), m * Math.sin(z[1])]; },
+      fname: 'f(z) = eᶻ',
+      note: 'Today’s example: ∮<sub>|z|=2</sub> eᶻ/(z−1) dz = 2πi·e ≈ 17.079i, with z₀ = 1.'
+    }
+  ];
+  let preset = 0, z0 = [0, 0], step = 1, epsFrac = 0.85, playing = false, dragZ0 = false;
+  let gammaSamp = [], S = 180, sweepTheta = 0, lastTick = 0;
+
+  const THETAS = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
+  const THETA_LBL = ['θ = 0', 'θ = π/2', 'θ = π', 'θ = 3π/2'];
+  const COLORS = ['#e11d48', '#f59e0b', '#16a34a', '#0ea5e9'];
+
+  const X = x => cx + x * S, Y = y => cy - y * S;
+  const iX = px => (px - cx) / S, iY = py => (cy - py) / S;
+
+  function buildGamma() {
+    const R = PRESETS[preset].R;
+    S = Math.min(W, H) / 2 / (R * 1.45);
+    gammaSamp = [];
+    for (let k = 0; k < 512; k++) {
+      const t = TAU * k / 512;
+      const r = R * (1 + 0.14 * Math.sin(3 * t) + 0.07 * Math.cos(2 * t));
+      gammaSamp.push([r * Math.cos(t), r * Math.sin(t)]);
+    }
+  }
+  function epsRange() {
+    const R = PRESETS[preset].R;
+    const d = distToLoop(gammaSamp, z0[0], z0[1]);
+    return [0.035 * R, Math.max(0.05 * R, 0.9 * d)];
+  }
+  function eps() {
+    const r = epsRange();
+    return r[0] + epsFrac * (r[1] - r[0]);
+  }
+  function fAt(p) { return PRESETS[preset].f(p); }
+  function fz0() { return fAt(z0); }
+  /* i * integral_0^2pi f(z0 + eps e^{i th}) dth, trapezoid N=256 */
+  function integralNumeric(e) {
+    const N = 256;
+    let sr = 0, si = 0;
+    for (let k = 0; k < N; k++) {
+      const t = TAU * k / N;
+      const w = fAt([z0[0] + e * Math.cos(t), z0[1] + e * Math.sin(t)]);
+      sr += w[0]; si += w[1];
+    }
+    const dth = TAU / N;
+    return [-si * dth, sr * dth];  /* i*(A+Bi) = -B + Ai */
+  }
+
+  /* ---- UI elements ---- */
+  const elCap = document.getElementById('p2caption');
+  const elStep = document.getElementById('p2stepInd');
+  const elEps = document.getElementById('p2eps');
+  const elEpsVal = document.getElementById('p2epsVal');
+  const elTable = document.getElementById('p2table');
+  const elDev = document.getElementById('p2dev');
+  const elInt = document.querySelector('#p2int span:last-child');
+  const elTarget = document.querySelector('#p2target span:last-child');
+  const elChainNum = document.getElementById('p2chainNum');
+  const elNote = document.getElementById('p2presetNote');
+  const btnPrev = document.getElementById('p2prev');
+  const btnNext = document.getElementById('p2next');
+  const btnPlay = document.getElementById('p2play');
+  const cardEps = document.getElementById('p2epsCard');
+  const cardSample = document.getElementById('p2sampleCard');
+  const cardInt = document.getElementById('p2intCard');
+  const cardChain = document.getElementById('p2chainCard');
+
+  const STEP_TITLES = ['', 'Setup', 'Deform (Cauchy–Goursat)', 'Parametrize & shrink', 'The limit', 'Unwind to f(z₀)'];
+  const CAPTIONS = ['',
+    /* 1 */ '<b class="tag">Step 1 — Setup.</b> f is holomorphic on and inside γ; z₀ is an interior point (drag it). Define <b>g(z) = f(z)/(z−z₀)</b>. Since f is holomorphic, g is holomorphic everywhere inside γ <em>except</em> the single point z₀, where the denominator vanishes. Goal: evaluate ∮<sub>γ</sub> g dz. <span class="note">(γ is drawn as a wobbly loop on purpose — deformation invariance means only “z₀ inside γ” matters, not γ’s shape. The worked example used a circle.)</span>',
+    /* 2 */ '<b class="tag">Step 2 — Deform.</b> Insert a small circle C<sub>ε</sub> centered at z₀. The shaded region between γ and C<sub>ε</sub> contains <b>no singularity of g</b> — z₀ has been cut out. Cauchy–Goursat applied to that region’s boundary (γ together with −C<sub>ε</sub>) gives ∮<sub>γ</sub> g dz − ∮<sub>Cε</sub> g dz = 0, i.e. <b>∮<sub>γ</sub> g dz = ∮<sub>Cε</sub> g dz</b>. This is exactly Panel 1’s invariance, put to work.',
+    /* 3 */ '<b class="tag">Step 3 — Parametrize &amp; shrink.</b> On C<sub>ε</sub>: <b>z = z₀ + εe<sup>iθ</sup></b>, so dz = iεe<sup>iθ</sup>dθ and the (z−z₀) = εe<sup>iθ</sup> in the denominator <em>cancels</em>: ∮<sub>Cε</sub> g dz = i∫₀²π f(z₀+εe<sup>iθ</sup>) dθ. Now drag ε toward 0 (or press Play): <b>continuity of f at z₀</b> forces every sampled value f(z₀+εe<sup>iθ</sup>) toward f(z₀), uniformly in θ — watch the table converge.',
+    /* 4 */ '<b class="tag">Step 4 — The limit.</b> The readout below never moves as ε shrinks: the integral equals its value at every ε (deformation invariance), and as ε→0 the integrand becomes the constant f(z₀), so i∫₀²π f(z₀+εe<sup>iθ</sup>)dθ → i·2π·f(z₀). Conclusion: <b>∮<sub>γ</sub> g dz = 2πi f(z₀)</b>.',
+    /* 5 */ '<b class="tag">Step 5 — Unwind back to f(z₀).</b> This is the step to make unmissable: g was <em>defined as</em> f(z)/(z−z₀), so “∮<sub>γ</sub> g dz = 2πi f(z₀)” is already a statement about f. Read the chain below left to right — the last box is the Cauchy Integral Formula.'
+  ];
+
+  function updateUI() {
+    elStep.textContent = 'Step ' + step + '/5 · ' + STEP_TITLES[step];
+    elCap.innerHTML = CAPTIONS[step];
+    btnPrev.disabled = (step <= 1);
+    btnNext.disabled = (step >= 5);
+    cardEps.style.display = (step >= 2) ? 'block' : 'none';
+    elEps.disabled = (step < 3);
+    btnPlay.disabled = (step < 3);
+    document.getElementById('p2reset').disabled = (step < 3);
+    cardSample.style.display = (step >= 3) ? 'block' : 'none';
+    cardInt.style.display = (step >= 4) ? 'block' : 'none';
+    cardChain.style.display = (step >= 5) ? 'block' : 'none';
+    elNote.innerHTML = PRESETS[preset].note;
+  }
+
+  function updateReadouts() {
+    const e = eps(), f0 = fz0();
+    elEpsVal.innerHTML = '<span class="lbl">ε = </span>' + fmtNum(e, 3);
+    if (step >= 3) {
+      let rows = '<tr><th></th><th>sample point on Cε</th><th>f(z₀+εe<sup>iθ</sup>)</th></tr>';
+      let maxDev = 0;
+      THETAS.forEach((t, i) => {
+        const p = [z0[0] + e * Math.cos(t), z0[1] + e * Math.sin(t)];
+        const w = fAt(p);
+        maxDev = Math.max(maxDev, Math.hypot(w[0] - f0[0], w[1] - f0[1]));
+        rows += '<tr><td><span class="swatch" style="background:' + COLORS[i] + '"></span>' + THETA_LBL[i] + '</td><td>' + fmtC(p[0], p[1], 2) + '</td><td>' + fmtC(w[0], w[1]) + '</td></tr>';
+      });
+      rows += '<tr class="target-row"><td colspan="2">target: f(z₀)</td><td>' + fmtC(f0[0], f0[1]) + '</td></tr>';
+      elTable.innerHTML = rows;
+      elDev.innerHTML = '<span class="lbl">max |f(z(θ)) − f(z₀)| = </span>' + fmtNum(maxDev, 4) + '<span class="lbl"> → 0 as ε→0 (continuity)</span>';
+    }
+    if (step >= 4) {
+      const I = integralNumeric(e);
+      elInt.textContent = fmtC(I[0], I[1]);
+      elTarget.textContent = fmtC(-TAU * f0[1], TAU * f0[0]);
+    }
+    if (step >= 5) {
+      elChainNum.innerHTML = '<span class="lbl">this preset (' + PRESETS[preset].fname + ', z₀ = ' + fmtC(z0[0], z0[1], 2) + '): f(z₀) = ' + fmtC(f0[0], f0[1]) + ', so ∮ = 2πi·f(z₀) = </span>' + fmtC(-TAU * f0[1], TAU * f0[0]);
+    }
+  }
+
+  function draw() {
+    drawPlane(ctx, W, H, S, cx, cy);
+    const e = eps(), f0 = fz0();
+
+    /* between-region shading (step >= 2) */
+    if (step >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(X(gammaSamp[0][0]), Y(gammaSamp[0][1]));
+      for (let i = 1; i < gammaSamp.length; i++) ctx.lineTo(X(gammaSamp[i][0]), Y(gammaSamp[i][1]));
+      ctx.closePath();
+      ctx.moveTo(X(z0[0] + e), Y(z0[1]));
+      ctx.arc(X(z0[0]), Y(z0[1]), e * S, 0, TAU);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(22,163,74,0.16)';
+      ctx.fill('evenodd');
+      ctx.fillStyle = '#15803d';
+      ctx.font = '11.5px -apple-system, sans-serif';
+      const lx = X(gammaSamp[128][0] * 0.72 + z0[0] * 0.28), ly = Y(gammaSamp[128][1] * 0.72 + z0[1] * 0.28);
+      ctx.fillText('g holomorphic here (no singularity)', lx - 90, ly);
+      ctx.font = 'italic 11.5px Georgia, serif';
+      ctx.fillText('→ Cauchy–Goursat applies', lx - 74, ly + 14);
+    }
+
+    /* gamma */
+    pathFrom(ctx, gammaSamp, X, Y);
+    ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 2.5; ctx.stroke();
+    arrowAt(ctx, gammaSamp, 128, X, Y, '#6366f1');
+    ctx.fillStyle = '#6366f1';
+    ctx.font = 'italic 18px Georgia, serif';
+    ctx.fillText('γ', X(gammaSamp[64][0]) + 12, Y(gammaSamp[64][1]) - 6);
+
+    /* C_eps */
+    if (step >= 2) {
+      ctx.beginPath();
+      ctx.arc(X(z0[0]), Y(z0[1]), e * S, 0, TAU);
+      ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.stroke();
+      /* orientation arrow at top of circle */
+      ctx.fillStyle = '#dc2626';
+      const ax = X(z0[0]), ay = Y(z0[1]) - e * S, sz = 6;
+      ctx.beginPath();
+      ctx.moveTo(ax - sz, ay); ctx.lineTo(ax + 2, ay - sz * 0.7); ctx.lineTo(ax + 2, ay + sz * 0.7);
+      ctx.closePath(); ctx.fill();
+      ctx.font = 'italic 15px Georgia, serif';
+      ctx.fillText('Cε', X(z0[0]) + e * S * 0.72, Y(z0[1]) - e * S * 0.72 - 5);
+    }
+
+    /* parametrization: sweep dot + sample dots (step >= 3) */
+    if (step >= 3) {
+      THETAS.forEach((t, i) => {
+        const px = X(z0[0] + e * Math.cos(t)), py = Y(z0[1] + e * Math.sin(t));
+        ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU);
+        ctx.fillStyle = COLORS[i]; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+      });
+      /* sweeping point z = z0 + eps e^{i theta} */
+      const sx = X(z0[0] + e * Math.cos(sweepTheta)), sy = Y(z0[1] + e * Math.sin(sweepTheta));
+      ctx.beginPath(); ctx.arc(sx, sy, 4, 0, TAU);
+      ctx.fillStyle = '#222'; ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(X(z0[0]), Y(z0[1])); ctx.lineTo(sx, sy); ctx.stroke();
+      ctx.fillStyle = '#333';
+      ctx.font = 'italic 13px Georgia, serif';
+      ctx.fillText('z = z₀ + εe^iθ', sx + 8, sy - 8);
+    }
+
+    /* z0 */
+    ctx.beginPath();
+    ctx.arc(X(z0[0]), Y(z0[1]), dragZ0 ? 7 : 5.5, 0, TAU);
+    ctx.fillStyle = '#dc2626'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#dc2626';
+    ctx.font = 'italic 15px Georgia, serif';
+    ctx.fillText('z₀', X(z0[0]) + 9, Y(z0[1]) + 16);
+    if (step === 1) {
+      ctx.font = 'italic 12.5px Georgia, serif';
+      ctx.fillText('singularity of g(z) = f(z)/(z−z₀)', X(z0[0]) + 9, Y(z0[1]) + 32);
+    }
+
+    updateReadouts();
+  }
+
+  /* ---- interactions ---- */
+  function ptAt(ev) {
+    const r = cv.getBoundingClientRect();
+    return [ev.clientX - r.left, ev.clientY - r.top];
+  }
+  function tryMoveZ0(mx, my) {
+    const R = PRESETS[preset].R;
+    const cand = [iX(mx), iY(my)];
+    if (winding(gammaSamp, cand[0], cand[1]) !== 1) return;          /* must stay inside gamma */
+    if (distToLoop(gammaSamp, cand[0], cand[1]) < 0.16 * R) return;  /* leave room for C_eps */
+    z0 = cand;
+    draw();
+  }
+  cv.addEventListener('pointerdown', e => {
+    const p = ptAt(e);
+    if (Math.hypot(X(z0[0]) - p[0], Y(z0[1]) - p[1]) < 16) {
+      dragZ0 = true;
+      cv.setPointerCapture(e.pointerId);
+      draw();
+    }
+  });
+  cv.addEventListener('pointermove', e => {
+    const p = ptAt(e);
+    if (dragZ0) { tryMoveZ0(p[0], p[1]); }
+    else cv.style.cursor = (Math.hypot(X(z0[0]) - p[0], Y(z0[1]) - p[1]) < 16) ? 'grab' : 'default';
+  });
+  cv.addEventListener('pointerup', () => { dragZ0 = false; draw(); });
+
+  elEps.addEventListener('input', () => {
+    epsFrac = elEps.value / 1000;
+    playing = false; btnPlay.innerHTML = '▶ Play ε→0';
+    draw();
+  });
+  btnPlay.addEventListener('click', () => {
+    playing = !playing;
+    btnPlay.innerHTML = playing ? '⏸ Pause' : '▶ Play ε→0';
+    if (playing && epsFrac < 0.02) { epsFrac = 0.85; }
+  });
+  document.getElementById('p2reset').addEventListener('click', () => {
+    epsFrac = 0.85; elEps.value = 850;
+    playing = false; btnPlay.innerHTML = '▶ Play ε→0';
+    draw();
+  });
+  btnPrev.addEventListener('click', () => { if (step > 1) { step--; playing = false; btnPlay.innerHTML = '▶ Play ε→0'; updateUI(); draw(); } });
+  btnNext.addEventListener('click', () => {
+    if (step < 5) {
+      step++;
+      if (step === 2) { epsFrac = 0.85; elEps.value = 850; }
+      updateUI(); draw();
+    }
+  });
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.preset-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      preset = +b.dataset.p;
+      z0 = PRESETS[preset].z0.slice();
+      buildGamma();
+      epsFrac = 0.85; elEps.value = 850;
+      playing = false; btnPlay.innerHTML = '▶ Play ε→0';
+      updateUI(); draw();
+    });
+  });
+
+  /* animation loop: sweep dot always, eps shrink when playing */
+  function tick(now) {
+    const dt = Math.min(0.05, (now - lastTick) / 1000 || 0.016);
+    lastTick = now;
+    let need = false;
+    if (step >= 3) { sweepTheta = (sweepTheta + dt * 1.4) % TAU; need = true; }
+    if (playing) {
+      epsFrac = Math.max(0, epsFrac - dt * 0.22);
+      elEps.value = Math.round(epsFrac * 1000);
+      if (epsFrac <= 0) { playing = false; btnPlay.innerHTML = '▶ Play ε→0'; }
+      need = true;
+    }
+    if (need && document.getElementById('panel2').classList.contains('active')) draw();
+    requestAnimationFrame(tick);
+  }
+
+  buildGamma();
+  updateUI();
+  draw();
+  requestAnimationFrame(tick);
+  window.__redrawP2 = draw;
+})();
+
+/* ---------- tabs ---------- */
+(function () {
+  const b1 = document.getElementById('tabBtn1'), b2 = document.getElementById('tabBtn2');
+  const p1 = document.getElementById('panel1'), p2 = document.getElementById('panel2');
+  function go(which) {
+    b1.classList.toggle('active', which === 1);
+    b2.classList.toggle('active', which === 2);
+    p1.classList.toggle('active', which === 1);
+    p2.classList.toggle('active', which === 2);
+    if (which === 1) window.__redrawP1(); else window.__redrawP2();
+  }
+  b1.addEventListener('click', () => go(1));
+  b2.addEventListener('click', () => go(2));
+})();
+</script>
+</body>
+</html>
