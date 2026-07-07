@@ -7,42 +7,44 @@ permalink: /
 ---
 
 <section class="home-section">
-  <p class="section-eyebrow">About this project</p>
-  <h2>Built as I learn it</h2>
+  <p class="section-eyebrow">The journey</p>
+  <h2>Built as I learned it</h2>
   <div class="prose">
-    <p>I'm Max — an incoming math major at UCSB's College of Creative Studies. This site is where I'm working through complex analysis on my own, pairing the standard theorems and proofs with interactive visualizations that make the geometry behind them tangible. Everything here is built as I learn it, in order, starting from the big picture and working toward the results that make the subject feel almost unfairly powerful.</p>
-    <p>Each lesson pairs a written explanation with a visualization you can actually play with — drag points, adjust sliders, and watch theorems become visible rather than just symbolic.</p>
+    <p>This started in high school calculus. I got fixated on complex functions — the idea that you could do calculus on numbers that aren't even real — and wanted to know what a complex derivative actually <em>does</em>. I didn't have the background to chase it down yet; calc I and II weren't enough. Multivariable and vector calculus finally gave me the tools, and this summer I went back and answered the questions that had been sitting there for years: what does integrating over the complex plane even mean, why do the Cauchy-Riemann equations decide whether a function is holomorphic.</p>
+    <p>I'm Max — an incoming math major at UCSB's College of Creative Studies. This site isn't trying to be a textbook; good ones already exist. It's the record of one path through the subject — the lessons as I actually learned them, in order, using Claude as a Socratic tutor.</p>
+    <p>The system behind it — session structure, spaced review, a running profile of how I learn, and the actual prompts that commissioned each visualization — is written up in <a href="/how-i-built-this/">How I built this</a>.</p>
   </div>
 </section>
 
 <section class="home-section">
   <div class="section-head">
     <div>
-      <p class="section-eyebrow">Interactive</p>
-      <h2>Featured visualizations</h2>
+      <p class="section-eyebrow">The path</p>
+      <h2>Lessons</h2>
     </div>
-    <a class="see-all" href="/visualizations/">See all {{ visualizations.length }} &rarr;</a>
+    <a class="see-all" href="/lessons/">All lessons &rarr;</a>
   </div>
-  <div class="viz-grid">
-    {%- set featured = ["00-grid-deformation-z-squared", "03-complex-log-branch-cut", "05-liouville-fta-chain"] -%}
-    {%- for viz in visualizations -%}
-      {%- if viz.slug in featured -%}
-        {% include "viz-card.njk" %}
-      {%- endif -%}
-    {%- endfor -%}
+  <div class="lesson-path">
+    {% for lesson in lessons %}
+      {% include "lesson-card.njk" %}
+    {% endfor %}
   </div>
+  <p class="muted lesson-path-note"><em>More is coming — lessons get added as I finish learning them.</em></p>
 </section>
 
 <section class="home-section">
-  <p class="section-eyebrow">Written material</p>
-  <h2>Lessons</h2>
-  <ul class="lesson-list">
-    <li><a href="/lessons/00-big-picture-overview/">Lesson 0 — The Big Picture: What Is Complex Analysis About?</a></li>
-    <li><a href="/lessons/01-complex-numbers-and-topology/">Lesson 1 — Complex Numbers, the Plane, and Basic Topology</a></li>
-    <li><a href="/lessons/02-holomorphic-functions-and-cauchy-riemann/">Lesson 2 — Holomorphic Functions & the Cauchy-Riemann Equations</a></li>
-    <li><a href="/lessons/03-power-series-and-elementary-functions/">Lesson 3 — Power Series & Elementary Functions</a></li>
-    <li><a href="/lessons/04-cauchys-theorem-and-integral-formula/">Lesson 4 — Cauchy's Theorem & the Cauchy Integral Formula</a></li>
-    <li><a href="/lessons/05-consequences-of-cauchys-formula/">Lesson 5 — Consequences of Cauchy's Formula</a></li>
-  </ul>
-  <p class="muted"><em>More lessons are on the way — this project is being built incrementally as I work through the material.</em></p>
+  <div class="aside-grid">
+    <a class="aside-card" href="/how-i-built-this/">
+      <p class="section-eyebrow">Behind the scenes</p>
+      <h2>How I built this</h2>
+      <p>The actual workflow: compute &rarr; visualize &rarr; prove, Socratic sessions, spaced review, and the real prompts that commissioned each visualization.</p>
+      <span class="aside-cta">Read the writeup &rarr;</span>
+    </a>
+    <a class="aside-card" href="/visualizations/">
+      <p class="section-eyebrow">The gallery</p>
+      <h2>Visualizations</h2>
+      <p>Every lesson embeds its interactives where they belong — next to the math they illustrate. All {{ visualizations.length }} also live in one gallery if you just want to play.</p>
+      <span class="aside-cta">Browse all {{ visualizations.length }} &rarr;</span>
+    </a>
+  </div>
 </section>
