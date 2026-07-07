@@ -1,0 +1,43 @@
+---
+layout: base.njk
+title: Home
+hero: true
+wide: true
+permalink: /
+---
+
+<section class="home-section">
+  <p class="section-eyebrow">About this project</p>
+  <h2>Built as I learn it</h2>
+  <div class="prose">
+    <p>I'm Max — an incoming math major at UCSB's College of Creative Studies. This site is where I'm working through complex analysis on my own, pairing the standard theorems and proofs with interactive visualizations that make the geometry behind them tangible. Everything here is built as I learn it, in order, starting from the big picture and working toward the results that make the subject feel almost unfairly powerful.</p>
+    <p>Each lesson pairs a written explanation with a visualization you can actually play with — drag points, adjust sliders, and watch theorems become visible rather than just symbolic.</p>
+  </div>
+</section>
+
+<section class="home-section">
+  <div class="section-head">
+    <div>
+      <p class="section-eyebrow">Interactive</p>
+      <h2>Featured visualizations</h2>
+    </div>
+    <a class="see-all" href="/visualizations/">See all {{ visualizations.length }} &rarr;</a>
+  </div>
+  <div class="viz-grid">
+    {%- set featured = ["00-grid-deformation-z-squared", "03-complex-log-branch-cut", "05-liouville-fta-chain"] -%}
+    {%- for viz in visualizations -%}
+      {%- if viz.slug in featured -%}
+        {% include "viz-card.njk" %}
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</section>
+
+<section class="home-section">
+  <p class="section-eyebrow">Written material</p>
+  <h2>Lessons</h2>
+  <ul class="lesson-list">
+    <li><a href="/lessons/00-big-picture-overview/">Lesson 0 — The Big Picture: What Is Complex Analysis About?</a></li>
+  </ul>
+  <p class="muted"><em>More lessons are on the way — this project is being built incrementally as I work through the material.</em></p>
+</section>

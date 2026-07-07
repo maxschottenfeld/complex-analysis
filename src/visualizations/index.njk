@@ -1,18 +1,17 @@
 ---
 layout: base.njk
 title: Visualizations
+wide: true
 ---
 
-<h1>Visualizations</h1>
-
-<p>Every interactive visualization from the project, in lesson order. Each one was built to make a specific theorem or definition tangible — drag points, move sliders, and step through proofs.</p>
+<div class="page-head">
+  <p class="section-eyebrow">The gallery</p>
+  <h1>Visualizations</h1>
+  <p class="lede">Every interactive visualization from the project, in lesson order. Each one was built to make a specific theorem or definition tangible — drag points, move sliders, and step through proofs.</p>
+</div>
 
 <div class="viz-grid">
   {% for viz in visualizations %}
-  <a class="viz-card" href="/visualizations/{{ viz.slug }}/">
-    <span class="viz-card-lesson">{{ viz.lesson }}</span>
-    <h2>{{ viz.title }}</h2>
-    <p>{{ viz.description }}</p>
-  </a>
+    {% include "viz-card.njk" %}
   {% endfor %}
 </div>

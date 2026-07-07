@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ title }} — Complex Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -21,9 +24,15 @@
 </head>
 <body>
   <nav class="site-nav">
-    <a href="/">Complex Analysis</a>
-    <a class="nav-link" href="/visualizations/">Visualizations</a>
+    <div class="nav-inner">
+      <a class="brand" href="/"><span class="brand-mark">&#8450;</span>Complex Analysis</a>
+      <div class="nav-links">
+        <a class="nav-link" href="/visualizations/">Visualizations</a>
+        <a class="nav-link" href="https://github.com/maxschottenfeld/complex-analysis" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
   </nav>
+  {% if hero %}{% include "hero.njk" %}{% endif %}
   <main{% if wide %} class="wide"{% endif %}>
     {{ content | safe }}
   </main>

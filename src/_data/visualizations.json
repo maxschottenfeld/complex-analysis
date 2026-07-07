@@ -3,48 +3,56 @@
     "slug": "00-overview-domain-coloring-and-conformal-maps",
     "title": "The Big Picture: Domain Coloring & Conformal Maps",
     "lesson": "Lesson 0",
+    "hue": 355,
     "description": "A complex function maps a plane to a plane — a literal graph would need 4 dimensions. This opener introduces the two substitute pictures used all through the subject: domain coloring (color each input by the angle of its output) and side-by-side input/output planes."
   },
   {
     "slug": "00-grid-deformation-z-squared",
     "title": "Grid Deformation Under f(z) = z²",
     "lesson": "Lesson 0",
+    "hue": 30,
     "description": "Watch a square grid deform under z². Vertical and horizontal lines map to two families of parabolas that stay perpendicular everywhere — except at the origin, where f′(0) = 0 and conformality visibly breaks down."
   },
   {
     "slug": "01-roots-of-unity",
     "title": "Roots of Unity",
     "lesson": "Lesson 1",
+    "hue": 55,
     "description": "The n solutions of zⁿ = 1 sit at the vertices of a regular n-gon on the unit circle. Explore how polar form turns multiplication into rotate-and-scale, and why raising each root to the nth power walks it around the circle back to 1."
   },
   {
     "slug": "01-open-sets-explorer",
     "title": "Open Sets Explorer",
     "lesson": "Lesson 1",
+    "hue": 145,
     "description": "The topology vocabulary of ℂ, made draggable: test points with ε-disks to see what interior, boundary, open, and closed actually mean — the definitions every later theorem quietly relies on."
   },
   {
     "slug": "02-conformality-jacobian",
     "title": "Conformality & the Jacobian",
     "lesson": "Lesson 2",
+    "hue": 185,
     "description": "Why do holomorphic maps preserve angles? Zoom in at a point and see the Jacobian act as a pure rotation-plus-scaling when the Cauchy-Riemann equations hold — the geometric content of complex differentiability."
   },
   {
     "slug": "03-complex-log-branch-cut",
     "title": "The Complex Logarithm & Its Branch Cut",
     "lesson": "Lesson 3",
+    "hue": 215,
     "description": "log z is multivalued: every loop around the origin adds 2πi. Explore the spiral of values, choose a branch, and see exactly what a branch cut removes to force a single-valued function."
   },
   {
     "slug": "04-contour-deformation-and-cif",
     "title": "Contour Deformation & the Cauchy Integral Formula",
     "lesson": "Lesson 4",
+    "hue": 265,
     "description": "Two panels: deform integration contours freely without changing the integral (as long as no singularity is crossed), then step through the actual derivation of the Cauchy Integral Formula, including the shrinking-circle limit that makes it work."
   },
   {
     "slug": "05-liouville-fta-chain",
     "title": "From CIF to the Fundamental Theorem of Algebra",
     "lesson": "Lesson 5",
+    "hue": 320,
     "description": "A single proof chain, animated end to end: the Cauchy Integral Formula gives derivative formulas, which give Cauchy's estimates, which give Liouville's theorem, which proves that every nonconstant polynomial has a root. Each link pairs a visualization with a step-through proof."
   }
 ]
