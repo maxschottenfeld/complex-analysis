@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Sets Explorer</title>
+<style>
+  :root {
+    --surface-primary: #ffffff;
+    --surface-secondary: #f5f5f5;
+    --text-primary: #222222;
+    --text-secondary: #666666;
+    --text-accent: #6366f1;
+    --text-success: #16a34a;
+    --text-danger: #dc2626;
+    --border-default: #cccccc;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--surface-primary);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+  }
+  .wrap { max-width: 600px; width: 100%; }
+  h1 { font-size: 18px; margin: 0 0 12px; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+  }
+  .controls { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .set-btn {
+    padding: 6px 12px; font-size: 13px; border-radius: 6px;
+    border: 1px solid var(--border-default);
+    background: var(--surface-primary); color: var(--text-primary);
+    cursor: pointer;
+  }
+  .set-btn.active {
+    background: var(--text-accent); color: #fff; border-color: var(--text-accent);
+  }
+  svg {
+    width: 100%; height: auto;
+    background: var(--surface-secondary);
+    border-radius: 8px;
+    touch-action: none;
+  }
+  .slider-row { display:flex; align-items:center; gap:10px; margin-top:10px; }
+  .slider-row label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+  .slider-row input[type=range] { flex:1; }
+  .slider-row span { font-size: 13px; color: var(--text-secondary); width: 34px; }
+  #verdict {
+    margin-top: 10px; padding: 10px 12px; border-radius: 8px;
+    font-size: 14px; line-height: 1.4;
+    background: var(--surface-secondary); color: var(--text-primary);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="sr-only">Interactive visualization of open sets: drag a point and see whether an epsilon-disk around it fits inside the chosen set</h1>
+  <h1>Open Sets Explorer</h1>
+
+  <div class="controls">
+    <button id="btn-open" class="set-btn">Open disk D(0,1)</button>
+    <button id="btn-closed" class="set-btn">Closed disk D̄(0,1)</button>
+    <button id="btn-punct" class="set-btn">Punctured plane ℂ\{0}</button>
+  </div>
+
+  <svg id="canvas" viewBox="0 0 400 400">
+    <line x1="200" y1="0" x2="200" y2="400" stroke="var(--border-default)" stroke-width="1"/>
+    <line x1="0" y1="200" x2="400" y2="200" stroke="var(--border-default)" stroke-width="1"/>
+    <circle id="setCircle" cx="200" cy="200" r="150" fill="none" stroke="var(--text-accent)" stroke-width="2"/>
+    <circle id="punctureDot" cx="200" cy="200" r="4" fill="var(--text-danger)" visibility="hidden"/>
+    <circle id="epsCircle" cx="120" cy="120" r="30" fill="var(--text-accent)" fill-opacity="0.15" stroke="var(--text-accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <circle id="pt" cx="120" cy="120" r="6" fill="var(--text-primary)" style="cursor:grab;"/>
+  </svg>
+
+  <div class="slider-row">
+    <label for="eps">ε radius</label>
+    <input type="range" id="eps" min="5" max="60" value="30">
+    <span id="epsVal">30</span>
+  </div>
+
+  <div id="verdict"></div>
+</div>
+
+<script>
+(function(){
+  const svg = document.getElementById('canvas');
+  const pt = document.getElementById('pt');
+  const epsCircle = document.getElementById('epsCircle');
+  const setCircle = document.getElementById('setCircle');
+  const punctureDot = document.getElementById('punctureDot');
+  const epsSlider = document.getElementById('eps');
+  const epsVal = document.getElementById('epsVal');
+  const verdict = document.getElementById('verdict');
+
+  const CX = 200, CY = 200, SCALE = 150;
+
+  let mode = 'open';
+  let px = 120, py = 120;
+  let eps = 30;
+
+  function setMode(m){
+    mode = m;
+    document.querySelectorAll('.set-btn').forEach(b=>b.classList.remove('active'));
+    if(m==='open') document.getElementById('btn-open').classList.add('active');
+    if(m==='closed') document.getElementById('btn-closed').classList.add('active');
+    if(m==='punct') document.getElementById('btn-punct').classList.add('active');
+
+    if(m==='punct'){
+      setCircle.setAttribute('stroke-opacity','0.15');
+      punctureDot.setAttribute('visibility','visible');
+    } else {
+      setCircle.setAttribute('stroke-opacity','1');
+      punctureDot.setAttribute('visibility','hidden');
+    }
+    if(m==='closed'){
+      setCircle.setAttribute('fill','var(--text-accent)');
+      setCircle.setAttribute('fill-opacity','0.06');
+    } else {
+      setCircle.setAttribute('fill','none');
+    }
+    update();
+  }
+
+  function dist(x1,y1,x2,y2){ return Math.hypot(x1-x2, y1-y2); }
+
+  function update(){
+    epsCircle.setAttribute('cx', px);
+    epsCircle.setAttribute('cy', py);
+    epsCircle.setAttribute('r', eps);
+    pt.setAttribute('cx', px);
+    pt.setAttribute('cy', py);
+
+    const r = dist(px,py,CX,CY) / SCALE;
+    const epsMath = eps / SCALE;
+    let html = '';
+
+    if(mode==='open'){
+      const inSet = r < 1;
+      if(!inSet){
+        html = `<strong>|z| = ${r.toFixed(2)} ≥ 1</strong> — this point is not in the open disk D(0,1) at all (on or outside the boundary).`;
+        pt.setAttribute('fill', 'var(--text-danger)');
+      } else {
+        const room = 1 - r;
+        const fits = epsMath < room;
+        html = `<strong>|z| = ${r.toFixed(2)}</strong>, distance to boundary = ${room.toFixed(2)}. ` +
+          (fits ? `ε = ${epsMath.toFixed(2)} fits — disk stays inside. ✓ Try shrinking ε below ${room.toFixed(2)} to confirm.`
+                : `ε = ${epsMath.toFixed(2)} is too big — disk pokes outside the boundary. Shrink ε below ${room.toFixed(2)}.`);
+        pt.setAttribute('fill', fits ? 'var(--text-success)' : 'var(--text-danger)');
+      }
+    } else if(mode==='closed'){
+      const inSet = r <= 1;
+      if(!inSet){
+        html = `<strong>|z| = ${r.toFixed(2)} > 1</strong> — not in the closed disk D̄(0,1).`;
+        pt.setAttribute('fill', 'var(--text-danger)');
+      } else if(Math.abs(r-1) < 0.01){
+        html = `<strong>|z| = ${r.toFixed(2)} ≈ 1 — boundary point.</strong> No ε-disk, however small, stays entirely inside D̄(0,1): part of it always pokes into |z|>1. This is why the closed disk is <em>not open</em>.`;
+        pt.setAttribute('fill', 'var(--text-danger)');
+      } else {
+        const room = 1 - r;
+        const fits = epsMath < room;
+        html = `<strong>|z| = ${r.toFixed(2)}</strong>, distance to boundary = ${room.toFixed(2)}. ` +
+          (fits ? `ε = ${epsMath.toFixed(2)} fits inside D̄(0,1). ✓`
+                : `ε = ${epsMath.toFixed(2)} pokes outside. Shrink it below ${room.toFixed(2)}.`);
+        pt.setAttribute('fill', fits ? 'var(--text-success)' : 'var(--text-danger)');
+      }
+    } else { // punct
+      if(r < 0.005){
+        html = `<strong>z = 0 is excluded</strong> from ℂ\\{0} — drag the point away from the origin.`;
+        pt.setAttribute('fill', 'var(--text-danger)');
+      } else {
+        const fits = epsMath < r;
+        html = `<strong>|z| = ${r.toFixed(2)}</strong> (distance to the excluded point 0). ` +
+          (fits ? `ε = ${epsMath.toFixed(2)} < |z| — disk avoids the origin. ✓ Works for any nonzero point: just take ε < |z|.`
+                : `ε = ${epsMath.toFixed(2)} ≥ |z| — disk swallows the origin. Shrink ε below ${r.toFixed(2)}.`);
+        pt.setAttribute('fill', fits ? 'var(--text-success)' : 'var(--text-danger)');
+      }
+    }
+    verdict.innerHTML = html;
+  }
+
+  let dragging = false;
+  function getSvgCoords(evt){
+    const rect = svg.getBoundingClientRect();
+    const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+    const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+    const x = (clientX - rect.left) / rect.width * 400;
+    const y = (clientY - rect.top) / rect.height * 400;
+    return [x,y];
+  }
+  function startDrag(evt){ dragging = true; pt.style.cursor='grabbing'; moveDrag(evt); evt.preventDefault(); }
+  function moveDrag(evt){
+    if(!dragging) return;
+    const [x,y] = getSvgCoords(evt);
+    px = Math.max(0,Math.min(400,x));
+    py = Math.max(0,Math.min(400,y));
+    update();
+    evt.preventDefault();
+  }
+  function endDrag(){ dragging=false; pt.style.cursor='grab'; }
+
+  pt.addEventListener('mousedown', startDrag);
+  svg.addEventListener('mousemove', moveDrag);
+  window.addEventListener('mouseup', endDrag);
+  pt.addEventListener('touchstart', startDrag, {passive:false});
+  svg.addEventListener('touchmove', moveDrag, {passive:false});
+  window.addEventListener('touchend', endDrag);
+
+  epsSlider.addEventListener('input', (e)=>{
+    eps = parseInt(e.target.value);
+    epsVal.textContent = eps;
+    update();
+  });
+
+  document.getElementById('btn-open').addEventListener('click', ()=>setMode('open'));
+  document.getElementById('btn-closed').addEventListener('click', ()=>setMode('closed'));
+  document.getElementById('btn-punct').addEventListener('click', ()=>setMode('punct'));
+
+  setMode('open');
+})();
+</script>
+</body>
+</html>

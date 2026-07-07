@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid deformation under f(z) = z²</title>
+<style>
+  :root {
+    --ink: #1f2430;
+    --muted: #6a7180;
+    --card: #ffffff;
+    --bg: #f7f6f3;
+    --line: #e3e1da;
+    --blue: #1864ab;
+    --orange: #d9480f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 Georgia, 'Times New Roman', serif;
+    padding: 28px 16px 48px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  h1 { font-size: 24px; font-weight: normal; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 18px; font-size: 14.5px; }
+  .sub i { font-style: italic; }
+  .controls {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 14px; font-size: 14px;
+  }
+  .controls label { color: var(--muted); }
+  #tSlider { flex: 1; min-width: 160px; accent-color: #495057; }
+  button {
+    font: 13.5px Georgia, serif; padding: 5px 12px; border-radius: 7px;
+    border: 1px solid #c9c6bd; background: #fdfcfa; color: var(--ink); cursor: pointer;
+  }
+  button:hover { background: #f0eee8; }
+  .panels { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 10px 6px; flex: 0 1 auto;
+  }
+  .panel .cap { text-align: center; color: var(--muted); font-size: 13.5px; padding: 4px 0 6px; }
+  canvas { display: block; border-radius: 6px; touch-action: none; }
+  #inCanvas { cursor: crosshair; }
+  .readout {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 16px; margin-top: 14px; font-size: 14.5px;
+  }
+  .readout .row { display: flex; flex-wrap: wrap; gap: 6px 28px; }
+  .readout .num { font-style: italic; }
+  #statusText { margin-top: 6px; color: var(--muted); }
+  #statusText.pinch { color: #b02525; }
+  .notes { color: var(--muted); font-size: 13.5px; margin-top: 18px; max-width: 940px; }
+  .notes p { margin: 0 0 8px; }
+  .notes i { font-style: italic; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Grid deformation under <i>f</i>(<i>z</i>) = <i>z</i>²</h1>
+  <p class="sub">How the square grid in the <i>z</i>-plane warps into two families of parabolas in the <i>w</i>-plane, where <i>u</i> = <i>x</i>² − <i>y</i>² and <i>v</i> = 2<i>xy</i>. Drag the black point in the left panel to test conformality anywhere.</p>
+
+  <div class="controls">
+    <button id="playBtn">Play warp</button>
+    <label for="tSlider">warp</label>
+    <input id="tSlider" type="range" min="0" max="1" step="0.001" value="1">
+    <span id="tLabel" style="min-width:64px; color:var(--muted);">t = 1.00</span>
+    <button id="btnConformal">Point → 1 + <i>i</i></button>
+    <button id="btnPinch">Point → 0 (the pinch)</button>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <canvas id="inCanvas"></canvas>
+      <div class="cap">Input — <i>z</i>-plane (<i>x</i>, <i>y</i>)</div>
+    </div>
+    <div class="panel">
+      <canvas id="outCanvas"></canvas>
+      <div class="cap">Output — <i>w</i>-plane (<i>u</i>, <i>v</i>)</div>
+    </div>
+  </div>
+
+  <div class="readout">
+    <div class="row">
+      <span><i>z</i> = <span class="num" id="zVal"></span></span>
+      <span><i>w</i> = <i>z</i>² = <span class="num" id="wVal"></span></span>
+      <span>tangent slopes at <i>w</i>: <span class="num" id="slopeVal"></span></span>
+      <span>angle between image curves: <span class="num" id="angleVal"></span></span>
+    </div>
+    <div id="statusText"></div>
+  </div>
+
+  <div class="notes">
+    <p>Each curve on the right is the image of the same-colored line on the left. A vertical line <i>x</i> = <i>c</i> maps to <i>u</i> = <i>c</i>² − <i>v</i>²/(4<i>c</i>²), a parabola opening toward −<i>u</i> with vertex (<i>c</i>², 0). A horizontal line <i>y</i> = <i>c</i> maps to <i>u</i> = <i>v</i>²/(4<i>c</i>²) − <i>c</i>², opening toward +<i>u</i> with vertex (−<i>c</i>², 0). Since (−<i>z</i>)² = <i>z</i>², the lines <i>x</i> = <i>c</i> and <i>x</i> = −<i>c</i> land on the same parabola — the map is 2-to-1.</p>
+    <p>The two bold curves pass through the draggable point's image <i>w</i> = <i>z</i>², drawn with their tangent lines and the measured angle. Away from <i>z</i> = 0 the angle is always 90°, matching the right angle between the grid lines in the input — angles are preserved. At <i>z</i> = 0, where <i>f</i>′(0) = 2·0 = 0, both tangent vectors collapse to zero and there is no angle left to preserve: the lines <i>x</i> = 0 and <i>y</i> = 0 both fold onto the <i>u</i>-axis, pinched at <i>w</i> = 0.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- configuration ----------
+  var CSS_W = 470;                       // canvas size in CSS pixels (square)
+  var IN_HALF = 2.6;                     // input view: [-2.6, 2.6]^2
+  var OUT_HALF = 6.5;                    // output view: [-6.5, 6.5]^2
+  var SPAN = 2.2;                        // each grid line spans [-SPAN, SPAN]
+  var SAMPLES = 180;
+  var GRID = [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2];
+
+  var BOLD_V = '#1864ab';                // through-point vertical line (strong blue)
+  var BOLD_H = '#d9480f';                // through-point horizontal line (strong orange)
+
+  // ---------- state ----------
+  var t = 1;                             // warp parameter: 0 = straight grid, 1 = full z^2
+  var px0 = 1, py0 = 1;                  // draggable point z = px0 + i*py0
+  var playing = false, lastTs = 0;
+
+  // ---------- canvas setup ----------
+  function setup(id) {
+    var c = document.getElementById(id);
+    var dpr = window.devicePixelRatio || 1;
+    c.width = CSS_W * dpr; c.height = CSS_W * dpr;
+    c.style.width = CSS_W + 'px'; c.style.height = CSS_W + 'px';
+    var ctx = c.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { canvas: c, ctx: ctx };
+  }
+  var inP = setup('inCanvas'), outP = setup('outCanvas');
+
+  function toPxIn(x, y) {
+    return [ (x + IN_HALF) / (2 * IN_HALF) * CSS_W,
+             (IN_HALF - y) / (2 * IN_HALF) * CSS_W ];
+  }
+  function toPxOut(u, v) {
+    return [ (u + OUT_HALF) / (2 * OUT_HALF) * CSS_W,
+             (OUT_HALF - v) / (2 * OUT_HALF) * CSS_W ];
+  }
+  function fromPxIn(px, py) {
+    return [ px / CSS_W * 2 * IN_HALF - IN_HALF,
+             IN_HALF - py / CSS_W * 2 * IN_HALF ];
+  }
+
+  // ---------- the map ----------
+  // interpolated map: w_t(z) = (1 - t) z + t z^2
+  function mapT(tt, x, y) {
+    return [ (1 - tt) * x + tt * (x * x - y * y),
+             (1 - tt) * y + tt * (2 * x * y) ];
+  }
+  // tangent to the image of the vertical line x = x0, at parameter y0
+  function tanVert(tt, x0, y0) {
+    return [ -2 * tt * y0, (1 - tt) + 2 * tt * x0 ];
+  }
+  // tangent to the image of the horizontal line y = y0, at parameter x0
+  function tanHoriz(tt, x0, y0) {
+    return [ (1 - tt) + 2 * tt * x0, 2 * tt * y0 ];
+  }
+
+  // ---------- colors ----------
+  function colV(c) {  // cool family for vertical lines x = c
+    if (c === 0) return 'hsl(215, 60%, 22%)';
+    return 'hsl(' + (205 + (c / 2) * 35) + ', 62%, 40%)';
+  }
+  function colH(c) {  // warm family for horizontal lines y = c
+    if (c === 0) return 'hsl(15, 70%, 25%)';
+    return 'hsl(' + (22 + (c / 2) * 18) + ', 78%, 44%)';
+  }
+  function isInt(c) { return Math.abs(c - Math.round(c)) < 1e-9; }
+
+  // ---------- drawing helpers ----------
+  function axes(ctx, toPx, half, hLab, vLab, ticks) {
+    var p, i;
+    ctx.strokeStyle = '#b9b6ae'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    p = toPx(-half, 0); ctx.moveTo(p[0], p[1]);
+    p = toPx(half, 0);  ctx.lineTo(p[0], p[1]);
+    p = toPx(0, -half); ctx.moveTo(p[0], p[1]);
+    p = toPx(0, half);  ctx.lineTo(p[0], p[1]);
+    ctx.stroke();
+    ctx.fillStyle = '#8d8a82';
+    ctx.font = 'italic 13px Georgia, serif';
+    p = toPx(half, 0);  ctx.fillText(hLab, p[0] - 12, p[1] - 6);
+    p = toPx(0, half);  ctx.fillText(vLab, p[0] + 6, p[1] + 12);
+    if (ticks) {
+      ctx.font = '10.5px Georgia, serif';
+      for (i = -Math.floor(half); i <= Math.floor(half); i++) {
+        if (i === 0) continue;
+        p = toPx(i, 0);
+        ctx.strokeStyle = '#b9b6ae';
+        ctx.beginPath(); ctx.moveTo(p[0], p[1] - 3); ctx.lineTo(p[0], p[1] + 3); ctx.stroke();
+        if (i % 2 === 0) ctx.fillText(String(i), p[0] - (i < 0 ? 8 : 4), p[1] + 14);
+        p = toPx(0, i);
+        ctx.beginPath(); ctx.moveTo(p[0] - 3, p[1]); ctx.lineTo(p[0] + 3, p[1]); ctx.stroke();
+        if (i % 2 === 0) ctx.fillText(String(i), p[0] + 6, p[1] + 3);
+      }
+    }
+  }
+
+  function polyline(ctx, pts) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.stroke();
+  }
+
+  // sampled image (under w_t) of vertical or horizontal line
+  function imagePts(tt, c, vertical) {
+    var pts = [], i, s, w;
+    for (i = 0; i <= SAMPLES; i++) {
+      s = -SPAN + (2 * SPAN) * i / SAMPLES;
+      w = vertical ? mapT(tt, c, s) : mapT(tt, s, c);
+      pts.push(toPxOut(w[0], w[1]));
+    }
+    return pts;
+  }
+
+  // ---------- input panel ----------
+  function drawInput() {
+    var ctx = inP.ctx, i, c, p, q;
+    ctx.clearRect(0, 0, CSS_W, CSS_W);
+    ctx.fillStyle = '#fdfdfc'; ctx.fillRect(0, 0, CSS_W, CSS_W);
+    axes(ctx, toPxIn, IN_HALF, 'x', 'y', false);
+
+    for (i = 0; i < GRID.length; i++) {
+      c = GRID[i];
+      // vertical line x = c
+      ctx.strokeStyle = colV(c);
+      ctx.lineWidth = isInt(c) ? (c === 0 ? 2.6 : 2) : 1;
+      ctx.globalAlpha = isInt(c) ? 1 : 0.45;
+      p = toPxIn(c, -SPAN); q = toPxIn(c, SPAN);
+      ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+      // horizontal line y = c
+      ctx.strokeStyle = colH(c);
+      ctx.lineWidth = isInt(c) ? (c === 0 ? 2.6 : 2) : 1;
+      p = toPxIn(-SPAN, c); q = toPxIn(SPAN, c);
+      ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+      ctx.globalAlpha = 1;
+      // labels on integer lines, at the line ends
+      if (isInt(c)) {
+        ctx.font = 'italic 12px Georgia, serif';
+        ctx.fillStyle = colV(c);
+        p = toPxIn(c, SPAN);
+        ctx.fillText('x = ' + c, p[0] - 16, p[1] - 7);
+        ctx.fillStyle = colH(c);
+        p = toPxIn(SPAN, c);
+        ctx.fillText('y = ' + c, p[0] + 5, p[1] + 4);
+      }
+    }
+
+    // through-point lines (bold)
+    ctx.lineWidth = 3.2;
+    ctx.strokeStyle = BOLD_V;
+    p = toPxIn(px0, -SPAN); q = toPxIn(px0, SPAN);
+    ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+    ctx.strokeStyle = BOLD_H;
+    p = toPxIn(-SPAN, py0); q = toPxIn(SPAN, py0);
+    ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+
+    // the draggable point
+    p = toPxIn(px0, py0);
+    ctx.fillStyle = '#16181d';
+    ctx.beginPath(); ctx.arc(p[0], p[1], 6.5, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(p[0], p[1], 6.5, 0, 2 * Math.PI); ctx.stroke();
+    ctx.fillStyle = '#16181d';
+    ctx.font = 'italic 13px Georgia, serif';
+    ctx.fillText('z', p[0] + 10, p[1] - 8);
+  }
+
+  // ---------- output panel ----------
+  function drawOutput(info) {
+    var ctx = outP.ctx, i, c, pts, w, p;
+    ctx.clearRect(0, 0, CSS_W, CSS_W);
+    ctx.fillStyle = '#fdfdfc'; ctx.fillRect(0, 0, CSS_W, CSS_W);
+    axes(ctx, toPxOut, OUT_HALF, 'u', 'v', true);
+
+    // grid-line images: halves first (faint), then integers
+    var passes = [false, true];
+    for (var pass = 0; pass < 2; pass++) {
+      for (i = 0; i < GRID.length; i++) {
+        c = GRID[i];
+        if (isInt(c) !== passes[pass]) continue;
+        ctx.globalAlpha = isInt(c) ? 0.95 : 0.4;
+        ctx.lineWidth = isInt(c) ? (c === 0 ? 2.6 : 2) : 1;
+        ctx.strokeStyle = colV(c);
+        polyline(ctx, imagePts(t, c, true));
+        ctx.strokeStyle = colH(c);
+        polyline(ctx, imagePts(t, c, false));
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // labels track the image of each line's midpoint
+    ctx.font = 'italic 12px Georgia, serif';
+    for (i = 0; i < GRID.length; i++) {
+      c = GRID[i];
+      if (!isInt(c) || c === 0) continue;
+      w = mapT(t, c, 0);                       // midpoint of x = c is (c, 0)
+      p = toPxOut(w[0], w[1]);
+      ctx.fillStyle = colV(c);
+      ctx.fillText('x = ' + c, p[0] - 14, p[1] + (c > 0 ? -8 : 17));
+      w = mapT(t, 0, c);                       // midpoint of y = c is (0, c)
+      p = toPxOut(w[0], w[1]);
+      ctx.fillStyle = colH(c);
+      ctx.fillText('y = ' + c, p[0] - 14, p[1] + (c > 0 ? -8 : 17));
+    }
+
+    // through-point image curves (bold)
+    ctx.lineWidth = 3.2;
+    ctx.strokeStyle = BOLD_V;
+    polyline(ctx, imagePts(t, px0, true));
+    ctx.strokeStyle = BOLD_H;
+    polyline(ctx, imagePts(t, py0, false));
+
+    // image point w
+    var wp = mapT(t, px0, py0);
+    var wpx = toPxOut(wp[0], wp[1]);
+
+    // tangent lines + angle marker
+    if (info.defined) {
+      var L = 1.15; // half-length of tangent segments, in w-plane units
+      drawTangent(ctx, wp, info.a, L, BOLD_V);
+      drawTangent(ctx, wp, info.b, L, BOLD_H);
+      drawAngleMarker(ctx, wpx, info);
+    }
+
+    ctx.fillStyle = '#16181d';
+    ctx.beginPath(); ctx.arc(wpx[0], wpx[1], 6, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(wpx[0], wpx[1], 6, 0, 2 * Math.PI); ctx.stroke();
+    ctx.fillStyle = '#16181d';
+    ctx.font = 'italic 13px Georgia, serif';
+    ctx.fillText('w', wpx[0] + 10, wpx[1] - 8);
+
+    // pinch annotation, fades in as t -> 1
+    if (t > 0.85) {
+      var alpha = Math.min(1, (t - 0.85) / 0.15);
+      ctx.globalAlpha = alpha;
+      var o = toPxOut(0, 0);
+      ctx.fillStyle = '#7a2020';
+      ctx.beginPath(); ctx.arc(o[0], o[1], 3.5, 0, 2 * Math.PI); ctx.fill();
+      ctx.font = '11.5px Georgia, serif';
+      ctx.fillText('pinch at w = 0:', o[0] + 8, o[1] + 26);
+      ctx.fillText('x = 0 and y = 0 fold onto the u-axis', o[0] + 8, o[1] + 40);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawTangent(ctx, w, dir, L, color) {
+    var n = Math.hypot(dir[0], dir[1]);
+    if (n < 1e-12) return;
+    var ux = dir[0] / n, uy = dir[1] / n;
+    var p = toPxOut(w[0] - L * ux, w[1] - L * uy);
+    var q = toPxOut(w[0] + L * ux, w[1] + L * uy);
+    ctx.save();
+    ctx.setLineDash([6, 4]);
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = color;
+    ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawAngleMarker(ctx, wpx, info) {
+    // pixel-space unit directions (canvas y is flipped)
+    var a = info.a, b = info.b;
+    var na = Math.hypot(a[0], a[1]), nb = Math.hypot(b[0], b[1]);
+    var pa = [a[0] / na, -a[1] / na], pb = [b[0] / nb, -b[1] / nb];
+    // pick representatives spanning the minor angle
+    if (pa[0] * pb[0] + pa[1] * pb[1] < 0) { pb[0] = -pb[0]; pb[1] = -pb[1]; }
+    var r = 17;
+    if (Math.abs(info.deg - 90) < 0.5) {
+      // right-angle square
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(wpx[0] + r * pa[0], wpx[1] + r * pa[1]);
+      ctx.lineTo(wpx[0] + r * (pa[0] + pb[0]), wpx[1] + r * (pa[1] + pb[1]));
+      ctx.lineTo(wpx[0] + r * pb[0], wpx[1] + r * pb[1]);
+      ctx.stroke();
+    } else {
+      var a0 = Math.atan2(pa[1], pa[0]), a1 = Math.atan2(pb[1], pb[0]);
+      var diff = a1 - a0;
+      while (diff > Math.PI) diff -= 2 * Math.PI;
+      while (diff < -Math.PI) diff += 2 * Math.PI;
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(wpx[0], wpx[1], r, a0, a0 + diff, diff < 0);
+      ctx.stroke();
+    }
+    // angle text along the bisector
+    var bis = [pa[0] + pb[0], pa[1] + pb[1]];
+    var nbis = Math.hypot(bis[0], bis[1]) || 1;
+    ctx.fillStyle = '#222';
+    ctx.font = '12.5px Georgia, serif';
+    ctx.fillText(info.deg.toFixed(1) + '°',
+      wpx[0] + (r + 16) * bis[0] / nbis - 12,
+      wpx[1] + (r + 16) * bis[1] / nbis + 4);
+  }
+
+  // ---------- conformality info ----------
+  function conformalInfo() {
+    var a = tanVert(t, px0, py0);    // tangent of image of x = px0
+    var b = tanHoriz(t, px0, py0);   // tangent of image of y = py0
+    var na = Math.hypot(a[0], a[1]), nb = Math.hypot(b[0], b[1]);
+    var defined = na > 1e-3 && nb > 1e-3;
+    var deg = NaN;
+    if (defined) {
+      var cos = Math.abs(a[0] * b[0] + a[1] * b[1]) / (na * nb);
+      deg = Math.acos(Math.min(1, cos)) * 180 / Math.PI;
+    }
+    return { a: a, b: b, defined: defined, deg: deg };
+  }
+
+  function fmtC(x, y) {
+    var re = x.toFixed(2), im = Math.abs(y).toFixed(2);
+    return re + (y < 0 ? ' − ' : ' + ') + im + 'i';
+  }
+  function fmtSlope(d) {
+    if (Math.abs(d[0]) < 1e-9) return '∞ (vertical)';
+    var s = d[1] / d[0];
+    return (s >= 0 ? '+' : '−') + Math.abs(s).toFixed(2);
+  }
+
+  // ---------- readout ----------
+  function updateReadout(info) {
+    var wTrue = mapT(1, px0, py0);   // true image under z^2, regardless of slider
+    document.getElementById('zVal').textContent = fmtC(px0, py0);
+    document.getElementById('wVal').textContent = fmtC(wTrue[0], wTrue[1]);
+    document.getElementById('tLabel').textContent = 't = ' + t.toFixed(2);
+
+    var slopeEl = document.getElementById('slopeVal');
+    var angleEl = document.getElementById('angleVal');
+    var status = document.getElementById('statusText');
+
+    if (info.defined) {
+      slopeEl.textContent = fmtSlope(info.a) + ' and ' + fmtSlope(info.b);
+      angleEl.textContent = info.deg.toFixed(1) + '°';
+      status.classList.remove('pinch');
+      var fp = '2z = ' + fmtC(2 * px0, 2 * py0);
+      if (t >= 0.999) {
+        status.innerHTML = 'The two input lines cross at 90°, and their images cross at ' +
+          info.deg.toFixed(1) + '° — the angle is preserved. Conformal here: ' +
+          '<i>f</i>′(<i>z</i>) = ' + fp + ' ≠ 0.';
+      } else {
+        status.innerHTML = 'Mid-warp (t = ' + t.toFixed(2) +
+          ') — slide to t = 1 to see the full map <i>w</i> = <i>z</i>².';
+      }
+    } else {
+      slopeEl.textContent = 'undefined';
+      angleEl.textContent = 'undefined';
+      status.classList.add('pinch');
+      status.innerHTML = 'Both tangent vectors are zero at <i>w</i> = 0 — there is no angle left to measure. ' +
+        '<i>f</i>′(0) = 2·0 = 0: the pinch point, where conformality fails.';
+    }
+  }
+
+  // ---------- main draw ----------
+  function drawAll() {
+    var info = conformalInfo();
+    drawInput();
+    drawOutput(info);
+    updateReadout(info);
+  }
+
+  // ---------- interaction ----------
+  var slider = document.getElementById('tSlider');
+  var playBtn = document.getElementById('playBtn');
+
+  slider.addEventListener('input', function () {
+    t = parseFloat(slider.value);
+    stopPlay();
+    drawAll();
+  });
+
+  function stopPlay() {
+    playing = false;
+    playBtn.textContent = (t >= 1) ? 'Replay warp' : 'Play warp';
+  }
+  function tick(ts) {
+    if (!playing) return;
+    var dt = (ts - lastTs) / 1000; lastTs = ts;
+    t = Math.min(1, t + dt * 0.35);
+    slider.value = t;
+    drawAll();
+    if (t >= 1) { stopPlay(); return; }
+    requestAnimationFrame(tick);
+  }
+  playBtn.addEventListener('click', function () {
+    if (playing) { stopPlay(); return; }
+    if (t >= 1) { t = 0; slider.value = 0; }
+    playing = true;
+    playBtn.textContent = 'Pause';
+    lastTs = performance.now();
+    requestAnimationFrame(tick);
+  });
+
+  document.getElementById('btnConformal').addEventListener('click', function () {
+    px0 = 1; py0 = 1; drawAll();
+  });
+  document.getElementById('btnPinch').addEventListener('click', function () {
+    px0 = 0; py0 = 0; drawAll();
+  });
+
+  // drag / click-to-place on the input panel
+  var dragging = false;
+  function placeFromEvent(e) {
+    var rect = inP.canvas.getBoundingClientRect();
+    var m = fromPxIn(e.clientX - rect.left, e.clientY - rect.top);
+    var x = Math.max(-SPAN, Math.min(SPAN, m[0]));
+    var y = Math.max(-SPAN, Math.min(SPAN, m[1]));
+    x = Math.round(x * 20) / 20;          // snap to 0.05
+    y = Math.round(y * 20) / 20;
+    if (Math.hypot(x, y) < 0.12) { x = 0; y = 0; }   // snap to the pinch
+    px0 = x; py0 = y;
+    drawAll();
+  }
+  inP.canvas.addEventListener('pointerdown', function (e) {
+    dragging = true;
+    inP.canvas.setPointerCapture(e.pointerId);
+    placeFromEvent(e);
+  });
+  inP.canvas.addEventListener('pointermove', function (e) {
+    if (dragging) placeFromEvent(e);
+  });
+  inP.canvas.addEventListener('pointerup', function () { dragging = false; });
+  inP.canvas.addEventListener('pointercancel', function () { dragging = false; });
+
+  // ---------- first paint ----------
+  drawAll();
+})();
+</script>
+</body>
+</html>

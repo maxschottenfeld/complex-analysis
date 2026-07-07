@@ -1,0 +1,18 @@
+---
+layout: base.njk
+title: Visualizations
+---
+
+<h1>Visualizations</h1>
+
+<p>Every interactive visualization from the project, in lesson order. Each one was built to make a specific theorem or definition tangible — drag points, move sliders, and step through proofs.</p>
+
+<div class="viz-grid">
+  {% for viz in visualizations %}
+  <a class="viz-card" href="/visualizations/{{ viz.slug }}/">
+    <span class="viz-card-lesson">{{ viz.lesson }}</span>
+    <h2>{{ viz.title }}</h2>
+    <p>{{ viz.description }}</p>
+  </a>
+  {% endfor %}
+</div>

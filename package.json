@@ -1,0 +1,12 @@
+{
+  "name": "complex-analysis-site",
+  "version": "0.1.0",
+  "description": "Personal site presenting Max Schottenfeld's complex analysis self-study project — lessons plus interactive visualizations.",
+  "scripts": {
+    "build": "eleventy",
+    "serve": "eleventy --serve"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  }
+}

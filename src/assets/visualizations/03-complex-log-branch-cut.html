@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Complex Logarithm &amp; Its Branch Cut</title>
+<style>
+  :root{
+    --bg:#0e1117; --panel:#161b22; --panel2:#1c2230; --ink:#e6edf3;
+    --muted:#9aa7b4; --line:#2b3340; --accent:#58a6ff; --warn:#ff7b54;
+    --good:#56d364; --mono:"SF Mono",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;}
+  a{color:var(--accent)}
+  header{padding:28px 24px 8px;max-width:1180px;margin:0 auto;}
+  header h1{font-size:26px;margin:0 0 6px;font-weight:650;letter-spacing:.2px}
+  header p{margin:4px 0;color:var(--muted);max-width:820px;font-size:15px}
+  .formula{font-family:var(--mono);background:var(--panel2);padding:2px 7px;border-radius:5px;
+    color:#cdd9e5;font-size:13.5px;white-space:nowrap}
+  main{max-width:1180px;margin:0 auto;padding:8px 24px 60px;
+    display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:18px;display:flex;flex-direction:column;}
+  .panel.wide{grid-column:1 / -1}
+  .panel h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .tag{font-size:11px;font-weight:600;color:#0e1117;background:var(--accent);
+    padding:2px 7px;border-radius:20px;letter-spacing:.3px}
+  .why{font-size:13px;color:var(--muted);margin:0 0 14px;}
+  canvas{display:block;border-radius:8px;background:#000;max-width:100%}
+  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+  .readout{font-family:var(--mono);font-size:13px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:8px;padding:12px 14px;flex:1;min-width:220px}
+  .readout .lbl{color:var(--muted)}
+  .readout .val{color:#cdd9e5}
+  .kval{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--line)}
+  .kval:last-child{border-bottom:none}
+  .kval.principal{color:var(--good);font-weight:600}
+  .controls{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
+  .controls input[type=range]{accent-color:var(--accent)}
+  button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+    border-radius:7px;padding:7px 13px;font-size:13px;cursor:pointer;font-weight:550}
+  button:hover{border-color:var(--accent)}
+  button.go{background:var(--accent);color:#0e1117;border-color:var(--accent)}
+  .cutnote{color:var(--warn);font-weight:600}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+  .swatch{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+  footer{max-width:1180px;margin:0 auto;padding:0 24px 50px;color:var(--muted);font-size:13px}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  @media(max-width:760px){main{grid-template-columns:1fr}.panel.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Complex Logarithm &amp; Its Branch Cut</h1>
+  <p>Every nonzero <span class="formula">z = re<sup>iθ</sup></span> has <strong>infinitely many</strong> logarithms:
+     <span class="formula">log z = ln|z| + i(θ + 2πk),&nbsp; k ∈ ℤ</span>.
+     The <strong>principal branch</strong> picks <span class="formula">k = 0</span> with
+     <span class="formula">Arg z ∈ (−π, π]</span>, giving
+     <span class="formula">Log z = ln|z| + i·Arg z</span>.</p>
+  <p>To make <span class="formula">Log z</span> single-valued we must <em>cut</em> the plane along the negative real axis.
+     Crossing that cut, <span class="formula">Arg z</span> jumps from <span class="cutnote">+π to −π</span> — that jump <em>is</em> the branch cut.
+     This page makes that visible from four angles.</p>
+</header>
+
+<main>
+  <!-- PANEL 1 -->
+  <section class="panel">
+    <h2><span class="tag">Panel 1</span> Domain coloring of Log z</h2>
+    <p class="why">Each point of the plane is colored by its value of <span class="formula">Log z</span>:
+       <strong>hue</strong> = <span class="formula">Arg z</span> (the imaginary part) and
+       <strong>brightness</strong> = <span class="formula">ln|z|</span> (the real part — dark near 0, bright far out).
+       Watch the negative real axis: the hue snaps from one color straight to its opposite. That hard seam is the discontinuity of <span class="formula">Log z</span>.</p>
+    <canvas id="dc" width="460" height="460"></canvas>
+    <div class="legend">
+      <span><span class="swatch" style="background:hsl(0,80%,55%)"></span>Arg ≈ 0 (positive real)</span>
+      <span><span class="swatch" style="background:hsl(120,80%,55%)"></span>Arg ≈ +π/2 (up)</span>
+      <span><span class="swatch" style="background:hsl(300,80%,55%)"></span>Arg ≈ −π/2 (down)</span>
+      <span class="cutnote">◖ seam on negative-x axis = branch cut</span>
+    </div>
+    <p class="hint">○ at the origin: <span class="formula">Log 0</span> is <strong>undefined</strong> — a logarithmic singularity. The same point z is also live in Panels 2 &amp; 3.</p>
+  </section>
+
+  <!-- PANEL 2 -->
+  <section class="panel">
+    <h2><span class="tag">Panel 2</span> Interactive point probe</h2>
+    <p class="why">Click or drag anywhere to place <span class="formula">z</span>. The readout gives its rectangular and polar forms, its principal <span class="formula">Arg z</span>, and three of its infinitely many log values (<span class="formula">k = −1, 0, 1</span>), which differ by <span class="formula">2πi</span>. The principal value is highlighted.</p>
+    <canvas id="probe" width="460" height="460"></canvas>
+    <div class="row" style="margin-top:12px">
+      <div class="readout">
+        <div class="kval"><span class="lbl">z (rect)</span><span class="val" id="p_rect">—</span></div>
+        <div class="kval"><span class="lbl">z (polar)</span><span class="val" id="p_polar">—</span></div>
+        <div class="kval"><span class="lbl">|z|</span><span class="val" id="p_mod">—</span></div>
+        <div class="kval"><span class="lbl">Arg z</span><span class="val" id="p_arg">—</span></div>
+        <div class="kval"><span class="lbl">ln|z|</span><span class="val" id="p_ln">—</span></div>
+      </div>
+      <div class="readout">
+        <div style="color:var(--muted);margin-bottom:6px">log z = ln|z| + i(Arg z + 2πk)</div>
+        <div class="kval" id="k_m1"><span class="lbl">k = −1</span><span class="val">—</span></div>
+        <div class="kval principal" id="k_0"><span class="lbl">k = 0 (Log z)</span><span class="val">—</span></div>
+        <div class="kval" id="k_p1"><span class="lbl">k = +1</span><span class="val">—</span></div>
+      </div>
+    </div>
+    <p class="hint">Drag z slowly across the negative real axis and watch <span class="formula">Arg z</span> flip sign — the readout jumps by <span class="formula">2π</span>.</p>
+  </section>
+
+  <!-- PANEL 3 -->
+  <section class="panel wide">
+    <h2><span class="tag">Panel 3</span> Walk around the origin — where continuity breaks</h2>
+    <p class="why">A point travels <strong>counterclockwise</strong> on a circle of radius <span class="formula">r</span>. On the right, <span class="formula">Arg z</span> is plotted against the angle traveled. It climbs smoothly from <span class="formula">−π</span> to <span class="formula">+π</span> — then, the instant the point crosses the negative real axis, it <span class="cutnote">jumps straight back to −π</span>. The function can't stay continuous there. <strong>That forced jump is exactly why a branch cut is needed.</strong></p>
+    <div class="row">
+      <canvas id="walk" width="430" height="430"></canvas>
+      <canvas id="argplot" width="560" height="430" style="flex:1;min-width:320px"></canvas>
+    </div>
+    <div class="controls">
+      <button id="playBtn" class="go">▶ Play</button>
+      <button id="resetBtn">↺ Reset</button>
+      <label>radius r = <span id="rval" style="color:var(--ink)">1.5</span>
+        <input id="rRange" type="range" min="0.4" max="3" step="0.1" value="1.5">
+      </label>
+      <span class="cutnote" id="jumpMsg" style="visibility:hidden">⚠ Arg z just jumped +π → −π — this is the branch cut!</span>
+    </div>
+  </section>
+
+  <!-- PANEL 4 -->
+  <section class="panel wide">
+    <h2><span class="tag">Panel 4</span> The Riemann surface — the log's “true” domain</h2>
+    <p class="why">The jump in Panel 3 is an artifact of forcing one value per point. The honest picture is a <strong>helicoid</strong>: height = <span class="formula">Im(log z)</span> = the argument, which keeps <em>increasing</em> by <span class="formula">2π</span> each lap around the origin instead of resetting. Each full turn is a different <strong>sheet</strong> (a different <span class="formula">k</span>). The log is perfectly continuous up here — drag to rotate. The <span style="color:var(--good)">green band</span> is the principal sheet (<span class="formula">k = 0</span>); the branch cut is just the edge where we slice one sheet off to flatten it back into Panel 1.</p>
+    <canvas id="riemann" width="1120" height="430"></canvas>
+    <p class="hint">Drag horizontally to spin · the vertical seams between colors are the <span class="formula">θ = ±π</span> edges where consecutive sheets join.</p>
+  </section>
+</main>
+
+<footer>
+  Built for Max’s complex-analysis self-study (Lesson 3 → Lesson 4). Key terms used as-is: <em>Arg z</em>, <em>principal branch</em>, <em>branch cut</em>, <em>Riemann surface</em>, <em>logarithmic singularity</em>.
+  Off the cut, <span class="formula">d/dz Log z = 1/z</span> — the principal branch is holomorphic on ℂ ∖ (−∞, 0].
+</footer>
+
+<script>
+"use strict";
+const TAU = Math.PI*2;
+// hue from argument: map (-pi,pi] -> [0,360)
+function argToHue(a){ return ((a/Math.PI)*180 + 360) % 360; }
+function fmt(x,d=3){ if(!isFinite(x)) return "∞"; const s=x.toFixed(d); return (s==="-0.000"||s==="-0.00"||s==="-0.0")?s.slice(1):s; }
+function fmtPi(a){ // express in units of pi
+  const r=a/Math.PI; return fmt(r,3)+"π";
+}
+
+/* ---------- shared plane mapping ---------- */
+// world coords: x,y in [-RANGE,RANGE]; pixel<->world helpers per canvas size
+const RANGE = 3.2;
+function makeMap(W,H){
+  return {
+    toPix:(x,y)=>[ (x/RANGE)*0.5*W + W/2 , H/2 - (y/RANGE)*0.5*H ],
+    toWorld:(px,py)=>[ (px - W/2)/(0.5*W)*RANGE , (H/2 - py)/(0.5*H)*RANGE ]
+  };
+}
+function drawAxes(ctx,W,H,map,cut=true){
+  ctx.lineWidth=1; ctx.strokeStyle="rgba(255,255,255,0.18)";
+  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+  if(cut){ // branch cut on negative real axis
+    ctx.lineWidth=3; ctx.strokeStyle="rgba(255,123,84,0.9)";
+    ctx.setLineDash([6,5]);
+    ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W/2,H/2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+/* ============ PANEL 1: domain coloring ============ */
+(function(){
+  const cv=document.getElementById('dc'), ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height, map=makeMap(W,H);
+  const img=ctx.createImageData(W,H), d=img.data;
+  for(let py=0;py<H;py++){
+    for(let px=0;px<W;px++){
+      const [x,y]=map.toWorld(px+0.5,py+0.5);
+      const mod=Math.hypot(x,y);
+      const arg=Math.atan2(y,x);              // (-pi,pi]
+      const hue=argToHue(arg);
+      // brightness encodes ln|z|: map ln from ~[-3,1.2] to lightness 12%..82%
+      let L = 12 + (Math.log(mod)+3)/4.2*70;
+      L=Math.max(6,Math.min(88,L));
+      const sat=82;
+      const [r,g,b]=hsl2rgb(hue,sat,L);
+      const i=(py*W+px)*4;
+      d[i]=r; d[i+1]=g; d[i+2]=b; d[i+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+  drawAxes(ctx,W,H,map,true);
+  // origin singularity marker
+  const [ox,oy]=map.toPix(0,0);
+  ctx.lineWidth=2; ctx.strokeStyle="#fff";
+  ctx.beginPath(); ctx.arc(ox,oy,6,0,TAU); ctx.stroke();
+  ctx.fillStyle="#fff"; ctx.font="12px sans-serif"; ctx.fillText("Log 0 undefined",ox+10,oy-8);
+  ctx.fillStyle="#ff7b54"; ctx.font="bold 12px sans-serif"; ctx.fillText("branch cut",10,oy-8);
+})();
+
+function hsl2rgb(h,s,l){
+  s/=100;l/=100;
+  const k=n=>(n+h/30)%12;
+  const a=s*Math.min(l,1-l);
+  const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+  return [Math.round(255*f(0)),Math.round(255*f(8)),Math.round(255*f(4))];
+}
+
+/* ============ PANEL 2: point probe ============ */
+(function(){
+  const cv=document.getElementById('probe'), ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height, map=makeMap(W,H);
+  let z={x:1.4,y:1.0}, dragging=false;
+
+  function render(){
+    ctx.fillStyle="#0a0d12"; ctx.fillRect(0,0,W,H);
+    // faint grid
+    ctx.strokeStyle="rgba(255,255,255,0.05)"; ctx.lineWidth=1;
+    for(let g=-3;g<=3;g++){ const [px]=map.toPix(g,0),[,py]=map.toPix(0,g);
+      ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(W,py);ctx.stroke(); }
+    drawAxes(ctx,W,H,map,true);
+    const [zx,zy]=map.toPix(z.x,z.y), [ox,oy]=map.toPix(0,0);
+    // radial line + angle arc
+    ctx.strokeStyle="rgba(88,166,255,0.55)"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(zx,zy); ctx.stroke();
+    const arg=Math.atan2(z.y,z.x);
+    ctx.strokeStyle="rgba(86,211,100,0.9)"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(ox,oy,26,0,-arg,arg<0); ctx.stroke();
+    // point
+    ctx.fillStyle="#58a6ff"; ctx.beginPath(); ctx.arc(zx,zy,7,0,TAU); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.font="13px sans-serif"; ctx.fillText("z",zx+10,zy-8);
+    // origin
+    ctx.strokeStyle="#fff"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(ox,oy,5,0,TAU); ctx.stroke();
+    updateReadout();
+  }
+  function updateReadout(){
+    const mod=Math.hypot(z.x,z.y), arg=Math.atan2(z.y,z.x), ln=Math.log(mod);
+    document.getElementById('p_rect').textContent=`${fmt(z.x,3)} ${z.y>=0?'+':'−'} ${fmt(Math.abs(z.y),3)}i`;
+    document.getElementById('p_polar').textContent=`${fmt(mod,3)}·e^(${fmt(arg,3)}i)`;
+    document.getElementById('p_mod').textContent=fmt(mod,4);
+    document.getElementById('p_arg').textContent=`${fmt(arg,4)}  (= ${fmtPi(arg)})`;
+    document.getElementById('p_ln').textContent=fmt(ln,4);
+    const line=k=>`${fmt(ln,3)} + ${fmt(arg+TAU*k,3)} i`;
+    document.querySelector('#k_m1 .val').textContent=line(-1);
+    document.querySelector('#k_0 .val').textContent=line(0);
+    document.querySelector('#k_p1 .val').textContent=line(1);
+  }
+  function setFromEvent(e){
+    const r=cv.getBoundingClientRect();
+    const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+    const cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+    const sx=cv.width/r.width, sy=cv.height/r.height;
+    const [wx,wy]=map.toWorld(cx*sx,cy*sy); z={x:wx,y:wy}; render();
+  }
+  cv.addEventListener('mousedown',e=>{dragging=true;setFromEvent(e);});
+  window.addEventListener('mousemove',e=>{if(dragging)setFromEvent(e);});
+  window.addEventListener('mouseup',()=>dragging=false);
+  cv.addEventListener('touchstart',e=>{dragging=true;setFromEvent(e);e.preventDefault();},{passive:false});
+  cv.addEventListener('touchmove',e=>{if(dragging){setFromEvent(e);e.preventDefault();}},{passive:false});
+  cv.addEventListener('touchend',()=>dragging=false);
+  render();
+})();
+
+/* ============ PANEL 3: walk around origin ============ */
+(function(){
+  const cv=document.getElementById('walk'), ctx=cv.getContext('2d');
+  const pl=document.getElementById('argplot'), pctx=pl.getContext('2d');
+  const W=cv.width,H=cv.height, map=makeMap(W,H);
+  const PW=pl.width,PH=pl.height;
+  let r=1.5, playing=false, theta=-Math.PI, raf=null, prevArg=null;
+  const trail=[]; // {ang, arg}  ang = angle traveled from start
+
+  const rRange=document.getElementById('rRange'), rval=document.getElementById('rval');
+  const jumpMsg=document.getElementById('jumpMsg');
+  rRange.addEventListener('input',()=>{ r=parseFloat(rRange.value); rval.textContent=r.toFixed(1); reset(); });
+
+  function reset(){ theta=-Math.PI+0.0001; trail.length=0; prevArg=null; jumpMsg.style.visibility="hidden"; draw(); }
+  document.getElementById('resetBtn').onclick=()=>{ playing=false; document.getElementById('playBtn').textContent="▶ Play"; reset(); };
+  document.getElementById('playBtn').onclick=function(){
+    playing=!playing; this.textContent=playing?"❚❚ Pause":"▶ Play";
+    if(playing) loop();
+  };
+  function loop(){ if(!playing) return; step(); raf=requestAnimationFrame(loop); }
+  function step(){
+    theta+=0.018;
+    if(theta>Math.PI){ theta-=TAU; trail.length=0; } // completed a lap, restart sweep
+    record(); draw();
+  }
+  function record(){
+    const x=r*Math.cos(theta), y=r*Math.sin(theta);
+    const arg=Math.atan2(y,x);
+    // angle traveled measured from -pi start, in [0, 2pi)
+    let ang=theta+Math.PI;
+    if(prevArg!==null && (prevArg>Math.PI/2 && arg<-Math.PI/2)){
+      jumpMsg.style.visibility="visible";
+      setTimeout(()=>{jumpMsg.style.visibility="hidden";},1400);
+    }
+    prevArg=arg;
+    trail.push({ang,arg});
+  }
+  function draw(){
+    // left: moving point on circle
+    ctx.fillStyle="#0a0d12"; ctx.fillRect(0,0,W,H);
+    drawAxes(ctx,W,H,map,true);
+    const [ox,oy]=map.toPix(0,0);
+    ctx.strokeStyle="rgba(88,166,255,0.4)"; ctx.lineWidth=1.5;
+    const [rp]=map.toPix(r,0); ctx.beginPath(); ctx.arc(ox,oy,rp-ox,0,TAU); ctx.stroke();
+    const x=r*Math.cos(theta), y=r*Math.sin(theta);
+    const [zx,zy]=map.toPix(x,y);
+    // arrow direction (ccw)
+    ctx.strokeStyle="rgba(86,211,100,0.6)"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(zx,zy); ctx.stroke();
+    ctx.fillStyle="#58a6ff"; ctx.beginPath(); ctx.arc(zx,zy,8,0,TAU); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.font="12px sans-serif"; ctx.fillText("z (ccw)",zx+10,zy);
+    ctx.strokeStyle="#fff"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(ox,oy,5,0,TAU); ctx.stroke();
+    ctx.fillStyle="#9aa7b4"; ctx.font="12px sans-serif";
+    ctx.fillText("Arg z = "+fmtPi(Math.atan2(y,x)),12,H-14);
+    drawPlot();
+  }
+  function drawPlot(){
+    pctx.fillStyle="#0a0d12"; pctx.fillRect(0,0,PW,PH);
+    const padL=58,padB=40,padT=20,padR=18;
+    const x0=padL, x1=PW-padR, y0=PH-padB, y1=padT;
+    const X=ang=> x0 + (ang/TAU)*(x1-x0);
+    const Y=arg=> y0 + ((Math.PI-arg)/(TAU))*(y1-y0); // arg in [-pi,pi] -> y
+    // grid + axes
+    pctx.strokeStyle="rgba(255,255,255,0.12)"; pctx.lineWidth=1;
+    pctx.strokeRect(x0,y1,x1-x0,y0-y1);
+    pctx.fillStyle="#9aa7b4"; pctx.font="12px sans-serif";
+    // y ticks at -pi,0,pi
+    [[Math.PI,"+π"],[Math.PI/2,"+π/2"],[0,"0"],[-Math.PI/2,"−π/2"],[-Math.PI,"−π"]].forEach(([v,t])=>{
+      const yy=Y(v); pctx.strokeStyle="rgba(255,255,255,0.07)";
+      pctx.beginPath();pctx.moveTo(x0,yy);pctx.lineTo(x1,yy);pctx.stroke();
+      pctx.fillText(t,8,yy+4);
+    });
+    // x ticks
+    [[0,"0"],[Math.PI/2,"π/2"],[Math.PI,"π"],[3*Math.PI/2,"3π/2"],[TAU,"2π"]].forEach(([v,t])=>{
+      const xx=X(v); pctx.fillText(t,xx-8,y0+22);
+    });
+    pctx.fillStyle="#cdd9e5"; pctx.font="13px sans-serif";
+    pctx.fillText("Arg z",12,y1-4);
+    pctx.fillText("angle traveled around origin →",x0+90,PH-8);
+    // the cut line where jump happens: angle traveled = pi (point hits negative real axis)
+    const xc=X(Math.PI);
+    pctx.strokeStyle="rgba(255,123,84,0.85)"; pctx.lineWidth=2; pctx.setLineDash([5,4]);
+    pctx.beginPath();pctx.moveTo(xc,y1);pctx.lineTo(xc,y0);pctx.stroke();pctx.setLineDash([]);
+    pctx.fillStyle="#ff7b54"; pctx.font="11px sans-serif";
+    pctx.fillText("crosses −real axis", xc+6, y1+14);
+    pctx.fillText("Arg: +π → −π jump", xc+6, y1+28);
+    // plot trail, breaking the line at the discontinuity
+    pctx.strokeStyle="#56d364"; pctx.lineWidth=2.5; pctx.beginPath();
+    let started=false, prev=null;
+    for(const p of trail){
+      const xx=X(p.ang), yy=Y(p.arg);
+      if(prev && Math.abs(p.arg-prev.arg)>Math.PI){ pctx.stroke(); pctx.beginPath(); started=false; } // break across jump
+      if(!started){ pctx.moveTo(xx,yy); started=true; } else pctx.lineTo(xx,yy);
+      prev=p;
+    }
+    pctx.stroke();
+    // current dot
+    if(trail.length){ const p=trail[trail.length-1];
+      pctx.fillStyle="#58a6ff"; pctx.beginPath(); pctx.arc(X(p.ang),Y(p.arg),5,0,TAU); pctx.fill(); }
+  }
+  reset();
+})();
+
+/* ============ PANEL 4: Riemann surface (helicoid) ============ */
+(function(){
+  const cv=document.getElementById('riemann'), ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  let yaw=-0.7, dragging=false, lastX=0;
+
+  // helicoid: param (theta over several sheets, radius), height = theta (= Im log)
+  // we render as wireframe-ish filled quads with painter's algorithm
+  const SHEETS=3;               // k = -1,0,1  -> theta in [-3pi, 3pi)
+  const thetaMin=-SHEETS*Math.PI, thetaMax=SHEETS*Math.PI;
+  const NT=120, NR=10, Rmax=2.4;
+
+  function project(x,y,z){
+    // rotate about vertical (y) axis by yaw, simple isometric-ish
+    const cx=Math.cos(yaw), sx=Math.sin(yaw);
+    const X = x*cx - z*sx;
+    const Z = x*sx + z*cx;
+    const scale=70, tilt=0.55;
+    const px = W/2 + X*scale;
+    const py = H/2 - y*38 + Z*scale*tilt*0.0 - Z*0; // height mostly from y
+    return [px, H/2 - (y*30) + X*0 + (Z*scale*tilt)]; // combine tilt
+  }
+  // cleaner projection
+  function proj(theta,rad){
+    const x=rad*Math.cos(theta), z=rad*Math.sin(theta);
+    const h=theta; // height = Im(log z)
+    const cy=Math.cos(yaw), sy=Math.sin(yaw);
+    const X=x*cy - z*sy, Z=x*sy + z*cy;
+    const scale=62, tilt=0.5, vscale=26;
+    return [ W/2 + X*scale, H/2 - h*vscale + Z*scale*tilt ];
+  }
+  function sheetColor(theta,shade){
+    // hue by where in (-pi,pi] this theta sits (mod 2pi) so principal sheet is green band
+    let a=((theta+Math.PI)%TAU); if(a<0)a+=TAU; a-=Math.PI; // -> (-pi,pi]
+    const principal = theta>-Math.PI && theta<=Math.PI;
+    const hue=argToHue(a);
+    const [r,g,b]=hsl2rgb(hue,principal?72:46, 30+shade*34);
+    return `rgb(${r},${g},${b})`;
+  }
+  function draw(){
+    ctx.fillStyle="#0a0d12"; ctx.fillRect(0,0,W,H);
+    // collect quads with depth for painter sort
+    const quads=[];
+    const dt=(thetaMax-thetaMin)/NT, dr=Rmax/NR;
+    for(let i=0;i<NT;i++){
+      const t0=thetaMin+i*dt, t1=t0+dt;
+      for(let j=1;j<=NR;j++){
+        const r0=j*dr - dr, r1=j*dr;
+        const p00=proj(t0,Math.max(r0,0.12)), p01=proj(t0,r1),
+              p11=proj(t1,r1), p10=proj(t1,Math.max(r0,0.12));
+        // depth ~ Z of center
+        const cy=Math.cos(yaw),sy=Math.sin(yaw);
+        const xm=((r0+r1)/2)*Math.cos((t0+t1)/2), zm=((r0+r1)/2)*Math.sin((t0+t1)/2);
+        const depth = xm*sy + zm*cy;
+        const shade=0.3+0.7*(r1/Rmax);
+        quads.push({p:[p00,p01,p11,p10],depth,theta:(t0+t1)/2,shade});
+      }
+    }
+    quads.sort((a,b)=>a.depth-b.depth);
+    for(const q of quads){
+      ctx.beginPath(); ctx.moveTo(q.p[0][0],q.p[0][1]);
+      for(let k=1;k<4;k++) ctx.lineTo(q.p[k][0],q.p[k][1]);
+      ctx.closePath();
+      ctx.fillStyle=sheetColor(q.theta,q.shade);
+      ctx.fill();
+      ctx.strokeStyle="rgba(0,0,0,0.18)"; ctx.lineWidth=0.5; ctx.stroke();
+    }
+    // central axis (the singularity)
+    const a0=proj(thetaMin,0.12), a1=proj(thetaMax,0.12);
+    ctx.strokeStyle="rgba(255,255,255,0.5)"; ctx.lineWidth=2; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(a0[0],a0[1]); ctx.lineTo(a1[0],a1[1]); ctx.stroke(); ctx.setLineDash([]);
+    // labels
+    ctx.fillStyle="#e6edf3"; ctx.font="13px sans-serif"; ctx.textAlign="left";
+    ctx.fillText("height = Im(log z) = argument (winds by 2π each lap)",18,26);
+    ctx.fillStyle="#56d364"; ctx.fillText("green band = principal sheet (k = 0, −π < θ ≤ π)",18,46);
+    ctx.fillStyle="#9aa7b4"; ctx.fillText("drag to rotate ↔",W-130,H-16);
+  }
+  cv.addEventListener('mousedown',e=>{dragging=true;lastX=e.clientX;});
+  window.addEventListener('mousemove',e=>{ if(dragging){ yaw+=(e.clientX-lastX)*0.01; lastX=e.clientX; draw(); }});
+  window.addEventListener('mouseup',()=>dragging=false);
+  cv.addEventListener('touchstart',e=>{dragging=true;lastX=e.touches[0].clientX;e.preventDefault();},{passive:false});
+  cv.addEventListener('touchmove',e=>{ if(dragging){ yaw+=(e.touches[0].clientX-lastX)*0.01; lastX=e.touches[0].clientX; draw(); e.preventDefault(); }},{passive:false});
+  cv.addEventListener('touchend',()=>dragging=false);
+  // gentle auto-spin until first interaction
+  let auto=true; cv.addEventListener('mousedown',()=>auto=false,{once:true});
+  (function spin(){ if(auto){ yaw+=0.004; draw(); requestAnimationFrame(spin);} })();
+  draw();
+})();
+</script>
+</body>
+</html>
