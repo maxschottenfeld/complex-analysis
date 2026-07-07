@@ -6,7 +6,7 @@ A self-study project by Max Schottenfeld — complex analysis lessons paired wit
 
 ## Structure
 
-- `src/index.md` — homepage
+- `src/index.njk` — homepage
 - `src/lessons/` — written lessons (Markdown + KaTeX)
 - `src/assets/visualizations/` — self-contained interactive HTML visualizations
 - `src/_data/visualizations.json` — drives the gallery: one entry per visualization (slug, title, lesson, description)
@@ -23,7 +23,7 @@ The gallery card and its dedicated page are generated automatically.
 
 ```bash
 npm install
-npx eleventy --serve   # http://localhost:8080
+npm run serve   # http://localhost:8080
 ```
 
 ## Deploying
