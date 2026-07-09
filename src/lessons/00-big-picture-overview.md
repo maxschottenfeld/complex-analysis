@@ -1,5 +1,6 @@
 ---
 layout: base.njk
+hue: 355
 title: "Lesson 0 — The Big Picture"
 ---
 

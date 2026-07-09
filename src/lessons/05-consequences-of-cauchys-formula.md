@@ -1,5 +1,6 @@
 ---
 layout: base.njk
+hue: 320
 title: "Lesson 5 — Consequences of Cauchy's Formula"
 ---
 

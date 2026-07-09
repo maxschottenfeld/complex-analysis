@@ -1,5 +1,6 @@
 ---
 layout: base.njk
+hue: 185
 title: "Lesson 2 — Holomorphic Functions & the Cauchy-Riemann Equations"
 ---
 

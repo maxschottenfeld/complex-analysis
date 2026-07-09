@@ -1,5 +1,6 @@
 ---
 layout: base.njk
+hue: 215
 title: "Lesson 3 — Power Series & Elementary Functions"
 ---
 

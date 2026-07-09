@@ -1,5 +1,6 @@
 ---
 layout: base.njk
+hue: 145
 title: "Lesson 5a — The Real-Analysis Bridge"
 ---
 
