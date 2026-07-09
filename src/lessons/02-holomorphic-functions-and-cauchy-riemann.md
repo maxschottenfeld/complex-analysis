@@ -1,6 +1,7 @@
 ---
 layout: base.njk
 hue: 185
+scrolly: true
 title: "Lesson 2 — Holomorphic Functions & the Cauchy-Riemann Equations"
 ---
 
@@ -56,7 +57,31 @@ Substituting the Cauchy-Riemann relations $u_x=v_y=a$, $v_x=-u_y=b$ collapses th
 $$J = \begin{pmatrix} a & -b \\ b & a \end{pmatrix},$$
 which is exactly the form of a **rotation matrix** $\begin{pmatrix}\cos\theta & -\sin\theta \\ \sin\theta & \cos\theta\end{pmatrix}$ scaled by a constant factor: $J$ is a rotation by $\arg(a+ib)$ composed with a scaling by $\sqrt{a^2+b^2}=|f'(z_0)|$ (note $\det J = a^2+b^2$, the scaling factor squared).
 
-<iframe class="viz-embed" src="/assets/visualizations/02-conformality-jacobian.html" title="Conformality and the Jacobian visualization"></iframe>
+The four claims that matrix computation just made — same rotation for every tangent vector, collapse where $f'=0$, reflection when CR fails, and no bad points at all for $e^z$ — are exactly the four things to watch below. As you scroll, the demo moves to each situation; it stays fully draggable the whole way.
+
+<section class="scrolly scrolly-static" data-scrolly>
+  <div class="scrolly-figure">
+    <iframe class="viz-embed" src="/assets/visualizations/02-conformality-jacobian.html?embed" title="Conformality and the Jacobian visualization"></iframe>
+  </div>
+  <div class="scrolly-steps">
+    <div class="scrolly-step" data-state='{"type":"conformality-state","fn":"sq","z0":[1,0.6],"v1":[0.9,0],"v2":[0.3,0.85]}'>
+      <span class="step-tag">1 · conformal at a generic point</span>
+      <p>$f(z)=z^2$ at $z_0 = 1+0.6i$. In the right panel, both tangent vectors are multiplied by the same complex number $f'(z_0)$ — one shared rotation, one shared scaling. The angle between them comes through untouched. "Conformal" is nothing deeper than <em>the same rotation hits everyone</em>.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"conformality-state","fn":"sq","z0":[0,0],"v1":[0.9,0],"v2":[0.3,0.85]}'>
+      <span class="step-tag">2 · the critical point</span>
+      <p>Now $z_0$ slides to the origin — the one point where $f'(z)=2z$ vanishes. The Jacobian goes singular: no rotation angle survives, both image vectors are crushed, and the angle between them is destroyed. Conformality fails <em>exactly</em> where $f'=0$ — this is the pinch from Lesson 0.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"conformality-state","fn":"conj","z0":[1,0.6],"v1":[0.9,0],"v2":[0.3,0.85]}'>
+      <span class="step-tag">3 · what CR failing looks like</span>
+      <p>Switch to $f(z)=\bar z$, which fails Cauchy-Riemann everywhere. Its Jacobian is a <em>reflection</em>: the angle keeps its size but flips its sign. A rigid map, and still not conformal — orientation is part of the deal, and no reflection can be written as rotation-plus-scaling.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"conformality-state","fn":"exp","z0":[0,1.5708],"v1":[0.9,0],"v2":[0.3,0.85]}'>
+      <span class="step-tag">4 · no bad points anywhere</span>
+      <p>Finally $e^z$: holomorphic with $f'(z)=e^z$, which is never zero — so there is no critical point to find. Here $z_0 = i\pi/2$, where $f'(z_0)=i$: a pure $90°$ rotation with scale exactly $1$. Drag $z_0$ anywhere and the verdict stays green.</p>
+    </div>
+  </div>
+</section>
 
 A rotation-plus-scaling map preserves angles between curves by construction — so wherever $f'(z_0)\ne0$, $f$ is conformal at $z_0$. Exactly where $f'(z_0)=0$, the Jacobian collapses (no well-defined rotation angle), and conformality can break down — precisely what happened at $z=0$ for $f(z)=z^2$ in Lesson 0.
 
