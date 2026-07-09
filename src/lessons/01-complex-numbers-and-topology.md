@@ -1,5 +1,6 @@
 ---
 layout: base.njk
+hue: 55
 title: "Lesson 1 — Complex Numbers, the Plane, and Basic Topology"
 ---
 

@@ -1,5 +1,6 @@
 ---
 layout: base.njk
+hue: 265
 title: "Lesson 4 — Cauchy's Theorem & the Cauchy Integral Formula"
 ---
 
