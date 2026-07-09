@@ -80,6 +80,23 @@
   .handle { cursor:grab; }
   .handle:active { cursor:grabbing; }
   .ang-label { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; }
+
+  /* Compact chrome when embedded via <iframe src="...?embed"> (used by the
+     scroll-driven section in Lesson 2, where the page provides the caption) */
+  body.embed { padding: 12px; }
+  body.embed h1, body.embed .sub, body.embed .note { display: none; }
+  body.embed .panels { gap: 10px; }
+  body.embed .panel { flex: 1 1 240px; padding: 8px; }
+  body.embed .readouts { margin-top: 10px; padding: 8px 12px; gap: 6px 14px; grid-template-columns: repeat(3, 1fr); }
+  body.embed .verdict { margin-top: 10px; padding: 8px 12px; font-size: 13px; }
+  /* Narrow embeds (phone scrollytelling): keep the two planes side by side —
+     the input/output comparison IS the content — and let the host page's
+     captions do the talking instead of the readout grid */
+  @media (max-width: 700px) {
+    body.embed .panels { flex-wrap: nowrap; gap: 8px; }
+    body.embed .panel { flex: 1 1 130px; min-width: 0; }
+    body.embed .readouts { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -133,6 +150,7 @@
 <script>
 (function(){
   "use strict";
+  if(location.search.indexOf("embed") >= 0) document.body.classList.add("embed");
   const SZ = 360, C = SZ/2;
   const SVGNS = "http://www.w3.org/2000/svg";
 
@@ -408,6 +426,45 @@
     });
   });
   document.querySelector('.fn-btn[data-fn="sq"]').classList.add("active");
+
+  // ---------- external control (scrollytelling hook) ----------
+  // A parent page embedding this file can drive it via postMessage:
+  //   { type: "conformality-state", fn: "sq"|"conj"|"exp"|"cube",
+  //     z0: [re, im], v1: [re, im], v2: [re, im] }
+  // Omitted fields keep their current value. State eases to the target
+  // unless the user prefers reduced motion; dragging still works between
+  // (and during) messages.
+  const prefersStill = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let extAnim = null;
+  window.addEventListener("message", e => {
+    const m = e.data;
+    if(!m || m.type !== "conformality-state") return;
+    if(m.fn && FUNCS[m.fn]){
+      curFn = m.fn;
+      document.querySelectorAll(".fn-btn").forEach(x =>
+        x.classList.toggle("active", x.getAttribute("data-fn") === m.fn));
+    }
+    const tgt = {
+      z0: m.z0 ? cx(m.z0[0], m.z0[1]) : z0,
+      v1: m.v1 ? cx(m.v1[0], m.v1[1]) : v1,
+      v2: m.v2 ? cx(m.v2[0], m.v2[1]) : v2
+    };
+    if(extAnim) cancelAnimationFrame(extAnim);
+    if(prefersStill){ z0 = tgt.z0; v1 = tgt.v1; v2 = tgt.v2; render(); return; }
+    const from = { z0, v1, v2 };
+    const t0 = performance.now(), DUR = 700;
+    const mix = (a, b, t) => cx(a.re + (b.re - a.re) * t, a.im + (b.im - a.im) * t);
+    function tick(now){
+      const u = Math.min(1, (now - t0) / DUR);
+      const s = u < 0.5 ? 2*u*u : 1 - Math.pow(-2*u + 2, 2) / 2; // easeInOutQuad
+      z0 = mix(from.z0, tgt.z0, s);
+      v1 = mix(from.v1, tgt.v1, s);
+      v2 = mix(from.v2, tgt.v2, s);
+      render();
+      extAnim = u < 1 ? requestAnimationFrame(tick) : null;
+    }
+    extAnim = requestAnimationFrame(tick);
+  });
 
   render();
 })();

@@ -3,6 +3,7 @@ const { EleventyHtmlBasePlugin } = require("@11ty/eleventy");
 module.exports = function (eleventyConfig) {
   // Copy static assets straight through to the build output.
   eleventyConfig.addPassthroughCopy("src/css");
+  eleventyConfig.addPassthroughCopy("src/js");
   eleventyConfig.addPassthroughCopy("src/assets");
 
   // Rewrites absolute URLs (/css/..., /visualizations/...) to include the

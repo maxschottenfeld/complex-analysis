@@ -566,6 +566,109 @@ blockquote strong, blockquote b { color: var(--text); }
   font-size: 0.8rem;
 }
 
+/* ---------- Scroll-driven viz sections ---------- */
+
+/* The figure pins via position:sticky; JS only swaps which step is
+   .is-active and posts its state into the iframe. With scripting off,
+   GSAP unavailable, or prefers-reduced-motion, .scrolly-static collapses
+   the whole thing to a normal figure + prose (no pin, no dimming). */
+
+.scrolly {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 2rem;
+  align-items: start;
+  margin: 2.5rem 0;
+  /* Break out of the 760px prose column: the pinned figure needs room
+     for the visualization's two panels to sit side by side. (Margins, not
+     transform — a transformed ancestor would break position:sticky.) */
+  width: min(1080px, calc(100vw - 2.5rem));
+  margin-left: calc((100% - min(1080px, 100vw - 2.5rem)) / 2);
+}
+
+.scrolly-figure {
+  order: 2;
+  position: sticky;
+  top: max(4rem, calc(50vh - 310px));
+}
+
+.scrolly-figure iframe {
+  width: 100%;
+  height: min(82vh, 600px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.scrolly-steps {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 50vh;
+  padding: 14vh 0 26vh;
+}
+
+.scrolly-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid hsl(var(--h) 70% 62% / 0.8);
+  border-radius: var(--radius);
+  padding: 1rem 1.2rem;
+  font-size: 0.98rem;
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+
+.scrolly-step.is-active { opacity: 1; }
+
+.scrolly-step p { margin: 0.4rem 0 0; }
+
+.step-tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--h) 85% 74%);
+}
+
+.scrolly-note {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0.5rem 0 0;
+}
+
+/* Static fallback: reduced motion, JS off, or GSAP unreachable */
+.scrolly-static { display: block; }
+.scrolly-static .scrolly-figure { position: static; }
+.scrolly-static .scrolly-steps { padding: 0; gap: 1rem; margin-top: 1.5rem; }
+.scrolly-static .scrolly-step { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scrolly-step { opacity: 1; transition: none; }
+}
+
+@media (max-width: 860px) {
+  .scrolly { display: block; }
+  .scrolly-figure {
+    position: sticky;
+    top: 3.4rem;
+    z-index: 5;
+    order: 0;
+  }
+}
+
+/* Below ~640px the nav wraps to multiple rows; un-stick it so it stops
+   eating viewport that the pinned figure needs */
+@media (max-width: 640px) {
+  .site-nav { position: static; }
+  .scrolly-figure { top: 0.5rem; }
+  .scrolly-figure iframe { height: 46vh; min-height: 340px; }
+  .scrolly-steps { padding: 8vh 0 18vh; gap: 42vh; }
+  .scrolly-static .scrolly-figure { position: static; }
+}
+
 /* ---------- Footer ---------- */
 
 footer {
