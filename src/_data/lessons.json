@@ -40,5 +40,12 @@
     "title": "Consequences of Cauchy's Formula",
     "hue": 320,
     "description": "The payoff. One formula cascades into infinite differentiability, Cauchy's estimates, Liouville's theorem, and a proof of the Fundamental Theorem of Algebra with no algebra in it."
+  },
+  {
+    "num": "5a",
+    "slug": "05a-real-analysis-bridge",
+    "title": "The Real-Analysis Bridge",
+    "hue": 145,
+    "description": "The bridge. Five lessons in, the proofs had shifted from computing things to bounding things — so before series took over the subject, I paused to build the analysis underneath: sup and inf, rigorous limits, the triangle inequality, and the ML-estimate derived from scratch."
   }
 ]
