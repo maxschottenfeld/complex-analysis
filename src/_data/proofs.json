@@ -1,0 +1,39 @@
+{
+  "liouville": {
+    "title": "Liouville's theorem",
+    "statement": "A bounded entire function is constant.",
+    "terms": [
+      { "tag": "f", "label": "$f$ — entire and bounded", "hueOffset": 0 },
+      { "tag": "M", "label": "$M$ — the one global bound", "hueOffset": 77 },
+      { "tag": "R", "label": "$R$ — the radius, ours to choose", "hueOffset": 154 },
+      { "tag": "fp", "label": "$f'(z_0)$ — the derivative at an arbitrary point", "hueOffset": 231 }
+    ],
+    "steps": [
+      {
+        "title": "the hypotheses",
+        "math": "\\htmlClass{pf-f}{f} \\text{ entire}, \\qquad \\bigl|\\htmlClass{pf-f}{f}(z)\\bigr| \\le \\htmlClass{pf-M}{M} \\ \\text{ for all } z \\in \\mathbb{C}",
+        "note": "Two assumptions, and the second is <em>global</em>: one fixed <span class=\"pf-M\">$M$</span> works at every point of the plane at once. That single number is the lever the whole proof pulls."
+      },
+      {
+        "title": "Cauchy's estimate with n = 1",
+        "math": "\\bigl|\\htmlClass{pf-fp}{f'(z_0)}\\bigr| \\le \\frac{1!\\,\\htmlClass{pf-M}{M}}{\\htmlClass{pf-R}{R}} = \\frac{\\htmlClass{pf-M}{M}}{\\htmlClass{pf-R}{R}}",
+        "note": "Pick any point $z_0$ and any circle of radius <span class=\"pf-R\">$R$</span> around it. Entire means holomorphic on every closed disk, so the estimate from earlier in this lesson applies at every radius — the hypothesis CIF needs comes free."
+      },
+      {
+        "title": "let R → ∞",
+        "math": "\\frac{\\htmlClass{pf-M}{M}}{\\htmlClass{pf-R}{R}} \\longrightarrow 0 \\quad \\text{as } \\htmlClass{pf-R}{R} \\to \\infty",
+        "note": "Boundedness earns its keep: <span class=\"pf-M\">$M$</span> is pinned while <span class=\"pf-R\">$R$</span> is ours, so the bound can be driven as small as we like. For an unbounded function, $M$ would grow along with $R$ and this lever wouldn't exist."
+      },
+      {
+        "title": "the squeeze",
+        "math": "0 \\le \\bigl|\\htmlClass{pf-fp}{f'(z_0)}\\bigr| \\le \\frac{\\htmlClass{pf-M}{M}}{\\htmlClass{pf-R}{R}} \\ \\text{ for every } \\htmlClass{pf-R}{R} \\implies \\bigl|\\htmlClass{pf-fp}{f'(z_0)}\\bigr| = 0",
+        "note": "<span class=\"pf-fp\">$f'(z_0)$</span> is a single fixed number sitting below an arbitrarily small bound. The only nonnegative number smaller than every $M/R$ is $0$."
+      },
+      {
+        "title": "z₀ was arbitrary",
+        "math": "\\htmlClass{pf-fp}{f'} \\equiv 0 \\ \\text{ on } \\mathbb{C} \\implies \\htmlClass{pf-f}{f} \\text{ is constant}",
+        "note": "Nothing above chose $z_0$ specially, so the derivative vanishes at <em>every</em> point. <span class=\"pf-f\">$f$</span> is constant — Liouville's theorem."
+      }
+    ]
+  }
+}

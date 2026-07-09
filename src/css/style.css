@@ -669,6 +669,129 @@ blockquote strong, blockquote b { color: var(--text); }
   .scrolly-static .scrolly-figure { position: static; }
 }
 
+/* ---------- Proof stepper ---------- */
+
+/* Rendered by the proofStepper shortcode. Classes pf-<tag> are reserved
+   for tagged terms: each tag gets --th (a hue offset from the page hue,
+   set by the shortcode's scoped <style>) and keeps it in every step —
+   the continuity of a quantity through the argument is the color. */
+
+.proof {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid hsl(var(--h) 70% 62% / 0.8);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.5rem 1.2rem;
+  margin: 2rem 0;
+}
+
+.proof-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--h) 85% 74%);
+  margin: 0 0 0.6rem;
+}
+
+.proof-statement { margin: 0 0 1.1rem; }
+
+.proof-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+}
+
+.proof-legend-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.proof-chip {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.2rem 0.55rem;
+  color: var(--text);
+  cursor: default;
+}
+
+.proof-controls {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin: 0 0 0.3rem;
+}
+
+.proof-btn {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  color: var(--muted);
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.proof-btn:hover { color: var(--text); border-color: var(--accent); }
+
+.proof-steps { list-style: none; margin: 0.4rem 0 0; padding: 0; }
+
+.proof-step {
+  padding: 1rem 0 0.5rem;
+  border-top: 1px solid var(--border);
+  outline: none;
+}
+
+.proof-step-tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.proof-step-math { margin: 0.3rem 0; overflow-x: auto; }
+
+.proof-step-note {
+  margin: 0.2rem 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 62ch;
+}
+
+/* Tagged-term highlight (KaTeX \htmlClass spans, note spans, legend chips) */
+.proof [class^="pf-"], .proof [class*=" pf-"] {
+  color: hsl(var(--th, var(--h)) 88% 76%);
+  background: hsl(var(--th, var(--h)) 70% 58% / 0.12);
+  border-radius: 3px;
+  padding: 0.05em 0.18em;
+  transition: background 0.2s ease;
+}
+
+.proof .pf-hot { background: hsl(var(--th, var(--h)) 70% 58% / 0.32); }
+
+/* Scroll reveal — armed by JS only, so no-JS readers see everything;
+   reduced-motion readers never get the hidden state at all */
+.proof-animated .proof-step {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.proof-animated .proof-step.is-visible { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .proof-animated .proof-step { opacity: 1; transform: none; transition: none; }
+}
+
 /* ---------- Footer ---------- */
 
 footer {

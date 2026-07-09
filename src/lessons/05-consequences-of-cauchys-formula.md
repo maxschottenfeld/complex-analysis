@@ -1,6 +1,7 @@
 ---
 layout: base.njk
 hue: 320
+proofstepper: true
 title: "Lesson 5 — Consequences of Cauchy's Formula"
 ---
 
@@ -39,7 +40,9 @@ Note the hypothesis carefully: Cauchy's estimate requires $f$ holomorphic on the
 
 ## Liouville's theorem
 
-For $f$ **entire and bounded** (so a single fixed $M$ works for *every* radius $R$), Cauchy's estimate with $n=1$ gives $|f'(z_0)|\le M/R$ for every $R$. Letting $R\to\infty$, the right-hand side $\to0$ — and since $|f'(z_0)|$ is a fixed number squeezed below an arbitrarily small quantity, it must equal exactly $0$. Since $z_0$ was arbitrary, $f'\equiv0$ everywhere, so $f$ is constant. That's **Liouville's theorem**: a bounded entire function is constant.
+Cauchy's estimate does all the work here — the proof is five short moves, and the whole trick is watching *which quantities stay fixed and which are free*. Each quantity keeps its color from step to step below (hover or tap one to trace it through the argument).
+
+{% proofStepper "liouville" %}
 
 **Why does this specifically need $R\to\infty$, and not just any circle?** Test it on $f(z)=z^2$ (entire, unbounded). At $z_0=0$: $M(R)=R^2$, so the bound $R^2/R=R\to0$ as $R\to0$ too — but this is a coincidence, since $f(0)=0$ exactly. At a generic point $z_0=1$: $M(R)=(1+R)^2$ (the farthest point on the circle from the origin), so the bound $(1+R)^2/R\to\infty$ as $R\to0$ — no shrinkage at all. The real distinction: for a *bounded* entire function, $M$ is one fixed number that works for a circle of any size, so growing $R$ is the only lever available, and it works. For an *unbounded* function, $M$ grows right along with $R$, so that lever doesn't exist — small circles never help either way.
 

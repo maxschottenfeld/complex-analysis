@@ -17,11 +17,15 @@
         delimiters: [
           { left: "$$", right: "$$", display: true },
           { left: "$", right: "$", display: false }
-        ]
+        ],
+        // \htmlClass carries term tags in proof-stepper math (pf-* spans)
+        trust: function (ctx) { return ctx.command === "\\htmlClass"; },
+        strict: function (errorCode) { return errorCode === "htmlExtension" ? "ignore" : "warn"; }
       });
     });
   </script>
   {% if scrolly %}<script defer src="/js/scrolly.js"></script>{% endif %}
+  {% if proofstepper %}<script defer src="/js/proof-stepper.js"></script>{% endif %}
 </head>
 <body{% if hue %} style="--h: {{ hue }}"{% endif %}>
   <nav class="site-nav">
