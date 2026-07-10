@@ -1,6 +1,7 @@
 ---
 layout: base.njk
 title: "How I Built This"
+description: "The actual workflow behind the site: Socratic sessions with Claude, spaced review, a running profile of how I learn, and the real prompts that commissioned each visualization."
 ---
 
 # How I built this

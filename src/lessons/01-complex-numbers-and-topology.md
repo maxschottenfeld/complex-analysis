@@ -2,6 +2,7 @@
 layout: base.njk
 hue: 55
 title: "Lesson 1 — Complex Numbers, the Plane, and Basic Topology"
+description: "The ground floor: arithmetic and geometry of complex numbers, polar form, roots of unity, and just enough topology — open sets, boundaries, regions — to state the later theorems honestly."
 ---
 
 # Lesson 1: Complex Numbers, the Plane, and Basic Topology
@@ -28,7 +29,7 @@ via difference-of-squares. The reason this always works: conjugation flips the s
 
 Lesson 0 used $z=re^{i\theta}$ to explain why $z^2$ doubles the angle — here it's made precise. Write $z=re^{i\theta}=r(\cos\theta+i\sin\theta)$, where $r=|z|$ and $\theta=\arg(z)$.
 
-Converting $1+i=\sqrt2\,e^{i\pi/4}$ is the clean warm-up case ($45°$). A less obliging example: $-1+i\sqrt3$ has $r=2$, $\theta=2\pi/3$, found via the second-quadrant reference angle.
+Converting $1+i=\sqrt2\\,e^{i\pi/4}$ is the clean warm-up case ($45°$). A less obliging example: $-1+i\sqrt3$ has $r=2$, $\theta=2\pi/3$, found via the second-quadrant reference angle.
 
 **Multivaluedness of $\arg$.** Take $z=i$. Both $\pi/2$ and $\pi/2+2\pi=5\pi/2$ (or equivalently $-3\pi/2$) are valid arguments — they point in the same direction, differing by a full revolution. (Note that $-\pi/2$ is *not* valid here: that's the direction of $-i$, not $i$.) The **principal argument** $\operatorname{Arg}(z)\in(-\pi,\pi]$ picks out one representative. This multivaluedness is the seed of branch cuts, which show up in Lesson 3.
 
@@ -67,21 +68,21 @@ The same six steps generalize directly. For $z^3=8i$, write $8i=8e^{i\pi/2}$ and
 
 Everything so far has been points and curves. The moment calculus enters the picture (Lesson 2 onward), it needs vocabulary for *where* — what kind of set a domain is. This connects directly to vector calculus: domains of vector fields, open regions, the "nice domains" theorems like Green's theorem require.
 
-**Open disk.** $D(z_0,r)=\{z:|z-z_0|<r\}$. Testing $D(0,1)$ against $z=0.9$, $z=i$, $z=1$: $0.9$ is interior, while $i$ and $1$ sit exactly on the boundary circle ($|z|=1$, not $<1$) — which is exactly why the disk is called "open": the boundary is excluded.
+**Open disk.** $D(z_0,r)=\lbrace z:|z-z_0|<r\rbrace$. Testing $D(0,1)$ against $z=0.9$, $z=i$, $z=1$: $0.9$ is interior, while $i$ and $1$ sit exactly on the boundary circle ($|z|=1$, not $<1$) — which is exactly why the disk is called "open": the boundary is excluded.
 
 **Open set.** Every point has *some* $\varepsilon$-disk around it fully contained in the set. Three test cases:
 
 - $D(0,1)$: **open.** For $z$ with $|z|=r<1$, take $\varepsilon=1-r$ — there's room to the boundary.
-- $\bar D(0,1)=\{|z|\le1\}$: **not open.** The boundary point $z=1$ *is* a member of the set (equality is allowed), but no $\varepsilon$-disk around it stays inside — half of any such disk pokes into $|z|>1$.
-- $\mathbb{C}\setminus\{0\}$: **open.** For any $z\ne0$, take $\varepsilon=|z|/2$ to avoid the origin.
+- $\bar D(0,1)=\lbrace|z|\le1\rbrace$: **not open.** The boundary point $z=1$ *is* a member of the set (equality is allowed), but no $\varepsilon$-disk around it stays inside — half of any such disk pokes into $|z|>1$.
+- $\mathbb{C}\setminus\lbrace0\rbrace$: **open.** For any $z\ne0$, take $\varepsilon=|z|/2$ to avoid the origin.
 
-**Closed sets** are defined as sets whose complement is open. $\bar D(0,1)$ is closed: its complement $\{|z|>1\}$ is open, by the same argument as the open-disk case, just outside the circle.
+**Closed sets** are defined as sets whose complement is open. $\bar D(0,1)$ is closed: its complement $\lbrace|z|>1\rbrace$ is open, by the same argument as the open-disk case, just outside the circle.
 
-**Open and closed aren't opposites.** The half-open annulus $A=\{0<|z|\le1\}$ (includes the outer boundary, excludes the origin) is neither:
+**Open and closed aren't opposites.** The half-open annulus $A=\lbrace0<|z|\le1\rbrace$ (includes the outer boundary, excludes the origin) is neither:
 - Not open: $z=1\in A$, but every $\varepsilon$-disk around it pokes outside into $|z|>1$.
-- Not closed: the complement $\{0\}\cup\{|z|>1\}$ contains $0$, but every $\varepsilon$-disk around $0$ contains points of $A$ (any $z$ with $0<|z|<\varepsilon$), so the complement fails to be open there.
+- Not closed: the complement $\lbrace0\rbrace\cup\lbrace|z|>1\rbrace$ contains $0$, but every $\varepsilon$-disk around $0$ contains points of $A$ (any $z$ with $0<|z|<\varepsilon$), so the complement fails to be open there.
 
-**Connectedness and regions.** Informally, a set is connected if it's one piece — you can travel between any two points without leaving the set. (Contrast $D(0,1)$ with two disjoint disks.) A **region** (or **domain**) is defined as *open and connected*. The punctured disk $D(0,1)\setminus\{0\}$ is still connected (route around the missing point) and still open, so it qualifies as a region — relevant later when residues show up on punctured regions.
+**Connectedness and regions.** Informally, a set is connected if it's one piece — you can travel between any two points without leaving the set. (Contrast $D(0,1)$ with two disjoint disks.) A **region** (or **domain**) is defined as *open and connected*. The punctured disk $D(0,1)\setminus\lbrace0\rbrace$ is still connected (route around the missing point) and still open, so it qualifies as a region — relevant later when residues show up on punctured regions.
 
 **Proving $D(z_0,r)$ is open.** For $z_1\in D(z_0,r)$, let $\varepsilon=r-|z_1-z_0|>0$ — the leftover room between $z_1$ and the boundary. For any $w\in D(z_1,\varepsilon)$, the goal is $|w-z_0|<r$. Write
 $$|w-z_0|=|(w-z_1)+(z_1-z_0)|\le|w-z_1|+|z_1-z_0|$$
@@ -91,4 +92,4 @@ So every point of $D(z_0,r)$ has room to spare — the disk is open.
 
 <iframe class="viz-embed" src="/assets/visualizations/01-open-sets-explorer.html" title="Open sets explorer visualization"></iframe>
 
-> **Key takeaways:** Open set: every point has some $\varepsilon$-disk contained in the set. Closed set: complement is open. Open and closed are **not** opposites — $A=\{0<|z|\le1\}$ is neither. Region/domain = open + connected. Triangle inequality: $|a+b|\le|a|+|b|$. $D(z_0,r)$ is open: given $z_1\in D(z_0,r)$, take $\varepsilon=r-|z_1-z_0|$; the triangle inequality gives $|w-z_0|\le|w-z_1|+|z_1-z_0|<\varepsilon+(r-\varepsilon)=r$.
+> **Key takeaways:** Open set: every point has some $\varepsilon$-disk contained in the set. Closed set: complement is open. Open and closed are **not** opposites — $A=\lbrace0<|z|\le1\rbrace$ is neither. Region/domain = open + connected. Triangle inequality: $|a+b|\le|a|+|b|$. $D(z_0,r)$ is open: given $z_1\in D(z_0,r)$, take $\varepsilon=r-|z_1-z_0|$; the triangle inequality gives $|w-z_0|\le|w-z_1|+|z_1-z_0|<\varepsilon+(r-\varepsilon)=r$.
