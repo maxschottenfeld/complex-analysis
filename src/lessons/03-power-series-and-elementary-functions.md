@@ -2,6 +2,7 @@
 layout: base.njk
 hue: 215
 title: "Lesson 3 — Power Series & Elementary Functions"
+description: "Power series take over: the exponential defined by its series, Euler's formula derived instead of assumed, and the logarithm turning multivalued — the first branch cut."
 ---
 
 # Lesson 3: Power Series & Elementary Functions
@@ -12,7 +13,7 @@ $e^{i\pi}=-1$ is a familiar fact, usually justified via the polar-multiplication
 
 The complex exponential is defined the same way as its real counterpart, as a power series:
 $$e^z = \sum_{n=0}^\infty \frac{z^n}{n!}$$
-Applying the ratio test, the ratio of consecutive terms $\to 0$ as $n\to\infty$ for *any* $z$, so the radius of convergence is $R=\infty$ — $e^z$ is **entire** (holomorphic on all of $\mathbb{C}$). Contrast with $\sum n!\,z^n$, whose ratio $\to\infty$: radius of convergence $R=0$, converging only at $z=0$.
+Applying the ratio test, the ratio of consecutive terms $\to 0$ as $n\to\infty$ for *any* $z$, so the radius of convergence is $R=\infty$ — $e^z$ is **entire** (holomorphic on all of $\mathbb{C}$). Contrast with $\sum n!\\,z^n$, whose ratio $\to\infty$: radius of convergence $R=0$, converging only at $z=0$.
 
 ## Euler's formula, derived rather than assumed
 
@@ -43,7 +44,7 @@ $\cos(i)>1$ — impossible for real cosine, perfectly fine for the complex versi
 Defining $\log z$ means solving $e^w=z$ for $w$. Writing $z=re^{i\theta}$ and using the same "match in polar form" reasoning as the roots-of-unity derivation in Lesson 1: $e^w=z$ needs $w=\ln r + i\theta$, but since $\theta$ is only defined mod $2\pi$, so is $w$ — there are infinitely many valid values of $w$, differing by $2\pi ik$:
 $$\log z = \ln|z| + i(\theta+2\pi k), \qquad k\in\mathbb{Z}$$
 $\log z$ is genuinely **multivalued**. Picking the principal argument gives the **principal branch**,
-$$\operatorname{Log} z = \ln|z| + i\,\operatorname{Arg}(z), \qquad \operatorname{Arg}(z)\in(-\pi,\pi].$$
+$$\operatorname{Log} z = \ln|z| + i\\,\operatorname{Arg}(z), \qquad \operatorname{Arg}(z)\in(-\pi,\pi].$$
 
 This forces a discontinuity. As $z$ crosses the negative real axis, $\operatorname{Arg}(z)$ jumps from just under $\pi$ to just above $-\pi$ — a jump of nearly $2\pi$ in an otherwise continuous function. The ray where this happens (the negative real axis, for the principal branch) is called a **branch cut**: removing it from the domain is exactly what makes $\operatorname{Log}$ single-valued and continuous everywhere else.
 

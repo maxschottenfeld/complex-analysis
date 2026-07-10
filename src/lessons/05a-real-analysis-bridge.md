@@ -2,6 +2,7 @@
 layout: base.njk
 hue: 145
 title: "Lesson 5a — The Real-Analysis Bridge"
+description: "Five lessons in, the proofs had shifted from computing things to bounding things — so before series took over, I paused to build the analysis underneath: sup and inf, rigorous limits, and the ML-estimate from scratch."
 ---
 
 # Lesson 5a: The Real-Analysis Bridge
