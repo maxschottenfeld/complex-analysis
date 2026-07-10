@@ -1,7 +1,49 @@
 const { EleventyHtmlBasePlugin } = require("@11ty/eleventy");
+const fs = require("fs");
+const path = require("path");
 const proofs = require("./src/_data/proofs.json");
 
+// markdown-it strips a backslash before any ASCII punctuation *before*
+// client-side KaTeX ever sees the page, so \{ \} \, \; \: \! reach the
+// browser as bare punctuation and \\ (a matrix row break) reaches it as a
+// lone backslash. The damage is easy to miss in review — braces render as
+// invisible grouping, thin spaces become literal commas. Convention for
+// site markdown: \lbrace and \rbrace for set braces, and double every
+// other escape (\\, for a thin space, \\\\ for a row break). This scan
+// fails the build with file:line when a single-escaped form sneaks back in.
+const MATH_ESCAPE_PATTERNS = [
+  { re: /(?<!\\)\\[{}]/, fix: "use \\lbrace / \\rbrace" },
+  { re: /(?<!\\)\\[,;:!]/, fix: "double it, e.g. \\\\," },
+  { re: /(?<!\\)\\\\(?=\s|$)/, fix: "row breaks need four: \\\\\\\\" },
+];
+
+function checkMathEscapes() {
+  const dirs = [path.join(__dirname, "src"), path.join(__dirname, "src", "lessons")];
+  const problems = [];
+  for (const dir of dirs) {
+    for (const file of fs.readdirSync(dir).filter(f => f.endsWith(".md"))) {
+      const rel = path.relative(__dirname, path.join(dir, file));
+      const lines = fs.readFileSync(path.join(dir, file), "utf8").split("\n");
+      lines.forEach((line, i) => {
+        for (const { re, fix } of MATH_ESCAPE_PATTERNS) {
+          const m = line.match(re);
+          if (m) problems.push(`  ${rel}:${i + 1} — "${m[0]}" (${fix})`);
+        }
+      });
+    }
+  }
+  if (problems.length) {
+    throw new Error(
+      "Single-escaped math sequences found — markdown-it will strip the backslash before KaTeX runs:\n" +
+      problems.join("\n")
+    );
+  }
+}
+
 module.exports = function (eleventyConfig) {
+  // Catch the markdown-eats-math-escapes porting gotcha before it ships.
+  eleventyConfig.on("eleventy.before", checkMathEscapes);
+
   // Renders a proof from src/_data/proofs.json as a step-by-step walkthrough.
   // Usage in a lesson: {% proofStepper "liouville" %} (plus `proofstepper:
   // true` in frontmatter to load the reveal/highlight script). Steps carry

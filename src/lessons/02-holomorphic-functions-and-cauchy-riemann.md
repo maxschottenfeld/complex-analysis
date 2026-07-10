@@ -3,6 +3,7 @@ layout: base.njk
 hue: 185
 scrolly: true
 title: "Lesson 2 — Holomorphic Functions & the Cauchy-Riemann Equations"
+description: "What complex differentiability actually demands, the Cauchy-Riemann equations that fall out of it, and why passing that test forces a map to preserve angles."
 ---
 
 # Lesson 2: Holomorphic Functions & the Cauchy-Riemann Equations
@@ -52,10 +53,10 @@ CR holds *only* at $z=0$ — a single isolated point, not an open set. This is w
 ## Conformality: closing the Lesson 0 loop
 
 Viewing $f=u+iv$ as a real map $\mathbb{R}^2\to\mathbb{R}^2$, its Jacobian is
-$$J = \begin{pmatrix} u_x & u_y \\ v_x & v_y \end{pmatrix}.$$
+$$J = \begin{pmatrix} u_x & u_y \\\\ v_x & v_y \end{pmatrix}.$$
 Substituting the Cauchy-Riemann relations $u_x=v_y=a$, $v_x=-u_y=b$ collapses this to
-$$J = \begin{pmatrix} a & -b \\ b & a \end{pmatrix},$$
-which is exactly the form of a **rotation matrix** $\begin{pmatrix}\cos\theta & -\sin\theta \\ \sin\theta & \cos\theta\end{pmatrix}$ scaled by a constant factor: $J$ is a rotation by $\arg(a+ib)$ composed with a scaling by $\sqrt{a^2+b^2}=|f'(z_0)|$ (note $\det J = a^2+b^2$, the scaling factor squared).
+$$J = \begin{pmatrix} a & -b \\\\ b & a \end{pmatrix},$$
+which is exactly the form of a **rotation matrix** $\begin{pmatrix}\cos\theta & -\sin\theta \\\\ \sin\theta & \cos\theta\end{pmatrix}$ scaled by a constant factor: $J$ is a rotation by $\arg(a+ib)$ composed with a scaling by $\sqrt{a^2+b^2}=|f'(z_0)|$ (note $\det J = a^2+b^2$, the scaling factor squared).
 
 The four claims that matrix computation just made — same rotation for every tangent vector, collapse where $f'=0$, reflection when CR fails, and no bad points at all for $e^z$ — are exactly the four things to watch below. As you scroll, the demo moves to each situation; it stays fully draggable the whole way.
 

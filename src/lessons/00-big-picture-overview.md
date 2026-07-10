@@ -2,6 +2,7 @@
 layout: base.njk
 hue: 355
 title: "Lesson 0 — The Big Picture"
+description: "A complex function maps a plane to a plane, so an honest graph would need four dimensions. Domain coloring and grid deformation are the workaround pictures — every later lesson leans on them."
 ---
 
 # Lesson 0: The Big Picture — What Is Complex Analysis About?
