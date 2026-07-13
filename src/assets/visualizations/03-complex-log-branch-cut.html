@@ -50,6 +50,25 @@
   footer{max-width:1180px;margin:0 auto;padding:0 24px 50px;color:var(--muted);font-size:13px}
   .hint{font-size:12px;color:var(--muted);margin-top:6px}
   @media(max-width:760px){main{grid-template-columns:1fr}.panel.wide{grid-column:auto}}
+
+  /* Compact chrome when embedded via <iframe src="...?embed"> — the host
+     page's scrolly steps do the narrating and pick which panel is visible
+     (postMessage, type:"logbranch-state"). One panel at a time, sized to
+     the iframe, never scrolling internally. */
+  body.embed header, body.embed footer, body.embed .why, body.embed .hint { display:none; }
+  body.embed{ height:100vh; overflow:hidden; }
+  body.embed main{ display:block; padding:12px; height:100%; max-width:none; }
+  body.embed .panel{ display:none; }
+  body.embed .panel.embed-active{ display:flex; height:100%; }
+  body.embed .panel h2{ flex:none; }
+  /* width/height auto + max caps: element box = scaled drawing (no letterbox),
+     so Panel 2's own pointer scaling stays exact */
+  body.embed .row{ flex-wrap:nowrap; min-height:0; flex:1; gap:8px; align-items:center; justify-content:center; }
+  body.embed canvas{ width:auto; height:auto; max-width:100%; max-height:100%; min-height:0; }
+  body.embed .row canvas{ flex:0 1 auto; min-width:0 !important; max-width:49.5%; }
+  body.embed .panel > canvas{ flex:0 1 auto; align-self:center; max-height:calc(100vh - 120px); }
+  body.embed .readout{ font-size:12px; padding:8px 10px; min-width:180px; }
+  body.embed .controls{ flex:none; }
 </style>
 </head>
 <body>
@@ -260,6 +279,8 @@ function hsl2rgb(h,s,l){
   cv.addEventListener('touchmove',e=>{if(dragging){setFromEvent(e);e.preventDefault();}},{passive:false});
   cv.addEventListener('touchend',()=>dragging=false);
   render();
+  // scrollytelling hook: let an embedding page place the probe point
+  window.__probeSet=(x,y)=>{ z={x:x,y:y}; render(); };
 })();
 
 /* ============ PANEL 3: walk around origin ============ */
@@ -363,6 +384,8 @@ function hsl2rgb(h,s,l){
       pctx.fillStyle="#58a6ff"; pctx.beginPath(); pctx.arc(X(p.ang),Y(p.arg),5,0,TAU); pctx.fill(); }
   }
   reset();
+  // scrollytelling hook: start/stop the walk from an embedding page
+  window.__walkPlay=(on)=>{ if(on!==playing) document.getElementById('playBtn').click(); };
 })();
 
 /* ============ PANEL 4: Riemann surface (helicoid) ============ */
@@ -452,6 +475,32 @@ function hsl2rgb(h,s,l){
   let auto=true; cv.addEventListener('mousedown',()=>auto=false,{once:true});
   (function spin(){ if(auto){ yaw+=0.004; draw(); requestAnimationFrame(spin);} })();
   draw();
+})();
+
+/* ============ embed mode + external control (scrollytelling hook) ============ */
+// A parent page embedding this file as <iframe src="...?embed"> can drive it:
+//   { type: "logbranch-state", panel: 1..4, z: [x, y], r: number, play: bool }
+// panel picks which of the four views is visible; z moves Panel 2's probe;
+// r / play control Panel 3's walk. Omitted fields keep their current value.
+(function(){
+  const embed = location.search.indexOf("embed") >= 0;
+  const panels = document.querySelectorAll('main .panel');
+  function showPanel(i){
+    panels.forEach((p,k)=>p.classList.toggle('embed-active', k===i-1));
+  }
+  if(embed){ document.body.classList.add('embed'); showPanel(1); }
+  window.addEventListener('message', e=>{
+    const m = e.data;
+    if(!m || m.type !== "logbranch-state") return;
+    if(embed && m.panel >= 1 && m.panel <= 4) showPanel(m.panel);
+    if(m.z && window.__probeSet) window.__probeSet(m.z[0], m.z[1]);
+    if(typeof m.r === "number"){
+      const rr = document.getElementById('rRange');
+      rr.value = m.r;
+      rr.dispatchEvent(new Event('input'));
+    }
+    if(typeof m.play === "boolean" && window.__walkPlay) window.__walkPlay(m.play);
+  });
 })();
 </script>
 </body>

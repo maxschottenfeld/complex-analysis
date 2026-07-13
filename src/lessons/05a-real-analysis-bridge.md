@@ -13,6 +13,22 @@ The structure of this project — session logs, spaced review, a running record 
 
 **Where I was starting from, for calibration:** multivariable and vector calculus (through Stokes' theorem) plus proof experience from discrete math — enough to carry me through five lessons. But if you're following a similar path, this is the material I'd want in hand *before* the series-heavy half of the subject begins.
 
+<aside class="lesson-side">
+  <div class="side-card">
+    <h3>The toolkit this page builds</h3>
+    <div class="side-node done"><span class="dot"></span><span class="lbl">Bounds, sup, inf<span class="sub">completeness — why limits exist</span></span></div>
+    <div class="side-node done"><span class="dot"></span><span class="lbl">The ε–N definition<span class="sub">what a limit actually is</span></span></div>
+    <div class="side-node done"><span class="dot"></span><span class="lbl">Triangle inequality, three ways<span class="sub">chained · reversed</span></span></div>
+    <div class="side-node done"><span class="dot"></span><span class="lbl">The ML-estimate, derived<span class="sub">Lesson 5's black box, opened</span></span></div>
+    <div class="side-node done"><span class="dot"></span><span class="lbl">Geometric series &amp; comparison<span class="sub">Lesson 6's doorstep</span></span></div>
+  </div>
+  <div class="side-card">
+    <h3>See ε–N in motion</h3>
+    <p>The ε–N definition below has a live worked example: the partial sums of $\sum z^n$ spiraling into $\frac{1}{1-z}$, with a draggable ε-disk — challenge with an ε, find the N past which the path never leaves.</p>
+    <p><a href="/visualizations/03b-geometric-series-partial-sums/">Geometric series: partial sums in the plane →</a></p>
+  </div>
+</aside>
+
 ## Bounds, suprema, and infima
 
 A number $b$ is an **upper bound** of a set $A$ if $a\le b$ for every $a\in A$. The definitional trap is the word "the" — a bounded set never has just one upper bound, it has an entire ray of them. For $A=\left\lbrace 1-\frac1n\right\rbrace = \lbrace 0, \tfrac12, \tfrac23, \dots\rbrace$, every number in $[1,\infty)$ is an upper bound; the **supremum** $\sup A$ is the *least* of them: $\sup A=1$. Note $1\notin A$ — the sup needn't belong to the set — while $\inf A=0$ (greatest lower bound) is attained at $n=1$.
@@ -32,6 +48,8 @@ Every "$R\to\infty$" and "$\varepsilon\to0$" move in earlier lessons was leaning
 $$a_n\to L \quad\text{means}\quad \forall\varepsilon>0\ \exists N\ \forall n>N:\ |a_n-L|<\varepsilon.$$
 
 $\varepsilon$ is a challenge ("get within this tolerance"); $N$ is the response — one fixed cutoff, depending on $\varepsilon$, past which every term complies. The index $n$ walks; the post $N$ stands still.
+
+(This definition can be *played with* directly: the [geometric-series visualization](/visualizations/03b-geometric-series-partial-sums/) draws the partial sums of $\sum z^n$ as a path in the plane, with an adjustable $\varepsilon$-disk around the limit — challenge it with a smaller $\varepsilon$ and watch the required $N$ grow.)
 
 **Worked:** $\frac1n\to0$: given $\varepsilon$, $N=\frac1\varepsilon$ works. This is exactly the shape of the Liouville argument — $|f'(z_0)|\le M/R$ with $R$ growing is $\frac1n\to0$ wearing a costume. Similarly $\frac{n}{n+1}\to1$: simplify the error to a single fraction first, $\left|\frac{n}{n+1}-1\right|=\frac{1}{n+1}$, giving $N=\frac1\varepsilon-1$.
 

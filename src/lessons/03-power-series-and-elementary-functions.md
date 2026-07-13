@@ -1,6 +1,7 @@
 ---
 layout: base.njk
 hue: 215
+scrolly: true
 title: "Lesson 3 — Power Series & Elementary Functions"
 description: "Power series take over: the exponential defined by its series, Euler's formula derived instead of assumed, and the logarithm turning multivalued — the first branch cut."
 ---
@@ -14,6 +15,12 @@ $e^{i\pi}=-1$ is a familiar fact, usually justified via the polar-multiplication
 The complex exponential is defined the same way as its real counterpart, as a power series:
 $$e^z = \sum_{n=0}^\infty \frac{z^n}{n!}$$
 Applying the ratio test, the ratio of consecutive terms $\to 0$ as $n\to\infty$ for *any* $z$, so the radius of convergence is $R=\infty$ — $e^z$ is **entire** (holomorphic on all of $\mathbb{C}$). Contrast with $\sum n!\\,z^n$, whose ratio $\to\infty$: radius of convergence $R=0$, converging only at $z=0$.
+
+But what does a complex series *converging* actually look like? The simplest testbed is the geometric series $\sum_{n=0}^\infty z^n$, radius of convergence exactly $1$ — and its partial sums can be watched directly:
+
+<iframe class="viz-embed" src="/assets/visualizations/03b-geometric-series-partial-sums.html?embed" title="Geometric series partial sums visualization"></iframe>
+
+Each partial sum $S_N = 1 + z + \dots + z^N$ is a point in the plane, and consecutive sums differ by one term $z^N$ — a step that rotates by $\arg z$ and rescales by $|z|$ every time. Inside the unit circle the steps shrink geometrically and the path spirals into $\frac{1}{1-z}$; outside, each step is longer than the last and the path escapes; on the circle itself the steps never shrink and the sums circle forever. That threshold — shrinking terms inside, growing terms outside — is what "radius of convergence" *means*, and the $\varepsilon$-disk overlay turns the definition of convergence into something you can find with a slider: for every $\varepsilon$ there's an $N$ past which the path never leaves the disk. (That definition gets its full treatment in [Lesson 5a](/lessons/05a-real-analysis-bridge/).)
 
 ## Euler's formula, derived rather than assumed
 
@@ -48,8 +55,36 @@ $$\operatorname{Log} z = \ln|z| + i\\,\operatorname{Arg}(z), \qquad \operatornam
 
 This forces a discontinuity. As $z$ crosses the negative real axis, $\operatorname{Arg}(z)$ jumps from just under $\pi$ to just above $-\pi$ — a jump of nearly $2\pi$ in an otherwise continuous function. The ray where this happens (the negative real axis, for the principal branch) is called a **branch cut**: removing it from the domain is exactly what makes $\operatorname{Log}$ single-valued and continuous everywhere else.
 
-<iframe class="viz-embed" src="/assets/visualizations/03-complex-log-branch-cut.html" title="Complex logarithm and branch cut visualization"></iframe>
+The four views below make each piece of that story visible. As you scroll, the pinned demo switches views to follow the argument — and every view stays fully interactive (drag the probe, spin the surface) the whole way.
 
-The visualization above is worth spending real time with: watch what happens walking a small loop around the origin — every full loop shifts $\operatorname{Arg}(z)$ by a full $2\pi$, which is the multivaluedness of $\log z$ made visible, and the branch cut is precisely the ray where that walk gets interrupted to force a single, consistent choice.
+<section class="scrolly scrolly-static" data-scrolly>
+  <div class="scrolly-figure">
+    <iframe class="viz-embed" src="/assets/visualizations/03-complex-log-branch-cut.html?embed" title="Complex logarithm and branch cut visualization"></iframe>
+  </div>
+  <div class="scrolly-steps">
+    <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":1}'>
+      <span class="step-tag">1 · the seam, seen from above</span>
+      <p>Domain coloring of $\operatorname{Log} z$: hue is $\operatorname{Arg} z$, brightness is $\ln|z|$. Everywhere else the hues blend smoothly — but along the negative real axis the color snaps straight to its opposite. That hard seam <em>is</em> the discontinuity forced by choosing $\operatorname{Arg}(z)\in(-\pi,\pi]$.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":2,"z":[1.4,1.0]}'>
+      <span class="step-tag">2 · one point, infinitely many logs</span>
+      <p>Probe a generic point. The readout lists three of the infinitely many values of $\log z$ — the $k=-1,0,1$ rungs of a ladder spaced exactly $2\pi i$ apart. The principal value $\operatorname{Log} z$ is just the $k=0$ rung. Drag the point yourself; the ladder follows.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":2,"z":[-1.8,0.12]}'>
+      <span class="step-tag">3 · sneak up on the cut</span>
+      <p>Now the probe sits just <em>above</em> the negative real axis: $\operatorname{Arg} z \approx +\pi$. Drag it a hair downward, across the axis, and watch the readout: $\operatorname{Arg}$ flips to $\approx -\pi$ — a jump of nearly $2\pi$ from an infinitesimal move. Every $k$-rung shifts by one. This is what "discontinuous across the cut" means concretely.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":3,"play":true}'>
+      <span class="step-tag">4 · walk the loop</span>
+      <p>A point circles the origin counterclockwise while $\operatorname{Arg} z$ is plotted against the angle traveled. It climbs smoothly toward $+\pi$… and the instant the walker crosses the negative real axis it snaps back to $-\pi$. No single-valued, continuous choice of argument can survive a full loop around $0$ — <em>that forced jump is why the cut exists</em>.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":4}'>
+      <span class="step-tag">5 · the honest picture</span>
+      <p>Let the argument keep climbing instead of resetting and the graph becomes a helicoid — the Riemann surface of $\log$. Up here the logarithm is perfectly continuous; each full turn is another sheet, another $k$. The branch cut is nothing intrinsic: it's just the scissors-line where one sheet is cut free and flattened back onto the plane. (Drag to spin it.)</p>
+    </div>
+  </div>
+</section>
+
+Every full loop around the origin shifts $\operatorname{Arg}(z)$ by a full $2\pi$ — the multivaluedness of $\log z$ made visible — and the branch cut is precisely the ray where that walk gets interrupted to force a single, consistent choice.
 
 > **Key takeaways:** $\log z$: if $e^w=z$, $w=\ln|z|+i(\theta+2\pi k)$, $k\in\mathbb{Z}$ — multivalued. Principal branch: $\operatorname{Log}z=\ln|z|+i\operatorname{Arg}(z)$, $\operatorname{Arg}(z)\in(-\pi,\pi]$. Branch cut: the ray (negative real axis, for the principal branch) where $\operatorname{Arg}(z)$ — and hence $\operatorname{Log}z$ — is discontinuous.

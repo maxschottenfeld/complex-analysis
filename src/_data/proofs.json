@@ -35,5 +35,47 @@
         "note": "Nothing above chose $z_0$ specially, so the derivative vanishes at <em>every</em> point. <span class=\"pf-f\">$f$</span> is constant — Liouville's theorem."
       }
     ]
+  },
+  "fta": {
+    "title": "The Fundamental Theorem of Algebra",
+    "statement": "Every nonconstant polynomial over $\\mathbb{C}$ has at least one root.",
+    "terms": [
+      { "tag": "p", "label": "$p$ — the polynomial, assumed rootless", "hueOffset": 0 },
+      { "tag": "f", "label": "$f = 1/p$ — built from the assumption", "hueOffset": 110 },
+      { "tag": "n", "label": "$n \\ge 1$ — the degree, waiting to bite back", "hueOffset": 220 }
+    ],
+    "steps": [
+      {
+        "title": "the setup, and the assumption to kill",
+        "math": "\\htmlClass{pf-p}{p}(z) = a_{\\htmlClass{pf-n}{n}} z^{\\htmlClass{pf-n}{n}} + \\dots + a_0, \\quad \\htmlClass{pf-n}{n} \\ge 1, \\ a_{\\htmlClass{pf-n}{n}} \\ne 0; \\qquad \\text{suppose } \\htmlClass{pf-p}{p}(z) \\ne 0 \\ \\text{ for every } z \\in \\mathbb{C}",
+        "note": "Degree <span class=\"pf-n\">$n \\ge 1$</span> with a nonzero leading coefficient is exactly what \"nonconstant\" means — file that away, it returns at the very end. Everything after this line is a consequence of the assumption <em>no root anywhere</em>, held only so it can destroy itself."
+      },
+      {
+        "title": "the assumption builds a function",
+        "math": "\\htmlClass{pf-f}{f}(z) = \\frac{1}{\\htmlClass{pf-p}{p}(z)} \\ \\text{ is entire}",
+        "note": "Pure setup, no cleverness: <span class=\"pf-p\">$p$</span> is holomorphic everywhere and — by assumption — never zero, so the quotient <span class=\"pf-f\">$f$</span> is defined and holomorphic on all of $\\mathbb{C}$."
+      },
+      {
+        "title": "far away: the leading term takes over",
+        "math": "|\\htmlClass{pf-p}{p}(z)| \\to \\infty \\ \\text{ as } |z| \\to \\infty \\implies |\\htmlClass{pf-f}{f}(z)| \\to 0",
+        "note": "For huge $|z|$ the term $a_nz^n$ dwarfs every other term of <span class=\"pf-p\">$p$</span> — this is the one place the polynomial's <em>shape</em> gets used. So outside some large disk, <span class=\"pf-f\">$f$</span> is not just bounded but tiny."
+      },
+      {
+        "title": "close in: continuity does the rest",
+        "math": "\\htmlClass{pf-f}{f} \\ \\text{ continuous on the closed disk} \\implies |\\htmlClass{pf-f}{f}| \\le M \\ \\text{ there}",
+        "note": "Still setup. There is no singularity hiding in the disk — <span class=\"pf-p\">$p$</span> never vanishes, by assumption — and a continuous function on a closed disk is bounded. (This is the step that <em>feels</em> skippable and isn't: $|f| \\to 0$ far away says nothing about the middle.)"
+      },
+      {
+        "title": "combine the two regions",
+        "math": "\\htmlClass{pf-f}{f} \\ \\text{ is entire and bounded on all of } \\mathbb{C}",
+        "note": "Small outside the disk, at most $M$ inside it: one bound covers the whole plane. Notice what just happened — the assumption \"<span class=\"pf-p\">$p$</span> has no root\" has manufactured <em>exactly</em> the hypotheses of Liouville's theorem."
+      },
+      {
+        "aha": "the contradiction",
+        "title": "Liouville fires",
+        "math": "\\htmlClass{pf-f}{f} \\ \\text{constant} \\implies \\htmlClass{pf-p}{p} = \\frac{1}{\\htmlClass{pf-f}{f}} \\ \\text{constant} \\implies \\text{contradicts } \\htmlClass{pf-n}{n} \\ge 1",
+        "note": "Everything before this was scaffolding; this is the only move that closes a loop. Liouville (previous section) forces the bounded entire <span class=\"pf-f\">$f$</span> to be constant, so <span class=\"pf-p\">$p$</span> is constant — but step 1 declared <span class=\"pf-n\">$n \\ge 1$</span>. The assumption was false: $p$ <b>must have a root</b>."
+      }
+    ]
   }
 }

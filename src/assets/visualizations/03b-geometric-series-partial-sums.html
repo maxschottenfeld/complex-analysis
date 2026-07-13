@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geometric Series: Partial Sums & the ε–N Definition</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d29;
+    --text: #e8e9ed;
+    --muted: #9aa0b0;
+    --accent: #7aa2f7;
+    --accent2: #f7768e;
+    --border: #2a2e3f;
+    --grid: #232838;
+    --axis: #3a4055;
+    --ok: #9ece6a;
+    --warn: #e0af68;
+    --bad: #f7768e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+  .panel {
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:12px;
+  }
+  svg { width:100%; height:auto; display:block; background:#0b0d14; border-radius:6px; touch-action:none; user-select:none; -webkit-user-select:none; }
+  svg text { pointer-events:none; }
+
+  .controls {
+    display:flex; gap:14px 24px; flex-wrap:wrap; align-items:center;
+    margin-top:12px; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:10px 14px; font-size:13px;
+  }
+  .ctl { display:flex; gap:8px; align-items:center; flex:1 1 260px; min-width:220px; }
+  .ctl .lbl { color:var(--muted); white-space:nowrap; }
+  .ctl .val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; min-width:3.5em; }
+  input[type=range] { flex:1; accent-color: var(--accent); min-width:80px; }
+  input[type=checkbox] { accent-color: var(--warn); width:15px; height:15px; }
+  label { cursor:pointer; user-select:none; }
+
+  .readouts {
+    margin-top:12px; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:12px 14px;
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px 18px;
+  }
+  .ro { font-size:13px; }
+  .ro .k { color:var(--muted); }
+  .ro .v { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:14px; color:var(--text); }
+  .ro .v.ok { color:var(--ok); }
+  .ro .v.warn { color:var(--warn); }
+
+  .verdict {
+    margin-top:12px; padding:11px 14px; border-radius:8px; font-size:14px;
+    background:#11141d; border:1px solid var(--border);
+  }
+  .verdict.ok  { border-color:var(--ok);  color:var(--ok); }
+  .verdict.bad { border-color:var(--bad); color:var(--bad); }
+  .verdict.warn{ border-color:var(--warn);color:var(--warn);}
+
+  .note { color:var(--muted); font-size:13px; margin-top:14px; line-height:1.6; }
+  .note code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--text); background:#11141d; padding:1px 5px; border-radius:4px; }
+  .handle { cursor:grab; }
+  .handle:active { cursor:grabbing; }
+
+  /* Compact chrome when embedded via <iframe src="...?embed"> (lesson pages
+     provide their own caption around the iframe). The whole embed is a flex
+     column pinned to the iframe's height: the plane flexes, everything else
+     keeps its natural size — so the iframe NEVER scrolls internally. */
+  body.embed { padding: 12px; height: 100vh; overflow: hidden; }
+  body.embed h1, body.embed .sub, body.embed .note { display: none; }
+  body.embed .wrap { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  body.embed .panel { padding: 8px; flex: 1 1 auto; min-height: 0; display: flex; }
+  body.embed .panel svg { width: 100%; height: 100%; }
+  body.embed .controls { flex: none; margin-top: 8px; padding: 8px 12px; }
+  body.embed .readouts { flex: none; margin-top: 8px; padding: 8px 12px; gap: 6px 14px; grid-template-columns: repeat(3, 1fr); }
+  body.embed .verdict { flex: none; margin-top: 8px; padding: 8px 12px; font-size: 13px; }
+  @media (max-width: 700px) {
+    body.embed .readouts { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Geometric Series: Partial Sums in the Complex Plane</h1>
+  <p class="sub">Lesson 3 · watch &sum;&thinsp;z&#8319; converge — or refuse to — one partial sum at a time</p>
+
+  <h1 class="sr-only">Interactive: drag a point z in the complex plane and slide the number of terms N; the partial sums of the geometric series are drawn as a connected path that spirals into 1/(1−z) when |z| is less than 1.</h1>
+
+  <div class="panel">
+    <svg id="plane" viewBox="0 0 640 400" aria-label="complex plane showing the partial-sum path"></svg>
+  </div>
+
+  <div class="controls">
+    <div class="ctl">
+      <span class="lbl">terms N =</span><span class="val" id="nval">10</span>
+      <input type="range" id="nslider" min="0" max="40" step="1" value="10" aria-label="number of terms N">
+    </div>
+    <div class="ctl">
+      <label><input type="checkbox" id="epstoggle" checked> <span class="lbl">&epsilon;-disk around the limit</span></label>
+      <span class="val" id="epsval">0.35</span>
+      <input type="range" id="epsslider" min="0.05" max="1" step="0.01" value="0.35" aria-label="epsilon radius">
+    </div>
+  </div>
+
+  <div class="readouts">
+    <div class="ro"><div class="k">z</div><div class="v" id="ro-z">—</div></div>
+    <div class="ro"><div class="k">|z|</div><div class="v" id="ro-absz">—</div></div>
+    <div class="ro"><div class="k">S&#8342; (N terms)</div><div class="v" id="ro-sn">—</div></div>
+    <div class="ro"><div class="k">limit 1/(1−z)</div><div class="v" id="ro-lim">—</div></div>
+    <div class="ro"><div class="k">|S&#8342; − limit|</div><div class="v" id="ro-err">—</div></div>
+    <div class="ro"><div class="k">N(&epsilon;) — inside for good</div><div class="v" id="ro-neps">—</div></div>
+  </div>
+
+  <div class="verdict" id="verdict">—</div>
+
+  <p class="note">
+    Drag the white dot <b>z</b>. The path connects the partial sums
+    <code>S&#8320; = 1</code>, <code>S&#8321; = 1 + z</code>, <code>S&#8322; = 1 + z + z&sup2;</code>, &hellip; —
+    each new segment is the next term <code>z&#8319;</code>, so the path rotates by <code>arg z</code> and scales by
+    <code>|z|</code> at every step. Inside the dashed unit circle the spiral closes in on
+    <code>1/(1−z)</code> (the &times; mark); outside, it flies apart; right on the circle it circles forever without
+    settling. The amber <b>&epsilon;-disk</b> is the "challenge" of the &epsilon;–N definition of convergence:
+    <code>N(&epsilon;)</code> is the cutoff past which <em>every</em> partial sum stays inside the disk — shrink
+    &epsilon; and watch the required N grow. Points that are inside for good turn green.
+  </p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  if(location.search.indexOf("embed") >= 0) document.body.classList.add("embed");
+  const W = 640, H = 400;
+  const SVGNS = "http://www.w3.org/2000/svg";
+
+  // ---------- complex helpers ----------
+  const cx = (re,im)=>({re,im});
+  const cadd = (a,b)=>cx(a.re+b.re, a.im+b.im);
+  const cmul = (a,b)=>cx(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re);
+  const cabs = (z)=>Math.hypot(z.re,z.im);
+
+  // ---------- state ----------
+  let z = cx(0.62, 0.40);
+  let N = 10;
+  let eps = 0.35;
+  let showEps = true;
+
+  // ---------- coordinate transform (fixed scale, like the source applet) ----------
+  // 80 px per unit, centered at 0.8 + 0i: Re in [-3.2, 4.8], Im in [-2.5, 2.5]
+  const SC = 80, CX0 = 0.8, CY0 = 0;
+  const px = re => W/2 + (re - CX0)*SC;
+  const py = im => H/2 - (im - CY0)*SC;
+  const inv = (sx,sy)=>cx((sx - W/2)/SC + CX0, -(sy - H/2)/SC + CY0);
+
+  // ---------- svg builders ----------
+  const svg = document.getElementById("plane");
+  function el(tag, attrs){ const e=document.createElementNS(SVGNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+  function txt(x,y,s,color,anchor,size){
+    const t=el("text",{x:x,y:y,fill:color||"var(--text)","text-anchor":anchor||"middle",
+      "font-size":size||13,"font-family":"ui-monospace, Menlo, monospace"});
+    t.textContent=s; return t;
+  }
+  function clear(s){ while(s.firstChild) s.removeChild(s.firstChild); }
+
+  function fmt(x){ return (Math.abs(x)<1e-9?0:x).toFixed(2); }
+  function fmtC(w){ const im=w.im; return `${fmt(w.re)} ${im>=0?'+':'−'} ${fmt(Math.abs(im))}i`; }
+  function setRO(id,val,cls){ const e=document.getElementById(id); e.textContent=val; e.className="v"+(cls?" "+cls:""); }
+
+  // ---------- series math ----------
+  // S_n = sum_{k=0}^n z^k;  for |z|<1 the tail error is |S_n - L| = |z|^{n+1}/|1-z|,
+  // strictly decreasing in n — so the path enters the eps-disk once and never leaves.
+  function partialSums(n){
+    const out = [cx(1,0)];
+    let term = cx(1,0), s = cx(1,0);
+    for(let k=1;k<=n;k++){
+      term = cmul(term, z);
+      s = cadd(s, term);
+      out.push(s);
+    }
+    return out;
+  }
+  function limit(){ // 1/(1-z)
+    const d = cx(1-z.re, -z.im);
+    const q = d.re*d.re + d.im*d.im;
+    return cx(d.re/q, -d.im/q);
+  }
+  function nEps(){ // smallest n with |z|^{n+1}/|1-z| < eps, or null if |z|>=1
+    const r = cabs(z);
+    if(r >= 1) return null;
+    const d = cabs(cx(1-z.re, -z.im));
+    if(r < 1e-6) return 0;                    // S_n = 1 = L immediately
+    if(r/d < eps) return 0;                   // already inside at n = 0
+    // n+1 > ln(eps*d)/ln r  (ln r < 0 flips the inequality)
+    return Math.max(0, Math.ceil(Math.log(eps*d)/Math.log(r) - 1 + 1e-12));
+  }
+
+  // ---------- render ----------
+  function render(){
+    clear(svg);
+
+    // grid every unit + axes
+    const g = el("g",{});
+    for(let v=-3; v<=5; v++){
+      g.appendChild(el("line",{x1:px(v),y1:0,x2:px(v),y2:H,stroke:"var(--grid)","stroke-width":1}));
+    }
+    for(let v=-2; v<=2; v++){
+      g.appendChild(el("line",{x1:0,y1:py(v),x2:W,y2:py(v),stroke:"var(--grid)","stroke-width":1}));
+    }
+    g.appendChild(el("line",{x1:0,y1:py(0),x2:W,y2:py(0),stroke:"var(--axis)","stroke-width":1.4}));
+    g.appendChild(el("line",{x1:px(0),y1:0,x2:px(0),y2:H,stroke:"var(--axis)","stroke-width":1.4}));
+    svg.appendChild(g);
+
+    // unit circle — the boundary of convergence
+    svg.appendChild(el("circle",{cx:px(0),cy:py(0),r:SC,fill:"none",stroke:"var(--axis)",
+      "stroke-width":1.5,"stroke-dasharray":"6 5"}));
+    svg.appendChild(txt(px(-0.72), py(0.86), "|z| = 1", "var(--muted)", "middle", 11));
+
+    const r = cabs(z);
+    const converges = r < 1 - 1e-9;
+    const L = limit();
+    const Ne = showEps ? nEps() : null;
+    const sums = partialSums(N);
+
+    // eps-disk around the limit (only meaningful when the limit exists)
+    if(showEps && converges){
+      svg.appendChild(el("circle",{cx:px(L.re),cy:py(L.im),r:eps*SC,
+        fill:"rgba(224,175,104,0.10)",stroke:"var(--warn)","stroke-width":1.5,"stroke-dasharray":"4 4"}));
+      svg.appendChild(txt(px(L.re), py(L.im + eps) - 7, "ε = "+eps.toFixed(2), "var(--warn)", "middle", 11));
+    }
+
+    // partial-sum path: segments, then dots (green once inside the eps-disk for good)
+    const inside = n => (Ne !== null && n >= Ne);
+    for(let k=1; k<sums.length; k++){
+      const col = (inside(k-1) && inside(k)) ? "var(--ok)" : "var(--accent)";
+      svg.appendChild(el("line",{x1:px(sums[k-1].re),y1:py(sums[k-1].im),
+        x2:px(sums[k].re),y2:py(sums[k].im),stroke:col,"stroke-width":2,"stroke-linecap":"round",
+        opacity:0.9}));
+    }
+    sums.forEach((s,n)=>{
+      svg.appendChild(el("circle",{cx:px(s.re),cy:py(s.im),r:n===sums.length-1?4.5:2.6,
+        fill:inside(n)?"var(--ok)":"var(--accent)"}));
+    });
+    // label S_0 and S_N
+    svg.appendChild(txt(px(1)+2, py(0)+18, "S₀", "var(--muted)", "start", 11));
+    const last = sums[sums.length-1];
+    if(last.re > -3.2 && last.re < 4.8 && Math.abs(last.im) < 2.5){
+      svg.appendChild(txt(px(last.re)+8, py(last.im)-8, "S"+(N<10?"₀₁₂₃₄₅₆₇₈₉"[N]:"_"+N), "var(--text)", "start", 12));
+    }
+
+    // limit marker ×
+    if(converges){
+      const lx=px(L.re), ly=py(L.im), a=5;
+      svg.appendChild(el("line",{x1:lx-a,y1:ly-a,x2:lx+a,y2:ly+a,stroke:"var(--ok)","stroke-width":2.2}));
+      svg.appendChild(el("line",{x1:lx-a,y1:ly+a,x2:lx+a,y2:ly-a,stroke:"var(--ok)","stroke-width":2.2}));
+      svg.appendChild(txt(lx, ly+20, "1/(1−z)", "var(--ok)", "middle", 11));
+    }
+
+    // draggable z handle (plus an oversized invisible hit target for touch)
+    svg.appendChild(el("circle",{cx:px(z.re),cy:py(z.im),r:7,fill:"#fff",stroke:"#0b0d14",
+      "stroke-width":2,"class":"handle","data-h":"z"}));
+    svg.appendChild(el("circle",{cx:px(z.re),cy:py(z.im),r:18,fill:"transparent",
+      "class":"handle","data-h":"z"}));
+    svg.appendChild(txt(px(z.re)+12, py(z.im)-10, "z", "#fff", "start", 13));
+
+    // ---------- readouts ----------
+    setRO("ro-z", fmtC(z));
+    setRO("ro-absz", r.toFixed(3), converges ? "ok" : (r > 1 ? "warn" : "warn"));
+    setRO("ro-sn", fmtC(last));
+    setRO("ro-lim", converges ? fmtC(L) : "— (no limit)");
+    setRO("ro-err", converges ? cabs(cx(last.re-L.re, last.im-L.im)).toFixed(4) : "—");
+    if(!showEps){ setRO("ro-neps", "(disk hidden)"); }
+    else if(Ne === null){ setRO("ro-neps", "— never"); }
+    else { setRO("ro-neps", "n ≥ "+Ne+(N >= Ne ? "  ✓ reached" : "  (slide N up)"), N >= Ne ? "ok" : "warn"); }
+
+    // ---------- verdict ----------
+    const vEl = document.getElementById("verdict");
+    if(Math.abs(r-1) < 0.02){
+      vEl.className = "verdict warn";
+      vEl.innerHTML = `<b>On the boundary |z| = 1.</b> Each term z&#8319; has modulus 1 — the steps never shrink, `+
+        `so the partial sums march around forever without settling. The geometric series diverges everywhere on the unit circle.`;
+    } else if(converges){
+      vEl.className = "verdict ok";
+      vEl.innerHTML = `<b>|z| = ${r.toFixed(3)} &lt; 1: converges.</b> Every step is the previous one rotated by arg&thinsp;z `+
+        `and shrunk by |z| — a spiral forced inward to 1/(1−z) = ${fmtC(L)}.`+
+        (showEps && Ne !== null ? ` For &epsilon; = ${eps.toFixed(2)}, every partial sum from n = ${Ne} on stays inside the disk — that N is the &epsilon;–N definition doing its job.` : ``);
+    } else {
+      vEl.className = "verdict bad";
+      vEl.innerHTML = `<b>|z| = ${r.toFixed(3)} &gt; 1: diverges.</b> Each step is <em>longer</em> than the last by the factor |z|, `+
+        `so the spiral unwinds outward without bound. No limit, no &epsilon;-disk to be inside of.`;
+    }
+  }
+
+  // ---------- dragging ----------
+  let drag=false;
+  function svgPoint(evt){
+    const rect=svg.getBoundingClientRect();
+    return { sx:(evt.clientX-rect.left)*W/rect.width, sy:(evt.clientY-rect.top)*H/rect.height };
+  }
+  svg.addEventListener("pointerdown", e=>{
+    const h=e.target.getAttribute && e.target.getAttribute("data-h");
+    if(!h) return;
+    drag=true; svg.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  svg.addEventListener("pointermove", e=>{
+    if(!drag) return;
+    const {sx,sy}=svgPoint(e);
+    const m=inv(sx,sy);
+    // keep z where the picture stays meaningful
+    z=cx(Math.max(-2.2,Math.min(2.2,m.re)), Math.max(-2.2,Math.min(2.2,m.im)));
+    render();
+  });
+  svg.addEventListener("pointerup", ()=>{ drag=false; });
+  svg.addEventListener("pointercancel", ()=>{ drag=false; });
+
+  // ---------- controls ----------
+  const nslider=document.getElementById("nslider");
+  const epsslider=document.getElementById("epsslider");
+  const epstoggle=document.getElementById("epstoggle");
+  nslider.addEventListener("input", ()=>{
+    N=parseInt(nslider.value,10);
+    document.getElementById("nval").textContent=N;
+    render();
+  });
+  epsslider.addEventListener("input", ()=>{
+    eps=parseFloat(epsslider.value);
+    document.getElementById("epsval").textContent=eps.toFixed(2);
+    render();
+  });
+  epstoggle.addEventListener("change", ()=>{ showEps=epstoggle.checked; render(); });
+
+  // ---------- external control (scrollytelling hook, house convention) ----------
+  // A parent page embedding this file can drive it via postMessage:
+  //   { type: "geoseries-state", z: [re, im], N: int, eps: number, showEps: bool }
+  // Omitted fields keep their current value. z eases to the target unless the
+  // user prefers reduced motion; dragging still works between messages.
+  const prefersStill = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let extAnim = null;
+  window.addEventListener("message", e => {
+    const m = e.data;
+    if(!m || m.type !== "geoseries-state") return;
+    if(typeof m.N === "number"){ N = Math.max(0, Math.min(40, Math.round(m.N))); nslider.value = N; document.getElementById("nval").textContent = N; }
+    if(typeof m.eps === "number"){ eps = Math.max(0.05, Math.min(1, m.eps)); epsslider.value = eps; document.getElementById("epsval").textContent = eps.toFixed(2); }
+    if(typeof m.showEps === "boolean"){ showEps = m.showEps; epstoggle.checked = m.showEps; }
+    if(!m.z){ render(); return; }
+    const tgt = cx(m.z[0], m.z[1]);
+    if(extAnim) cancelAnimationFrame(extAnim);
+    if(prefersStill){ z = tgt; render(); return; }
+    const from = cx(z.re, z.im);
+    const t0 = performance.now(), DUR = 700;
+    function tick(now){
+      const u = Math.min(1, (now - t0) / DUR);
+      const s = u < 0.5 ? 2*u*u : 1 - Math.pow(-2*u + 2, 2) / 2; // easeInOutQuad
+      z = cx(from.re + (tgt.re - from.re)*s, from.im + (tgt.im - from.im)*s);
+      render();
+      extAnim = u < 1 ? requestAnimationFrame(tick) : null;
+    }
+    extAnim = requestAnimationFrame(tick);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

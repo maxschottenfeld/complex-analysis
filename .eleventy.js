@@ -61,9 +61,13 @@ module.exports = function (eleventyConfig) {
     const chips = proof.terms
       .map(t => `<button type="button" class="proof-chip pf-${t.tag}">${t.label}</button>`)
       .join("");
+    // A step may carry `aha: "<label>"` — the payoff move of the argument.
+    // It renders visually distinct (amber rule + wash, uppercase flag), the
+    // same convention as .step.aha in the standalone chain visualization.
     const steps = proof.steps
       .map((s, i) =>
-        `<li class="proof-step" tabindex="-1">` +
+        `<li class="proof-step${s.aha ? " proof-step-aha" : ""}" tabindex="-1">` +
+        (s.aha ? `<span class="proof-step-aha-tag">${s.aha}</span>` : "") +
         `<span class="proof-step-tag">${i + 1} · ${s.title}</span>` +
         `<div class="proof-step-math">$$${s.math}$$</div>` +
         `<p class="proof-step-note">${s.note}</p>` +

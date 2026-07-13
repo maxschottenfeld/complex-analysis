@@ -566,6 +566,79 @@ blockquote strong, blockquote b { color: var(--text); }
   font-size: 0.8rem;
 }
 
+/* ---------- Lesson sidebar ---------- */
+
+/* A lesson-page port of the sticky card column the FTA chain viz uses
+   (<aside class="side">): a small "track" card plus link-out cards. On
+   wide screens it rides the right gutter next to the 760px prose column;
+   below that it falls into the page flow as ordinary cards. */
+
+.lesson-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin: 1.8rem 0;
+}
+
+.lesson-side .side-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.lesson-side .side-card h3 {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--h) 85% 74%);
+  margin: 0 0 0.6rem;
+}
+
+.lesson-side .side-node {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding: 0.22rem 0;
+}
+
+.lesson-side .side-node .dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  transform: translateY(-1px);
+}
+
+.lesson-side .side-node.done .dot {
+  border-color: hsl(var(--h) 70% 62%);
+  background: hsl(var(--h) 70% 62% / 0.55);
+}
+
+.lesson-side .side-node .lbl { color: var(--text); }
+.lesson-side .side-node .sub { display: block; font-size: 0.78rem; color: var(--muted); }
+
+.lesson-side .side-card p { margin: 0 0 0.5rem; color: var(--muted); }
+.lesson-side .side-card p:last-child { margin-bottom: 0; }
+
+@media (min-width: 1380px) {
+  .lesson-side {
+    position: fixed;
+    top: 5.5rem;
+    right: calc((100vw - 760px) / 2 - 296px);
+    width: 268px;
+    margin: 0;
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+  }
+}
+
 /* ---------- Scroll-driven viz sections ---------- */
 
 /* The figure pins via position:sticky; JS only swaps which step is
@@ -758,6 +831,36 @@ blockquote strong, blockquote b { color: var(--text); }
   color: var(--muted);
 }
 
+/* The payoff step of a proof — amber, deliberately outside the page-hue
+   system, matching the .step.aha convention in the chain visualization */
+.proof-step-aha {
+  border-left: 3px solid hsl(42 80% 62% / 0.9);
+  background: hsl(42 80% 62% / 0.06);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding-left: 1.1rem;
+  padding-right: 0.9rem;
+  margin-top: 0.6rem;
+}
+
+.proof-step-aha-tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(42 90% 68%);
+  margin-bottom: 0.2rem;
+}
+
+.proof-animated .proof-step-aha.is-visible { animation: proofAhaGlow 1.6s ease; }
+
+@keyframes proofAhaGlow {
+  0% { box-shadow: 0 0 0 0 hsl(42 90% 60% / 0.45); }
+  70% { box-shadow: 0 0 0 10px transparent; }
+  100% { box-shadow: none; }
+}
+
 .proof-step-math { margin: 0.3rem 0; overflow-x: auto; }
 
 .proof-step-note {
@@ -778,8 +881,15 @@ blockquote strong, blockquote b { color: var(--text); }
 
 .proof .pf-hot { background: hsl(var(--th, var(--h)) 70% 58% / 0.32); }
 
-/* Scroll reveal — armed by JS only, so no-JS readers see everything;
-   reduced-motion readers never get the hidden state at all */
+/* Click-to-reveal — armed by JS only, so no-JS readers see everything.
+   .proof-interactive/.is-shown control display (which steps exist yet);
+   .proof-animated/.is-visible control the fade/slide (skipped under
+   reduced motion, where steps simply appear). Reveals are additive:
+   the stepper never re-hides a step. */
+.proof-interactive .proof-step { display: none; }
+
+.proof-interactive .proof-step.is-shown { display: list-item; }
+
 .proof-animated .proof-step {
   opacity: 0;
   transform: translateY(14px);
@@ -788,8 +898,23 @@ blockquote strong, blockquote b { color: var(--text); }
 
 .proof-animated .proof-step.is-visible { opacity: 1; transform: none; }
 
+.proof-progress {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  align-self: center;
+}
+
+.proof-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.proof-btn:disabled:hover { color: var(--muted); border-color: var(--border-strong); }
+
 @media (prefers-reduced-motion: reduce) {
   .proof-animated .proof-step { opacity: 1; transform: none; transition: none; }
+  .proof-animated .proof-step-aha.is-visible { animation: none; }
 }
 
 /* ---------- Footer ---------- */

@@ -1,6 +1,7 @@
 ---
 layout: base.njk
 hue: 265
+scrolly: true
 title: "Lesson 4 — Cauchy's Theorem & the Cauchy Integral Formula"
 description: "The centerpiece: contour integrals, deformation invariance, Cauchy's theorem, and the integral formula — a holomorphic function's boundary values determine every value inside."
 ---
@@ -46,7 +47,39 @@ Both area integrals are zero, so the original contour integral is zero. This is 
 
 Fix $z_0$ inside a closed contour $\gamma$, with $f$ holomorphic on and inside $\gamma$, and set $g(z)=\dfrac{f(z)}{z-z_0}$. $g$ is holomorphic everywhere inside $\gamma$ except at $z_0$ itself, so surround $z_0$ with a small circle $C_\varepsilon$ and shrink $\gamma$ down to it: the region between $\gamma$ and $C_\varepsilon$ is singularity-free, so Cauchy-Goursat applies there, giving $\oint_\gamma g\\,dz = \oint_{C_\varepsilon} g\\,dz$.
 
-<iframe class="viz-embed" src="/assets/visualizations/04-contour-deformation-and-cif.html" title="Contour deformation and Cauchy Integral Formula visualization"></iframe>
+That whole argument plays out below. As you scroll, the pinned demo first replays deformation invariance (the engine of the proof), then walks the CIF derivation move by move on the lesson's practice example $\oint_{|z|=2}\frac{e^z}{z-1}\\,dz$ — and it stays live throughout: drag the contour's control points, drag $z_0$, drag the $\varepsilon$-slider.
+
+<section class="scrolly scrolly-static" data-scrolly>
+  <div class="scrolly-figure">
+    <iframe class="viz-embed" src="/assets/visualizations/04-contour-deformation-and-cif.html?embed" title="Contour deformation and Cauchy Integral Formula visualization"></iframe>
+  </div>
+  <div class="scrolly-steps">
+    <div class="scrolly-step" data-state='{"type":"cif-state","panel":1,"compare":false}'>
+      <span class="step-tag">1 · the only thing that matters is winding</span>
+      <p>The loop $\gamma$ is integrating $\oint dz/z$, and its shape is yours to mangle — drag the control points. The value stays locked at $2\pi i \times n$: stretch and dent all you like and nothing changes, but pull the loop across the red $\times$ at $z=0$ and the winding number — and the integral — jumps.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"cif-state","panel":1,"compare":true}'>
+      <span class="step-tag">2 · deformation invariance, stated honestly</span>
+      <p>A second contour $\gamma'$ appears — a shrunken copy of $\gamma$. The shaded region between them contains no singularity, so Cauchy–Goursat applies to its boundary ($\gamma$ together with $-\gamma'$) and forces $\oint_\gamma = \oint_{\gamma'}$. Drag $\gamma$ so the singularity falls <em>between</em> the two loops and the equality visibly breaks — the hypothesis was doing real work.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"cif-state","panel":2,"preset":2,"step":1}'>
+      <span class="step-tag">3 · CIF setup: manufacture the singularity</span>
+      <p>Now the derivation, on the practice example $f(z)=e^z$, $z_0=1$. Define $g(z)=\frac{f(z)}{z-z_0}$: holomorphic everywhere inside $\gamma$ <em>except</em> the one point $z_0$, where the denominator vanishes. The wobbly loop is deliberate — after step 2, only "$z_0$ inside $\gamma$" matters, not $\gamma$'s shape.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"cif-state","panel":2,"step":2}'>
+      <span class="step-tag">4 · cut the singularity out</span>
+      <p>Surround $z_0$ with a small circle $C_\varepsilon$. Between $\gamma$ and $C_\varepsilon$ (shaded green) $g$ has no singularity at all — so by exactly the argument of step 2, $\oint_\gamma g\ dz = \oint_{C_\varepsilon} g\ dz$. The big unknown integral has become a small circle's integral.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"cif-state","panel":2,"step":3,"play":true}'>
+      <span class="step-tag">5 · shrink, and let continuity finish</span>
+      <p>On $C_\varepsilon$, parametrizing $z = z_0 + \varepsilon e^{i\theta}$ cancels the denominator <em>algebraically</em> — no limit yet. Then $\varepsilon\to0$ (playing now; drag the slider yourself too): continuity of $f$ squeezes every sampled value $f(z_0+\varepsilon e^{i\theta})$ onto $f(z_0)$, so the integral becomes $i\int_0^{2\pi} f(z_0)\ d\theta = 2\pi i \cdot f(z_0)$.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"cif-state","panel":2,"step":5}'>
+      <span class="step-tag">6 · unwind — it was about f all along</span>
+      <p>Watch the numeric readout: $\oint_{C_\varepsilon} g\ dz$ agrees with $2\pi i \cdot f(z_0) = 2\pi i \cdot e \approx 17.079i$ at <em>every</em> $\varepsilon$ — invariance demonstrated, not asserted. And since $g$ was <em>defined as</em> $\frac{f(z)}{z-z_0}$, that equation is already a statement about $f$. Dividing by $2\pi i$ — the algebra right below — is the Cauchy Integral Formula.</p>
+    </div>
+  </div>
+</section>
 
 On $C_\varepsilon$, parametrize $z=z_0+\varepsilon e^{i\theta}$:
 $$\oint_{C_\varepsilon} \frac{f(z)}{z-z_0}\\,dz = \int_0^{2\pi} \frac{f(z_0+\varepsilon e^{i\theta})}{\varepsilon e^{i\theta}}\cdot i\varepsilon e^{i\theta}\\,d\theta = i\int_0^{2\pi} f(z_0+\varepsilon e^{i\theta})\\,d\theta$$

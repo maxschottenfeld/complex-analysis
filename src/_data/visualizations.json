@@ -42,6 +42,13 @@
     "description": "log z is multivalued: every loop around the origin adds 2πi. Explore the spiral of values, choose a branch, and see exactly what a branch cut removes to force a single-valued function."
   },
   {
+    "slug": "03b-geometric-series-partial-sums",
+    "title": "Geometric Series: Partial Sums in the Plane",
+    "lesson": "Lesson 3",
+    "hue": 215,
+    "description": "Drag z and watch the partial sums of Σzⁿ trace a path: a spiral forced inward to 1/(1−z) when |z| < 1, an unbounded outward spiral when |z| > 1, and endless circling right on the boundary. An ε-disk around the limit makes the ε–N definition of convergence literal — find the N past which the path never leaves."
+  },
+  {
     "slug": "04-contour-deformation-and-cif",
     "title": "Contour Deformation & the Cauchy Integral Formula",
     "lesson": "Lesson 4",
