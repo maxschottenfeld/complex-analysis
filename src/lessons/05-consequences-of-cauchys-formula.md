@@ -2,6 +2,7 @@
 layout: base.njk
 hue: 320
 proofstepper: true
+scrolly: true
 title: "Lesson 5 — Consequences of Cauchy's Formula"
 description: "One formula cascades into infinite differentiability, Cauchy's estimates, Liouville's theorem, and a proof of the Fundamental Theorem of Algebra with no algebra in it."
 ---
@@ -53,17 +54,65 @@ The result is genuinely strange when checked against familiar functions: $\sin z
 
 ## The Fundamental Theorem of Algebra
 
-A proof by contradiction. Let $p(z)=a_nz^n+\dots+a_0$ with $n\ge1$, $a_n\ne0$, and suppose — for contradiction — that $p$ has no root anywhere in $\mathbb{C}$.
+A proof by contradiction — and the thing to watch is which moves are mere *setup* and which single move is the *payoff*. Steps 1–5 below just take the assumed-rootless polynomial, build $f=1/p$ out of it, and check that function's passport: entire, and bounded. None of them is clever. The flagged final step is the only one that closes a loop — Liouville detonates the contradiction, and the degree $n\ge1$ from step 1 comes back to bite.
 
-Then $f=1/p$ is defined everywhere and, since $p$ never vanishes, $f$ is holomorphic everywhere too — $f$ is entire. As $|z|\to\infty$, the leading term $a_nz^n$ dominates the rest of $p$, so $|p(z)|\to\infty$, forcing $|f(z)|\to0$. Near the origin, $f$ is continuous (no singularity there, since $p$ never vanishes by assumption), so $f$ is bounded on some disk around $0$. Combined with $f\to0$ at infinity, $f$ is bounded on all of $\mathbb{C}$.
+{% proofStepper "fta" %}
 
-$f$ is entire and bounded — Liouville's theorem forces $f$ to be **constant**. But $f$ constant means $p=1/f$ is constant too, which directly contradicts $n\ge1$ (a genuinely nonconstant polynomial). So the assumption was false: $p$ must have a root. That's the **Fundamental Theorem of Algebra** — every nonconstant polynomial over $\mathbb{C}$ has at least one root — proved with no algebra at all, only Liouville's theorem.
+That's the **Fundamental Theorem of Algebra** — every nonconstant polynomial over $\mathbb{C}$ has at least one root — proved with no algebra at all, only Liouville's theorem.
 
 (Worked example, arbitrary — the technique is the point: $p(z)=z^3+1$ has roots $z=e^{i\pi/3}$, $e^{i\pi}=-1$, $e^{i5\pi/3}$, by the same roots-of-unity work from Lesson 1.)
 
-<iframe class="viz-embed" src="/assets/visualizations/05-liouville-fta-chain.html" title="From CIF to the Fundamental Theorem of Algebra visualization"></iframe>
-
 > **Key takeaway:** **Fundamental Theorem of Algebra:** every nonconstant polynomial over $\mathbb{C}$ has at least one root. Proof: assume not; $1/p$ is entire and bounded; Liouville forces it constant, contradicting the polynomial's degree.
+
+## The whole chain, replayed
+
+Everything above was one continuous argument — CIF $\to$ differentiation formulas $\to$ Cauchy's estimates $\to$ Liouville $\to$ FTA, each link using only the one before it. The recap below replays that chain end to end against live pictures: as you scroll, the pinned figure moves through the four layers, and every one stays interactive the whole way (drag $z_0$, drag the sliders — the animations rerun if you scroll back).
+
+<section class="scrolly scrolly-static" data-scrolly>
+  <div class="scrolly-figure">
+    <iframe class="viz-embed" src="/assets/visualizations/05-liouville-fta-chain.html?embed" title="From CIF to the Fundamental Theorem of Algebra, scroll-driven"></iframe>
+  </div>
+  <div class="scrolly-steps">
+    <div class="scrolly-step" data-state='{"type":"chain-state","sec":1,"n":0}'>
+      <span class="step-tag">1 · start from CIF</span>
+      <p>The purple shading is the integrand's magnitude $|f(z)/(z-z_0)^{n+1}|$ for $f(z)=e^z$ — and at $n=0$ that is the CIF integrand itself. The formula only ever <em>reads</em> $f$ on the circle $\gamma$, yet it pins down $f$ at $z_0$. Drag $z_0$; the numerically computed integral tracks the exact value $e^{z_0}$ wherever it goes.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"chain-state","sec":1,"n":3}'>
+      <span class="step-tag">2 · differentiate under the integral</span>
+      <p>Step $n$ up to $3$: each derivative pulls one more factor down and adds one power to the denominator — and the integrand's weight clamps ever tighter around $z_0$. Higher derivatives are more <em>local</em> information, and the integrand concentrates to match. Nothing about higher derivatives was ever assumed, so $f^{(n)}(z_0)$ exists for every $n$: <strong>holomorphic $\Rightarrow$ infinitely differentiable.</strong></p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"chain-state","sec":2,"R":1.5}'>
+      <span class="step-tag">3 · bound it — the estimate's raw parts</span>
+      <p>Take the contour to be a circle $C_R$: on it, $|z-z_0| = R$ <em>exactly</em>, which is what makes circles the right contour for estimates. The ticks sample $|f|$ around the circle; the red dot marks the largest sample — that value is $M$. The readouts assemble Cauchy's estimate from its three raw parts: $M$, the length $2\pi R$, and the finished bound $M/R$.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"chain-state","sec":2,"R":3.05}'>
+      <span class="step-tag">4 · what R does — and doesn't do</span>
+      <p>Slide $R$ outward and the bound does <em>not</em> shrink here: for $f=e^z$, the max $M(R)=e^R$ grows far faster than $R$. That's the tell. Cauchy's estimate only becomes a weapon when $M$ stays pinned while $R$ grows — which is exactly what <em>bounded</em> is about to buy.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"chain-state","sec":3,"act":"reset"}'>
+      <span class="step-tag">5 · Liouville's two hypotheses</span>
+      <p>Now let $f$ be <strong>entire</strong> and <strong>bounded</strong>: $|f| \le M = 10$, one fixed $M$, everywhere. Entire means no singularity ever stops the circle — $C_R$ is legal at every radius. Bounded means that same $M$ works on all of them at once. Both hypotheses are about to do real work: entirety frees $R$, boundedness pins $M$.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"chain-state","sec":3,"act":"squeeze"}'>
+      <span class="step-tag">6 · the squeeze</span>
+      <p>Let $R \to \infty$ (running now — the circle creeps toward the edge while the true $R$ runs off to infinity). The gauge is the live bound $M/R$ draining to zero, and $|f'(z_0)|$ is trapped beneath it the whole way down. A fixed nonnegative number smaller than every $M/R$ has no choice: $|f'(z_0)| = 0$.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"chain-state","sec":3,"act":"sweep"}'>
+      <span class="step-tag">7 · z₀ was arbitrary</span>
+      <p>Nothing in that squeeze used <em>where</em> $z_0$ sits — so the identical argument runs at every point of the plane (stamping now). $f' \equiv 0$ on all of $\mathbb{C}$, so $f$ is constant: <strong>Liouville's theorem</strong>, the same five moves as the stepper earlier on this page, now drawn instead of written.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"chain-state","sec":4,"r":1.8}'>
+      <span class="step-tag">8 · aim it at a polynomial</span>
+      <p>Domain coloring of $p(z)=z^3+1$: hue is $\arg p$, dark is $|p|$ near $0$ — the three dark points are the roots FTA promises. Assume, for contradiction, $p$ has <em>no</em> root: then $f = 1/p$ is entire. The dashed ring is $|z|=r$, and the readout tracks $\max |1/p|$ on it.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"chain-state","sec":4,"act":"radial"}'>
+      <span class="step-tag">9 · the contradiction closes the chain</span>
+      <p>Push $r$ outward (running): the leading term dominates, $|p| \to \infty$, so $\max|1/p| \to 0$ — combined with continuity on the inner disk, $f=1/p$ is bounded on all of $\mathbb{C}$. Entire and bounded forces $f$ constant by step 7 — so $p$ is constant, contradicting $n \ge 1$. Every nonconstant polynomial has a root, and the whole chain — CIF $\to$ derivatives $\to$ estimates $\to$ Liouville $\to$ FTA — ran on one formula.</p>
+    </div>
+  </div>
+</section>
+
+(The [standalone version](/visualizations/05-liouville-fta-chain/) keeps the full four-section walkthrough with its proof steps and explore cards, if you want the long-form version back.)
 
 ## The maximum modulus principle
 

@@ -1,12 +1,16 @@
-/* Proof stepper: scroll-reveal + cross-step term highlighting.
+/* Proof stepper: click-to-reveal steps + cross-step term highlighting.
  *
  * Works on the HTML emitted by the `proofStepper` Eleventy shortcode
  * (see .eleventy.js / src/_data/proofs.json). Three jobs:
  *
- * 1. Reveal each .proof-step as it scrolls into view (IntersectionObserver).
- *    The steps are visible by default; the hidden state is only armed here,
- *    so no-JS readers get the whole proof. Reduced motion: no reveal at all.
- * 2. prev/next buttons as a manual, keyboard-friendly way to walk the steps.
+ * 1. Click-to-reveal: steps ship visible in the markup (no-JS readers get
+ *    the whole proof); this script arms the hidden state and "next step"
+ *    reveals them one at a time. Reveals are additive — a revealed step
+ *    never hides again — and "prev step" only walks focus back, it never
+ *    un-reveals. (Same model as the Next-step buttons in the standalone
+ *    FTA/Liouville chain visualization.) Reduced motion: steps still
+ *    reveal on click, just without the fade/slide animation.
+ * 2. A "n / m" progress readout between the prev/next buttons.
  * 3. Term continuity: classes pf-<tag> are reserved for tagged terms (KaTeX
  *    \htmlClass output in the math, plain spans in the notes, legend chips).
  *    Hovering or focusing any occurrence lights every occurrence of that
@@ -23,33 +27,58 @@
 
   proofEls.forEach(proof => {
     const steps = Array.from(proof.querySelectorAll(".proof-step"));
+    const controls = proof.querySelector(".proof-controls");
+    const btnPrev = proof.querySelector('.proof-btn[data-dir="-1"]');
+    const btnNext = proof.querySelector('.proof-btn[data-dir="1"]');
 
-    // --- scroll reveal ---
-    if (!reduced && "IntersectionObserver" in window) {
-      proof.classList.add("proof-animated");
-      const io = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            io.unobserve(entry.target);
-          }
-        });
-      }, { rootMargin: "0px 0px -15% 0px", threshold: 0.15 });
-      steps.forEach(s => io.observe(s));
+    // --- click-to-reveal ---
+    // Arm the hidden state only now that JS is definitely running.
+    proof.classList.add("proof-interactive");
+    if (!reduced) proof.classList.add("proof-animated");
+
+    const progress = document.createElement("span");
+    progress.className = "proof-progress";
+    if (controls && btnNext) controls.insertBefore(progress, btnNext);
+
+    let shown = 0;    // how many steps are revealed (never decreases)
+    let cursor = -1;  // the step the reader is "on"
+
+    function update() {
+      progress.textContent = shown + " / " + steps.length;
+      if (btnPrev) btnPrev.disabled = cursor <= 0;
+      if (btnNext) btnNext.disabled = shown >= steps.length && cursor >= steps.length - 1;
     }
 
-    // --- manual prev/next fallback ---
-    let cursor = -1;
-    proof.querySelectorAll(".proof-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const dir = parseInt(btn.getAttribute("data-dir"), 10);
-        cursor = Math.min(steps.length - 1, Math.max(0, cursor + dir));
-        const step = steps[cursor];
-        step.classList.add("is-visible");
-        step.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
-        step.focus({ preventScroll: true });
-      });
+    function goTo(i, focus) {
+      const step = steps[i];
+      step.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+      if (focus) step.focus({ preventScroll: true });
+    }
+
+    function reveal() {
+      const step = steps[shown];
+      shown++;
+      cursor = shown - 1;
+      step.classList.add("is-shown");
+      /* force layout so the fade/slide transition actually runs */
+      void step.offsetWidth;
+      step.classList.add("is-visible");
+      goTo(cursor, true);
+      update();
+    }
+
+    if (btnNext) btnNext.addEventListener("click", () => {
+      if (cursor < shown - 1) { cursor++; goTo(cursor, true); }   // walked back earlier: move forward first
+      else if (shown < steps.length) reveal();
+      update();
     });
+
+    if (btnPrev) btnPrev.addEventListener("click", () => {
+      if (cursor > 0) { cursor--; goTo(cursor, true); }
+      update();
+    });
+
+    update();
 
     // --- cross-step term highlighting ---
     function tagOf(el) {

@@ -111,6 +111,26 @@
   .frac .den { display: block; padding: 0 3px; }
   .note { font-size: 12.5px; color: var(--text-secondary); }
   .hint { font-size: 12px; color: var(--text-secondary); font-style: italic; }
+
+  /* Compact chrome when embedded via <iframe src="...?embed"> — the host
+     page's scrolly steps narrate and drive panel/step/preset via postMessage
+     (type:"cif-state"). Flex-fit to the iframe height: never scrolls
+     internally. The canvas stays interactive (drag z₀ / control points). */
+  body.embed { height: 100vh; overflow: hidden; padding: 12px; }
+  body.embed h1, body.embed .subtitle, body.embed .tabs { display: none; }
+  body.embed .wrap { height: 100%; display: flex; flex-direction: column; max-width: none; }
+  body.embed .panel.active { flex: 1; min-height: 0; flex-direction: column; flex-wrap: nowrap; gap: 10px; }
+  /* width/height auto + max caps: the element box stays exactly the scaled
+     drawing (no letterbox), so pointer→canvas math needs only one ratio */
+  body.embed canvas { width: auto !important; height: auto !important; max-width: 100%; max-height: calc(100vh - 250px); flex: 0 1 auto; min-height: 0; align-self: center; }
+  body.embed .sidebar { flex: none; flex-direction: row; flex-wrap: wrap; gap: 8px; width: 100%; max-width: none; min-width: 0; }
+  body.embed .sidebar .card { flex: 1 1 240px; padding: 8px 10px; font-size: 12.5px; }
+  /* narration and step-nav live on the host page; keep only the live controls */
+  body.embed #panel1 .sidebar .card:last-child { display: none; }
+  body.embed #panel2 .sidebar > .card:nth-child(1),
+  body.embed #panel2 .sidebar > .card:nth-child(2),
+  body.embed #p2sampleCard,
+  body.embed #p2chainCard { display: none !important; }
 </style>
 </head>
 <body>
@@ -439,8 +459,9 @@ function arrowAt(ctx, s, i, X, Y, color) {
   }
 
   function ptAt(e) {
+    /* scale by logical/rendered size: the embed mode displays the canvas smaller */
     const r = cv.getBoundingClientRect();
-    return [e.clientX - r.left, e.clientY - r.top];
+    return [(e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height)];
   }
   cv.addEventListener('pointerdown', e => {
     const p = ptAt(e);
@@ -699,8 +720,9 @@ function arrowAt(ctx, s, i, X, Y, color) {
 
   /* ---- interactions ---- */
   function ptAt(ev) {
+    /* scale by logical/rendered size: the embed mode displays the canvas smaller */
     const r = cv.getBoundingClientRect();
-    return [ev.clientX - r.left, ev.clientY - r.top];
+    return [(ev.clientX - r.left) * (W / r.width), (ev.clientY - r.top) * (H / r.height)];
   }
   function tryMoveZ0(mx, my) {
     const R = PRESETS[preset].R;
@@ -782,6 +804,24 @@ function arrowAt(ctx, s, i, X, Y, color) {
   draw();
   requestAnimationFrame(tick);
   window.__redrawP2 = draw;
+  /* scrollytelling hooks: let an embedding page set the walkthrough step,
+     start/stop the eps-shrink, and pick a preset */
+  window.__cifStep = s => {
+    s = Math.max(1, Math.min(5, s));
+    if (s === step) return;
+    if (s >= 2 && step < 2) { epsFrac = 0.85; elEps.value = 850; }
+    step = s;
+    playing = false; btnPlay.innerHTML = '▶ Play ε→0';
+    updateUI(); draw();
+  };
+  window.__cifPlay = on => {
+    if (on && step < 3) window.__cifStep(3);
+    if (on !== playing) btnPlay.click();
+  };
+  window.__cifPreset = p => {
+    const btn = document.querySelectorAll('.preset-btn')[p];
+    if (btn && !btn.classList.contains('active')) btn.click();
+  };
 })();
 
 /* ---------- tabs ---------- */
@@ -797,6 +837,31 @@ function arrowAt(ctx, s, i, X, Y, color) {
   }
   b1.addEventListener('click', () => go(1));
   b2.addEventListener('click', () => go(2));
+  window.__cifGo = go;
+})();
+
+/* ---------- embed mode + external control (scrollytelling hook) ---------- */
+/* A parent page embedding this file as <iframe src="...?embed"> can drive it:
+     { type: "cif-state", panel: 1|2, preset: 0..2, step: 1..5,
+       play: bool, compare: bool }
+   panel switches the tab; preset/step/play drive the CIF walkthrough;
+   compare toggles Panel 1's deformed-contour overlay. Omitted fields keep
+   their current value. Everything stays user-interactive between messages. */
+(function () {
+  const embed = location.search.indexOf('embed') >= 0;
+  if (embed) document.body.classList.add('embed');
+  window.addEventListener('message', e => {
+    const m = e.data;
+    if (!m || m.type !== 'cif-state') return;
+    if (m.panel === 1 || m.panel === 2) window.__cifGo(m.panel);
+    if (typeof m.compare === 'boolean') {
+      const cb = document.getElementById('p1compare');
+      if (cb.checked !== m.compare) { cb.checked = m.compare; cb.dispatchEvent(new Event('change')); }
+    }
+    if (typeof m.preset === 'number') window.__cifPreset(m.preset);
+    if (typeof m.step === 'number') window.__cifStep(m.step);
+    if (typeof m.play === 'boolean') window.__cifPlay(m.play);
+  });
 })();
 </script>
 </body>

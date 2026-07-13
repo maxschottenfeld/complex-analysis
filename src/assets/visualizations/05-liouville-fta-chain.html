@@ -265,6 +265,30 @@
     font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 12px; font-weight: 700;
     color: var(--text-secondary); text-align: center; line-height: 15px;
   }
+  /* Compact chrome when embedded via <iframe src="...?embed"> — the host
+     lesson page scrolls its own narrative and drives this file one section
+     at a time via postMessage (type:"chain-state"). Only the active
+     section's visualization column is shown: canvas, sliders, buttons and
+     readouts all stay live. Flex-fit to the iframe: never scrolls
+     internally. The standalone page (no ?embed) is untouched. */
+  body.embed { height: 100vh; overflow: hidden; padding: 12px; }
+  body.embed #sideToggle, body.embed .side, body.embed h1, body.embed .subtitle,
+  body.embed .sec-head, body.embed .sec-sub, body.embed .proof,
+  body.embed details.legend, body.embed #sec0, body.embed #close { display: none !important; }
+  body.embed .page { display: block; max-width: none; height: 100%; }
+  body.embed .main { height: 100%; }
+  body.embed .sec { display: none; margin: 0; height: 100%; }
+  body.embed .sec.embed-active { display: block; }
+  body.embed .duo { height: 100%; flex-wrap: nowrap; justify-content: center; }
+  body.embed .vizcol { flex: 1 1 auto; min-width: 0; max-width: 660px; height: 100%; margin: 0 auto; }
+  /* width/height auto + max caps: the element box stays exactly the scaled
+     drawing (no letterbox), so pointer→canvas math needs only one ratio */
+  body.embed .vizcol canvas.plane {
+    width: auto !important; height: auto !important;
+    max-width: 100%; max-height: calc(100vh - 260px);
+    flex: 0 1 auto; min-height: 0; align-self: center;
+  }
+
   @media (max-width: 1020px) {
     .page { display: block; }
     #sideToggle {
@@ -911,6 +935,46 @@ updActive();
 document.getElementById('sideToggle').addEventListener('click', function () {
   document.getElementById('side').classList.toggle('open');
 });
+
+/* ---------- embed mode + external control (scrollytelling hook) ---------- */
+/* A parent page embedding this file as <iframe src="...?embed"> can drive it:
+     { type: "chain-state", sec: 1..4, n: 0..3, R: number, r: number,
+       act: "squeeze" | "sweep" | "reset" | "radial" | ... }
+   sec picks which section's visualization is visible; n clicks §1's
+   derivative-order buttons; R / r drive §2's and §4's sliders; act runs the
+   same ACT[sec] hooks the proof steps use (plus "reset" for §3). Omitted
+   fields keep their current value; everything stays user-interactive. */
+(function () {
+  var embed = location.search.indexOf('embed') >= 0;
+  function showSec(k) {
+    [1, 2, 3, 4].forEach(function (i) {
+      var el = document.getElementById('sec' + i);
+      if (el) el.classList.toggle('embed-active', i === k);
+    });
+  }
+  if (embed) { document.body.classList.add('embed'); showSec(1); }
+  window.addEventListener('message', function (e) {
+    var m = e.data;
+    if (!m || m.type !== 'chain-state') return;
+    if (embed && m.sec >= 1 && m.sec <= 4) showSec(m.sec);
+    if (typeof m.n === 'number') {
+      var b = document.querySelector('.nbtn[data-n="' + m.n + '"]');
+      if (b) b.click();
+    }
+    if (typeof m.R === 'number') {
+      var s2 = document.getElementById('r2slider');
+      s2.value = m.R;
+      s2.dispatchEvent(new Event('input'));
+    }
+    if (typeof m.r === 'number') {
+      var s4 = document.getElementById('r4slider');
+      s4.value = m.r;
+      s4.dispatchEvent(new Event('input'));
+    }
+    if (m.act === 'reset' && m.sec === 3) { document.getElementById('btn3reset').click(); return; }
+    if (m.act && ACT[m.sec] && ACT[m.sec][m.act]) { try { ACT[m.sec][m.act](); } catch (err) {} }
+  });
+})();
 </script>
 
 <script>
@@ -1012,9 +1076,10 @@ document.getElementById('sideToggle').addEventListener('click', function () {
     b.addEventListener('click', function () { setN(parseInt(b.getAttribute('data-n'), 10)); });
   });
   function evPos(e) {
+    /* scale by logical/rendered size: the embed mode displays the canvas smaller */
     var r = cv.getBoundingClientRect();
     var t = (e.touches && e.touches[0]) || e;
-    return [t.clientX - r.left, t.clientY - r.top];
+    return [(t.clientX - r.left) * (W / r.width), (t.clientY - r.top) * (H / r.height)];
   }
   function down(e) {
     var p = evPos(e);
