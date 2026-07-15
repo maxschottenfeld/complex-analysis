@@ -47,5 +47,12 @@
     "title": "The Real-Analysis Bridge",
     "hue": 145,
     "description": "The bridge. Five lessons in, the proofs had shifted from computing things to bounding things — so before series took over the subject, I paused to build the analysis underneath: sup and inf, rigorous limits, the triangle inequality, and the ML-estimate derived from scratch."
+  },
+  {
+    "num": "6",
+    "slug": "06-power-series-and-analytic-continuation",
+    "title": "Power Series Representations & Analytic Continuation",
+    "hue": 240,
+    "description": "The biggest structural fact yet: a holomorphic function equals its own Taylor series. That forces zeros to be isolated, gives at most one analytic continuation, and turns a singularity into something with an exact, measurable location — removable, pole, or essential."
   }
 ]
