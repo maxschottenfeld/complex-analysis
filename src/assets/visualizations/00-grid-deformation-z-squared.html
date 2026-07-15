@@ -57,6 +57,19 @@
   .notes { color: var(--muted); font-size: 13.5px; margin-top: 18px; max-width: 940px; }
   .notes p { margin: 0 0 8px; }
   .notes i { font-style: italic; }
+
+  /* Compact chrome when embedded via <iframe src="...?embed"> — the gallery
+     page provides its own heading/caption. Canvas element sizing (CSS_W) is
+     shrunk from JS below rather than via CSS, since the canvas already draws
+     at a fixed CSS pixel size for crisp dragging math; the rest just tightens
+     spacing so the whole thing fits 100vh without an internal scrollbar. */
+  body.embed { height: 100vh; overflow: hidden; padding: 10px; }
+  body.embed h1, body.embed .sub, body.embed .notes { display: none; }
+  body.embed .wrap { max-width: none; height: 100%; display: flex; flex-direction: column; }
+  body.embed .controls { flex: none; margin-bottom: 8px; padding: 6px 10px; font-size: 12px; gap: 8px; }
+  body.embed .panels { flex: 1 1 auto; min-height: 0; align-items: center; }
+  body.embed .panel { padding: 6px 6px 4px; }
+  body.embed .readout { flex: none; margin-top: 8px; padding: 8px 10px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -105,7 +118,9 @@
   'use strict';
 
   // ---------- configuration ----------
-  var CSS_W = 470;                       // canvas size in CSS pixels (square)
+  var EMBED = location.search.indexOf('embed') >= 0;
+  if (EMBED) document.body.classList.add('embed');
+  var CSS_W = EMBED ? 170 : 470;          // canvas size in CSS pixels (square)
   var IN_HALF = 2.6;                     // input view: [-2.6, 2.6]^2
   var OUT_HALF = 6.5;                    // output view: [-6.5, 6.5]^2
   var SPAN = 2.2;                        // each grid line spans [-SPAN, SPAN]

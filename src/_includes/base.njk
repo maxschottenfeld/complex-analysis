@@ -36,6 +36,7 @@
   </script>
   {% if scrolly %}<script defer src="/js/scrolly.js"></script>{% endif %}
   {% if proofstepper %}<script defer src="/js/proof-stepper.js"></script>{% endif %}
+  {% if '/lessons/' in page.url %}<script defer src="/js/page-tracker.js"></script>{% endif %}
 </head>
 <body{% if hue %} style="--h: {{ hue }}"{% endif %}>
   <nav class="site-nav">
@@ -52,6 +53,14 @@
   {% if hero %}{% include "hero.njk" %}{% endif %}
   <main{% if wide %} class="wide"{% endif %}>
     {{ content | safe }}
+    {% set neighbors = page.fileSlug | lessonNeighbors %}
+    {% if neighbors %}
+    <nav class="lesson-pager" aria-label="Lesson navigation">
+      {% if neighbors.prev %}<a class="lesson-pager-link lesson-pager-prev" href="/lessons/{{ neighbors.prev.slug }}/">&larr; Lesson {{ neighbors.prev.num }}</a>{% endif %}
+      {% if neighbors.prev and neighbors.next %}<span class="lesson-pager-sep">&middot;</span>{% endif %}
+      {% if neighbors.next %}<a class="lesson-pager-link lesson-pager-next" href="/lessons/{{ neighbors.next.slug }}/">Lesson {{ neighbors.next.num }} &rarr;</a>{% endif %}
+    </nav>
+    {% endif %}
   </main>
   <footer>
     <p>A self-study project.</p>

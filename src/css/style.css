@@ -627,6 +627,16 @@ blockquote strong, blockquote b { color: var(--text); }
 .lesson-side .side-card p { margin: 0 0 0.5rem; color: var(--muted); }
 .lesson-side .side-card p:last-child { margin-bottom: 0; }
 
+/* "On this page" tracker card (built client-side by js/page-tracker.js).
+   Link nodes reuse the side-node/dot language; dots fill as sections are
+   reached, and the current section's label lifts to full text color. */
+
+.lesson-side a.side-node { text-decoration: none; }
+.lesson-side a.side-node .lbl { color: var(--muted); transition: color 0.25s; }
+.lesson-side a.side-node:hover .lbl,
+.lesson-side a.side-node.now .lbl { color: var(--text); }
+.lesson-side .tracker-card .side-node { padding: 0.18rem 0; }
+
 @media (min-width: 1380px) {
   .lesson-side {
     position: fixed;
@@ -916,6 +926,25 @@ blockquote strong, blockquote b { color: var(--text); }
   .proof-animated .proof-step { opacity: 1; transform: none; transition: none; }
   .proof-animated .proof-step-aha.is-visible { animation: none; }
 }
+
+/* ---------- Lesson pager ---------- */
+
+.lesson-pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  max-width: 860px;
+  margin: 3rem auto 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+.lesson-pager-link { color: var(--muted); text-decoration: none; }
+.lesson-pager-link:hover { color: var(--accent); }
+.lesson-pager-next { margin-left: auto; text-align: right; }
+.lesson-pager-sep { color: var(--border); }
 
 /* ---------- Footer ---------- */
 

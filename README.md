@@ -29,6 +29,26 @@ The build fails with a file:line pointer if one of these sneaks in (see `checkMa
 
 The gallery card and its dedicated page are generated automatically.
 
+## Interactive patterns
+
+### Scrolly + `?embed`
+
+A "scrolly" section pins a visualization beside lesson prose that steps through it on scroll (`src/js/scrolly.js`; add `scrolly: true` to a lesson's frontmatter to load it). The visualization is embedded as `<iframe src="/assets/visualizations/<slug>.html?embed">` — every scrolly-driven viz supports this `?embed` query:
+
+- Flex-fits to `100vh`, never scrolls internally (the host page's steps do the narrating).
+- Own narration/chrome hidden — the surrounding lesson prose replaces it.
+- Shows one panel/section at a time, driven entirely by the host page.
+
+The host page talks to the embedded viz with `postMessage`, one state shape per visualization (`geoseries-state`, `logbranch-state`, `cif-state`, `chain-state`, …). Omitted fields keep their current value, so a step can update just the piece that changed. The viz stays user-interactive between messages — a reader can nudge a slider mid-scroll and the next step message picks up from there.
+
+### Proof stepper
+
+`{% proofStepper "liouville" %}` (shortcode in `.eleventy.js`) renders a proof from `src/_data/proofs.json` as a click-to-reveal walkthrough — add `proofstepper: true` to the lesson's frontmatter to load `src/js/proof-stepper.js`. Each proof entry has:
+
+- `terms`: tagged quantities (`tag`, `label`, `hueOffset`) that keep one consistent color across every step they appear in, via `\htmlClass{pf-<tag>}{...}` in the math and `<span class="pf-<tag>">` in prose notes.
+- `steps`: one entry per step (`title`, `math`, `note`). Steps ship visible in the markup for no-JS readers; the script arms hidden state and reveals them one at a time as "next step" is clicked (reveals are additive — never re-hidden by "prev step", which only moves focus). A "reveal all" button shows every remaining step at once, for re-readers who don't need the click-through pacing.
+- An optional `aha` flag on a step marks the payoff move of the argument — it renders visually distinct (amber rule + wash, uppercase flag), matching the `.step.aha` convention in the standalone chain visualization (`05-liouville-fta-chain.html`).
+
 ## Local development
 
 ```bash
