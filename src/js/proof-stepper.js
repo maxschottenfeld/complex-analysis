@@ -9,7 +9,9 @@
  *    never hides again — and "prev step" only walks focus back, it never
  *    un-reveals. (Same model as the Next-step buttons in the standalone
  *    FTA/Liouville chain visualization.) Reduced motion: steps still
- *    reveal on click, just without the fade/slide animation.
+ *    reveal on click, just without the fade/slide animation. "Reveal all"
+ *    shows every remaining step at once — for re-readers who already know
+ *    the argument and just want the whole proof on screen.
  * 2. A "n / m" progress readout between the prev/next buttons.
  * 3. Term continuity: classes pf-<tag> are reserved for tagged terms (KaTeX
  *    \htmlClass output in the math, plain spans in the notes, legend chips).
@@ -30,6 +32,7 @@
     const controls = proof.querySelector(".proof-controls");
     const btnPrev = proof.querySelector('.proof-btn[data-dir="-1"]');
     const btnNext = proof.querySelector('.proof-btn[data-dir="1"]');
+    const btnRevealAll = proof.querySelector('.proof-btn-revealall');
 
     // --- click-to-reveal ---
     // Arm the hidden state only now that JS is definitely running.
@@ -47,6 +50,7 @@
       progress.textContent = shown + " / " + steps.length;
       if (btnPrev) btnPrev.disabled = cursor <= 0;
       if (btnNext) btnNext.disabled = shown >= steps.length && cursor >= steps.length - 1;
+      if (btnRevealAll) btnRevealAll.disabled = shown >= steps.length;
     }
 
     function goTo(i, focus) {
@@ -76,6 +80,10 @@
     if (btnPrev) btnPrev.addEventListener("click", () => {
       if (cursor > 0) { cursor--; goTo(cursor, true); }
       update();
+    });
+
+    if (btnRevealAll) btnRevealAll.addEventListener("click", () => {
+      while (shown < steps.length) reveal();
     });
 
     update();

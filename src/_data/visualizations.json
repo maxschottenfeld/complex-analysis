@@ -60,6 +60,6 @@
     "title": "From CIF to the Fundamental Theorem of Algebra",
     "lesson": "Lesson 5",
     "hue": 320,
-    "description": "A single proof chain, animated end to end: the Cauchy Integral Formula gives derivative formulas, which give Cauchy's estimates, which give Liouville's theorem, which proves that every nonconstant polynomial has a root. Each link pairs a visualization with a step-through proof."
+    "description": "A single proof chain, animated end to end: the Cauchy Integral Formula gives derivative formulas, which give Cauchy's estimates, which give Liouville's theorem, which proves that every nonconstant polynomial has a root. Each link pairs a visualization with a step-through proof. Lesson 5 embeds a shorter scrolly recap of this same chain (9 steps) — this standalone page is the long-form version."
   }
 ]

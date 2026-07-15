@@ -2,6 +2,8 @@ const { EleventyHtmlBasePlugin } = require("@11ty/eleventy");
 const fs = require("fs");
 const path = require("path");
 const proofs = require("./src/_data/proofs.json");
+const lessons = require("./src/_data/lessons.json");
+const markdownItAnchor = require("markdown-it-anchor");
 
 // markdown-it strips a backslash before any ASCII punctuation *before*
 // client-side KaTeX ever sees the page, so \{ \} \, \; \: \! reach the
@@ -81,10 +83,35 @@ module.exports = function (eleventyConfig) {
       `<div class="proof-controls">` +
       `<button type="button" class="proof-btn" data-dir="-1">&larr; prev step</button>` +
       `<button type="button" class="proof-btn" data-dir="1">next step &rarr;</button>` +
+      `<button type="button" class="proof-btn proof-btn-revealall" data-action="reveal-all">reveal all</button>` +
       `</div>` +
       `<ol class="proof-steps">${steps}</ol>` +
       `</section>`;
   });
+  // Looks up the previous/next lesson in reading order for the footer
+  // pager. `slug` is a lesson page's `page.fileSlug`, which matches
+  // lessons.json's `slug` field 1:1 since lesson filenames are unprefixed.
+  eleventyConfig.addFilter("lessonNeighbors", function (slug) {
+    const i = lessons.findIndex(l => l.slug === slug);
+    if (i === -1) return null;
+    return { prev: lessons[i - 1] || null, next: lessons[i + 1] || null };
+  });
+
+  // Heading ids on h2s, so the "on this page" tracker (js/page-tracker.js)
+  // and direct links have something to point at. Headings can contain raw
+  // $...$ KaTeX — the slugify keeps command names but strips TeX punctuation,
+  // so "CR check for $e^z$" → "cr-check-for-e-z", not a slug full of
+  // backslashes.
+  eleventyConfig.amendLibrary("md", md => md.use(markdownItAnchor, {
+    level: [2],
+    slugify: s => s
+      .replace(/\\([a-zA-Z]+)/g, "$1")
+      .replace(/[${}^_\\]/g, " ")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, ""),
+  }));
+
   // Copy static assets straight through to the build output.
   eleventyConfig.addPassthroughCopy("src/css");
   eleventyConfig.addPassthroughCopy("src/js");

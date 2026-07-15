@@ -1,6 +1,7 @@
 ---
 layout: base.njk
 hue: 145
+scrolly: true
 title: "Lesson 5a — The Real-Analysis Bridge"
 description: "Five lessons in, the proofs had shifted from computing things to bounding things — so before series took over, I paused to build the analysis underneath: sup and inf, rigorous limits, and the ML-estimate from scratch."
 ---
@@ -49,7 +50,31 @@ $$a_n\to L \quad\text{means}\quad \forall\varepsilon>0\ \exists N\ \forall n>N:\
 
 $\varepsilon$ is a challenge ("get within this tolerance"); $N$ is the response — one fixed cutoff, depending on $\varepsilon$, past which every term complies. The index $n$ walks; the post $N$ stands still.
 
-(This definition can be *played with* directly: the [geometric-series visualization](/visualizations/03b-geometric-series-partial-sums/) draws the partial sums of $\sum z^n$ as a path in the plane, with an adjustable $\varepsilon$-disk around the limit — challenge it with a smaller $\varepsilon$ and watch the required $N$ grow.)
+This definition can be *played with* directly: the partial sums of $\sum z^n$ trace a path in the plane, with an adjustable $\varepsilon$-disk around the limit. Scroll through the demo below — each step re-challenges the same fixed point $z$ with a smaller $\varepsilon$, and the required $N$ has to grow to keep up.
+
+<section class="scrolly scrolly-static" data-scrolly>
+  <div class="scrolly-figure">
+    <iframe class="viz-embed" src="/assets/visualizations/03b-geometric-series-partial-sums.html?embed" title="Geometric series partial sums visualization"></iframe>
+  </div>
+  <div class="scrolly-steps">
+    <div class="scrolly-step" data-state='{"type":"geoseries-state","z":[0.62,0.40],"eps":0.35,"N":10,"showEps":true}'>
+      <span class="step-tag">1 · a challenge, and a response</span>
+      <p>Fix $z=0.62+0.40i$ — inside the unit circle, so the series converges to $1/(1-z)$. Challenge with $\varepsilon=0.35$: past $N=10$ every partial sum sits inside the disk (green), so $N=10$ is a valid response. Not the smallest possible response — just <em>a</em> response, which is all the definition asks for.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"geoseries-state","eps":0.15,"N":10}'>
+      <span class="step-tag">2 · shrink ε</span>
+      <p>Tighten the challenge to $\varepsilon=0.15$. The disk shrinks, and the smallest $N$ that works climbs to $N(\varepsilon)=8$ — the readout below the plane tracks it. $N=10$ still (barely) covers it.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"geoseries-state","eps":0.05}'>
+      <span class="step-tag">3 · shrink it again</span>
+      <p>Down to $\varepsilon=0.05$. Now $N(\varepsilon)=11$ — one more than the $N=10$ we'd fixed — and the tail of the path that used to read "inside for good" turns back to blue. The old response has stopped working: this is exactly why the definition says "$\exists N$" <em>after</em> "$\forall\varepsilon$," not before.</p>
+    </div>
+    <div class="scrolly-step" data-state='{"type":"geoseries-state","N":14}'>
+      <span class="step-tag">4 · the response catches up</span>
+      <p>Raise $N$ to $14$ and the tail turns green again. For every $\varepsilon>0$ there is always <em>some</em> $N$ that works — the required $N$ just has to grow as $\varepsilon$ shrinks, exactly the pattern the definition demands.</p>
+    </div>
+  </div>
+</section>
 
 **Worked:** $\frac1n\to0$: given $\varepsilon$, $N=\frac1\varepsilon$ works. This is exactly the shape of the Liouville argument — $|f'(z_0)|\le M/R$ with $R$ growing is $\frac1n\to0$ wearing a costume. Similarly $\frac{n}{n+1}\to1$: simplify the error to a single fraction first, $\left|\frac{n}{n+1}-1\right|=\frac{1}{n+1}$, giving $N=\frac1\varepsilon-1$.
 
