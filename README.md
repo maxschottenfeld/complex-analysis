@@ -31,15 +31,14 @@ The gallery card and its dedicated page are generated automatically.
 
 ## Interactive patterns
 
-### Scrolly + `?embed`
+### `?embed` — required for every visualization
 
-A "scrolly" section pins a visualization beside lesson prose that steps through it on scroll (`src/js/scrolly.js`; add `scrolly: true` to a lesson's frontmatter to load it). The visualization is embedded as `<iframe src="/assets/visualizations/<slug>.html?embed">` — every scrolly-driven viz supports this `?embed` query:
+Every visualization in `src/assets/visualizations/` must support a compact `?embed` mode, whether or not it's used inside a scrolly section: detect `?embed` in the URL, add a class to `<body>`, and flex-fit the layout to `100vh` with `overflow: hidden` so it **never scrolls internally**, regardless of viewport size. This is a hard convention, not a nice-to-have — `06-isolated-zeros-floor-argument.html` shipped without it once and sat unembedded for a day before the gap was caught, and by then its content was already 3x taller than the standard embed box. Verify actual rendered height against the viewport before calling a build done; don't assume the CSS works.
 
-- Flex-fits to `100vh`, never scrolls internally (the host page's steps do the narrating).
-- Own narration/chrome hidden — the surrounding lesson prose replaces it.
-- Shows one panel/section at a time, driven entirely by the host page.
+Two ways a visualization gets embedded:
 
-The host page talks to the embedded viz with `postMessage`, one state shape per visualization (`geoseries-state`, `logbranch-state`, `cif-state`, `chain-state`, …). Omitted fields keep their current value, so a step can update just the piece that changed. The viz stays user-interactive between messages — a reader can nudge a slider mid-scroll and the next step message picks up from there.
+- **Plain embed** — `<iframe class="viz-embed" src="/assets/visualizations/<slug>.html?embed">` directly in lesson prose. The visualization's own controls stay interactive; nothing external drives it. Use `.viz-embed-wide-wrap` (a wrapper div breaking the iframe out to the same `min(1080px, 100vw - 2.5rem)` width scrolly sections use) instead of the default 760px-wide box when a visualization's controls need more horizontal room to sit beside its diagram rather than wrap below it (see `01-roots-of-unity.html`'s embed, which needs this).
+- **Scrolly-driven embed** — a "scrolly" section pins the visualization beside lesson prose that steps through it on scroll (`src/js/scrolly.js`; add `scrolly: true` to a lesson's frontmatter to load it). On top of the base `?embed` requirements above, a scrolly-driven viz also hides its own narration/chrome (the surrounding lesson prose replaces it) and shows one panel/section at a time, driven entirely by the host page via `postMessage` — one state shape per visualization (`geoseries-state`, `logbranch-state`, `cif-state`, `chain-state`, …). Omitted fields keep their current value, so a step can update just the piece that changed. The viz stays user-interactive between messages — a reader can nudge a slider mid-scroll and the next step message picks up from there. `scrolly.js` also toggles a `body.scrolly-active` class for as long as any scrolly section is on screen — the "on this page" tracker card (`.lesson-side`, fixed-position at wide viewports) fades out during that window since its screen region can overlap the pinned scrolly figure.
 
 ### Proof stepper
 
