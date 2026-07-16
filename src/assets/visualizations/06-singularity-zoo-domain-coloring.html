@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singularity Zoo &mdash; Domain Coloring</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d29;
+    --border: #2a2e3f;
+    --text: #e8e9ed;
+    --muted: #9aa0b0;
+    --accent: #7aa2f7;
+    /* classification-tag accents, borrowed verbatim from 06-isolated-zeros-floor-argument.html's
+       existing palette, used only to color-code the three panel labels */
+    --warn: #e0af68;
+    --bad: #f7768e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px;
+  }
+
+  .page-header h1 { font-size: 20px; margin: 0 0 4px; }
+  .page-header .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 4px; }
+  .page-header .sub2 { color: var(--muted); font-size: 12.5px; margin: 0 0 16px; }
+
+  .zoomControl {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .zoomControl label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .zoomControl label .readout { color: var(--accent); font-weight: 600; }
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--accent);
+    display: block;
+  }
+  .zoomHints {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .panels {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .panel {
+    flex: 1 1 300px;
+    min-width: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-head { flex: 0 0 auto; margin-bottom: 8px; }
+  .panel h2 {
+    margin: 0 0 2px;
+    font-size: 13.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .panel h2 .tag.removable { color: var(--accent); }
+  .panel h2 .tag.pole { color: var(--warn); }
+  .panel h2 .tag.essential { color: var(--bad); }
+  .panel .formula {
+    font-size: 12.5px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .canvas-wrap {
+    position: relative;
+    flex: 1 1 320px;
+    min-height: 0;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #000;
+    border-radius: 6px;
+  }
+  .caption {
+    flex: 0 0 auto;
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ---------------- embed mode ---------------- */
+  body.embed {
+    height: 100vh;
+    overflow: hidden;
+  }
+  body.embed .wrap {
+    height: 100vh;
+    max-width: none;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+  }
+  body.embed .page-header { display: none; }
+  body.embed .zoomControl {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    padding: 7px 12px;
+  }
+  body.embed .zoomControl label { margin-bottom: 5px; font-size: 12px; }
+  body.embed .panels {
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  body.embed .panel {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    padding: 7px;
+  }
+  body.embed .panel-head { margin-bottom: 4px; }
+  body.embed .panel h2 { font-size: 11px; }
+  body.embed .panel .formula { font-size: 10px; }
+  body.embed .canvas-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+  }
+  body.embed canvas {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  body.embed .caption { font-size: 10px; margin-top: 4px; }
+
+  @media (max-width: 720px) {
+    .panels { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="page-header">
+      <h1>Singularity Zoo &mdash; Domain Coloring</h1>
+      <p class="sub">Lesson 6, Segment 4 &middot; three isolated singularities at <i>z</i>&#8320; = 0, same domain-coloring convention as the overview piece: hue = arg(<i>f</i>(<i>z</i>)), lightness = |<i>f</i>(<i>z</i>)| (dark near zeros, white near poles/blow-up).</p>
+      <p class="sub2">Drag the shared slider &mdash; all three panels zoom toward <i>z</i>&#8320; = 0 together, so you can compare their behavior at the same scale.</p>
+    </div>
+
+    <div class="zoomControl">
+      <label for="zoomSlider">Zoom &mdash; view radius: <span class="readout mono" id="radiusReadout">|z| &lt; 0.300</span></label>
+      <input type="range" id="zoomSlider" min="0" max="1000" step="1" value="300">
+      <div class="zoomHints"><span>zoomed out</span><span>tight on z&#8320; = 0</span></div>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-head">
+          <h2><span class="tag removable">Removable</span></h2>
+          <div class="formula mono">f(z) = sin(z) / z</div>
+        </div>
+        <div class="canvas-wrap"><canvas id="canvas-removable" aria-label="Domain coloring of sin(z)/z near z=0"></canvas></div>
+        <p class="caption">stays smooth &mdash; nothing marks the origin</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2><span class="tag pole">Pole of order 2</span></h2>
+          <div class="formula mono">f(z) = 1 / z&sup2;</div>
+        </div>
+        <div class="canvas-wrap"><canvas id="canvas-pole" aria-label="Domain coloring of 1/z^2 near z=0"></canvas></div>
+        <p class="caption">clean double-wind, brightens to white</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2><span class="tag essential">Essential</span></h2>
+          <div class="formula mono">f(z) = e<sup>1/z</sup></div>
+        </div>
+        <div class="canvas-wrap"><canvas id="canvas-essential" aria-label="Domain coloring of e^(1/z) near z=0"></canvas></div>
+        <p class="caption">every color, every zoom level &mdash; never settles</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- embed mode ----------------
+  var isEmbed = new URLSearchParams(location.search).has("embed");
+  if (isEmbed) document.body.classList.add("embed");
+
+  // ---------------- zoom mapping ----------------
+  var RMAX = 1.2;    // "zoomed out" view radius, |z| < 1.2
+  var RMIN = 0.006;  // tightest zoom, |z| < 0.006
+  var LOG_RMAX = Math.log(RMAX);
+  var LOG_RMIN = Math.log(RMIN);
+
+  var slider = document.getElementById("zoomSlider");
+  var radiusReadout = document.getElementById("radiusReadout");
+
+  function radiusFromSlider(v){
+    var t = v / 1000; // 0..1
+    return Math.exp(LOG_RMAX + (LOG_RMIN - LOG_RMAX) * t);
+  }
+  function formatRadius(r){
+    if (r >= 0.1) return r.toFixed(3);
+    if (r >= 0.001) return r.toFixed(4);
+    return r.toExponential(2);
+  }
+
+  // ---------------- complex-plane computations ----------------
+  // Each compute function writes its result into shared scratch variables
+  // (_hue = arg(f(z)) in radians, _logMag = ln|f(z)|) rather than allocating
+  // a fresh array per pixel -- this loop runs on every slider tick across
+  // three ~150k-pixel canvases, so avoiding per-pixel allocation matters.
+  var _hue = 0, _logMag = 0;
+
+  // Removable: f(z) = sin(z)/z. Direct complex division; sin(z)~z near 0 so
+  // the ratio is well-behaved numerically (no special-casing needed beyond
+  // a tiny epsilon guard on the denominator).
+  function computeRemovable(x, y){
+    var sinRe = Math.sin(x) * Math.cosh(y);
+    var sinIm = Math.cos(x) * Math.sinh(y);
+    var d = x*x + y*y + 1e-300;
+    var reF = (sinRe*x + sinIm*y) / d;
+    var imF = (sinIm*x - sinRe*y) / d;
+    _hue = Math.atan2(imF, reF);
+    _logMag = Math.log(Math.hypot(reF, imF) + 1e-300);
+  }
+
+  // Pole of order 2: f(z) = 1/z^2. Computed analytically rather than via
+  // literal division: for z = r*e^{i*theta}, arg(f) = -2*theta and
+  // ln|f| = -2*ln(r) = -ln(r^2) exactly -- avoids ever squaring a huge
+  // number and matches the numeric facts in the spec exactly (e.g.
+  // |f(0.1)| = 100, |f(0.01)| = 10000).
+  function computePole(x, y){
+    var r2 = x*x + y*y;
+    if (r2 < 1e-30) { _hue = 0; _logMag = 40; return; }
+    _hue = -2 * Math.atan2(y, x);
+    _logMag = -Math.log(r2);
+  }
+
+  // Essential: f(z) = e^(1/z). Computed analytically via w = 1/z = x/d - i*y/d
+  // (d = x^2+y^2): since f = e^w, ln|f| = Re(w) and arg(f) = Im(w) (mod 2*pi).
+  // This sidesteps ever calling Math.exp() on a huge argument (which would
+  // overflow to Infinity near the singularity) while still reproducing the
+  // real direction-dependent blowup/decay/rotation exactly.
+  function computeEssential(x, y){
+    var d = x*x + y*y + 1e-300;
+    var invRe = x / d;
+    var invIm = -y / d;
+    _logMag = invRe;
+    _hue = invIm;
+  }
+
+  // ---------------- shared domain-coloring convention ----------------
+  // Reuses 00-overview-domain-coloring-and-conformal-maps.html's core idea
+  // exactly: hue from arg(f), brightness rings from the fractional part of
+  // ln|f| (so magnitude reads as concentric "contour" bands). That scheme
+  // alone never reaches true white/black (fixed saturation, value capped
+  // at 1 still yields a vivid hue, not white) -- but the pole panel's own
+  // caption explicitly needs it to visibly "brighten to white" toward the
+  // center, so a saturating blend on both value AND saturation is layered
+  // on top for large |ln|f||, collapsing back to the exact original formula
+  // whenever |ln|f|| is small.
+  //
+  // The saturation point (whitenK) is deliberately per-panel rather than
+  // one global constant: the pole's |f| only ever reaches the few-dozen
+  // range within this piece's zoom bounds, so a tight K reads clearly as
+  // "brightening." e^(1/z)'s Re(1/z) reaches into the hundreds near the
+  // real axis at deep zoom -- reusing the pole's tight K there would flood
+  // most of the essential panel with flat white/black and bury the "every
+  // hue, repeatedly" payoff the essential panel is actually for, leaving
+  // only a sliver near the imaginary axis colorful. A looser K keeps that
+  // panel's color diversity legible across a wider angular band while still
+  // preserving the real physics (strong bias to white near the positive
+  // real axis, black near the negative real axis).
+  var _cr = 0, _cg = 0, _cb = 0;
+
+  function setColor(hueAngle, logMag, whitenK){
+    var hue = hueAngle / (2*Math.PI);
+    hue -= Math.floor(hue);
+
+    var frac = logMag - Math.floor(logMag);
+    var ringV = 0.5 + 0.4 * Math.sin(frac * 2*Math.PI);
+    ringV = Math.max(0.15, Math.min(1, ringV + 0.4));
+
+    var baseS = 0.85;
+    var m = Math.abs(logMag);
+    var t = 1 - Math.exp(-m / whitenK);
+
+    var v, s;
+    if (logMag >= 0) {
+      // approaching a pole / blow-up -> fade toward true white
+      v = ringV + (1 - ringV) * t;
+      s = baseS * (1 - t);
+    } else {
+      // approaching a zero / vanishing -> fade toward true black
+      v = ringV * (1 - t);
+      s = baseS;
+    }
+
+    var i = Math.floor(hue * 6);
+    var f = hue * 6 - i;
+    var p = v * (1 - s);
+    var q = v * (1 - f*s);
+    var tt = v * (1 - (1-f)*s);
+    switch (i % 6) {
+      case 0: _cr=v; _cg=tt; _cb=p; break;
+      case 1: _cr=q; _cg=v;  _cb=p; break;
+      case 2: _cr=p; _cg=v;  _cb=tt; break;
+      case 3: _cr=p; _cg=q;  _cb=v; break;
+      case 4: _cr=tt;_cg=p;  _cb=v; break;
+      default:_cr=v; _cg=p;  _cb=q; break;
+    }
+    _cr *= 255; _cg *= 255; _cb *= 255;
+  }
+
+  // ---------------- panels ----------------
+  var PANELS = [
+    { canvas: document.getElementById("canvas-removable"), compute: computeRemovable, whitenK: 60 },
+    { canvas: document.getElementById("canvas-pole"),      compute: computePole,      whitenK: 6 },
+    { canvas: document.getElementById("canvas-essential"), compute: computeEssential, whitenK: 55 }
+  ];
+  PANELS.forEach(function(p){ p.ctx = p.canvas.getContext("2d"); });
+
+  var MAX_SIDE = 440;
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  function fitCanvas(canvas){
+    var rect = canvas.getBoundingClientRect();
+    var w = Math.max(1, Math.min(MAX_SIDE, Math.round(rect.width * DPR)));
+    var h = Math.max(1, Math.min(MAX_SIDE, Math.round(rect.height * DPR)));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+      return true;
+    }
+    return false;
+  }
+
+  function renderPanel(panel, R){
+    var canvas = panel.canvas, ctx = panel.ctx;
+    var W = canvas.width, H = canvas.height;
+    if (W === 0 || H === 0) return;
+    var img = ctx.createImageData(W, H);
+    var data = img.data;
+    var scale = Math.min(W, H) / (2 * R);
+    var cx = W / 2, cy = H / 2;
+    var compute = panel.compute;
+    var whitenK = panel.whitenK;
+    var idx = 0;
+    for (var py = 0; py < H; py++) {
+      var y = (cy - py - 0.5) / scale;
+      for (var px = 0; px < W; px++) {
+        var x = (px - cx + 0.5) / scale;
+        compute(x, y);
+        setColor(_hue, _logMag, whitenK);
+        data[idx]   = _cr;
+        data[idx+1] = _cg;
+        data[idx+2] = _cb;
+        data[idx+3] = 255;
+        idx += 4;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    // z0 = 0 marker: small crosshair + dot at the panel center (always the origin)
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = Math.max(1, DPR);
+    var armLen = Math.max(4, Math.min(W, H) * 0.02);
+    ctx.beginPath();
+    ctx.moveTo(cx - armLen, cy); ctx.lineTo(cx + armLen, cy);
+    ctx.moveTo(cx, cy - armLen); ctx.lineTo(cx, cy + armLen);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, Math.max(2, DPR * 1.5), 0, 2*Math.PI);
+    ctx.fillStyle = "#0b0d14";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.85)";
+    ctx.lineWidth = Math.max(1, DPR);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  var currentR = radiusFromSlider(parseFloat(slider.value));
+
+  function renderAll(){
+    fitAllCanvases();
+    for (var i = 0; i < PANELS.length; i++) renderPanel(PANELS[i], currentR);
+  }
+  function fitAllCanvases(){
+    for (var i = 0; i < PANELS.length; i++) fitCanvas(PANELS[i].canvas);
+  }
+
+  // ---------------- slider wiring (coalesced via rAF for smooth dragging) ----------------
+  var rafPending = false;
+  function scheduleRender(){
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function(){
+      rafPending = false;
+      renderAll();
+    });
+  }
+  slider.addEventListener("input", function(){
+    currentR = radiusFromSlider(parseFloat(slider.value));
+    radiusReadout.textContent = "|z| < " + formatRadius(currentR);
+    scheduleRender();
+  });
+
+  // ---------------- resize handling ----------------
+  var ro = new ResizeObserver(function(){ scheduleRender(); });
+  PANELS.forEach(function(p){ ro.observe(p.canvas.parentElement); });
+  window.addEventListener("resize", scheduleRender);
+
+  // ---------------- initial paint ----------------
+  radiusReadout.textContent = "|z| < " + formatRadius(currentR);
+  renderAll();
+})();
+</script>
+</body>
+</html>

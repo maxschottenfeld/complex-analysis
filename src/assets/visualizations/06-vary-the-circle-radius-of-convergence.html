@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vary the Circle &mdash; Why R = 3, Exactly</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d29;
+    --panel2: #12141c;
+    --text: #e8e9ed;
+    --muted: #9aa0b0;
+    --accent: #7aa2f7;
+    --accent-dim: rgba(122,162,246,0.14);
+    --border: #2a2e3f;
+    --grid: #232838;
+    --axis: #3a4055;
+    --ok: #9ece6a;
+    --warn: #e0af68;
+    --bad: #f7768e;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+  }
+  i.mv { font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+
+  .panels { display:flex; gap:14px; flex-wrap:wrap; align-items:stretch; }
+  .panel {
+    flex:1 1 420px; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:13px; display:flex; flex-direction:column;
+  }
+  .panel h2 { font-size:14px; margin:0 0 8px; color:var(--accent); font-weight:600; }
+  .panel h2 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--text); font-weight:400; font-size:12.5px; }
+
+  svg#plane { width:100%; height:auto; display:block; background:#0b0d14; border-radius:6px; touch-action:none; cursor:crosshair; }
+  .lbl-txt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }
+  .handle { cursor:grab; } .handle:active { cursor:grabbing; }
+
+  .ctrl-row { display:flex; align-items:center; gap:9px; margin-top:10px; flex-wrap:wrap; }
+  .ctrl-row label { font-size:12px; color:var(--muted); white-space:nowrap; }
+  input[type=range] { flex:1 1 120px; accent-color: var(--accent); min-width:80px; }
+  .btn {
+    background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    padding:6px 11px; border-radius:6px; font-size:12px; cursor:pointer; white-space:nowrap;
+  }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn:disabled { opacity:0.5; cursor:default; }
+  .btn.small { padding:4px 9px; font-size:11.5px; }
+  .preset-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+
+  .readout-line { font-size:12.8px; margin-top:9px; color:var(--muted); }
+  .readout-line .v { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--text); }
+  .readout-line .v.ok { color:var(--ok); font-weight:600; }
+  .readout-line .v.warn { color:var(--warn); font-weight:600; }
+  .readout-line .v.bad { color:var(--bad); font-weight:600; }
+
+  .verdict {
+    margin-top:9px; padding:8px 11px; border-radius:8px; font-size:12.5px;
+    background:#11141d; border:1px solid var(--border); line-height:1.5;
+  }
+  .verdict.ok { border-color:var(--ok); color:var(--ok); }
+  .verdict.warn { border-color:var(--warn); color:var(--warn); }
+
+  .callout {
+    border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
+    padding:8px 12px; background:rgba(122,162,246,0.07); font-size:12.5px;
+    margin-top:10px; line-height:1.5; color:var(--text);
+  }
+  .callout b { color:var(--accent); }
+  .callout .tag {
+    display:block; font-size:10px; font-weight:800; letter-spacing:0.06em;
+    color:var(--accent); text-transform:uppercase; margin-bottom:4px;
+  }
+  .callout .short { display:none; }
+
+  /* ---- blow-up gauge (div-based, log-scale) ---- */
+  .gauge-wrap { margin-top:2px; }
+  .gauge-track {
+    position:relative; height:34px; background:#0b0d14; border:1px solid var(--border);
+    border-radius:6px; margin-top:6px; overflow:visible;
+  }
+  .gauge-fill {
+    position:absolute; top:0; left:0; bottom:0; border-radius:6px 0 0 6px;
+    background:linear-gradient(90deg, var(--warn), var(--bad));
+    opacity:0.35; transition:width .08s linear;
+  }
+  .gauge-sing {
+    position:absolute; top:-6px; right:8px; width:2px; height:46px; background:var(--bad);
+  }
+  .gauge-sing-lbl { position:absolute; top:-18px; right:-2px; font-size:10.5px; color:var(--bad); font-family: ui-monospace, Menlo, monospace; }
+  .gauge-marker {
+    position:absolute; top:50%; width:12px; height:12px; margin-top:-6px; margin-left:-6px;
+    border-radius:50%; background:var(--bad); border:2px solid #0b0d14; box-shadow:0 0 0 1.5px var(--bad);
+    transition:left .08s linear;
+  }
+  .gauge-start-lbl { position:absolute; bottom:-16px; left:2px; font-size:10px; color:var(--muted); }
+
+  .big-num-row { display:flex; align-items:baseline; gap:10px; margin-top:12px; }
+  .big-num { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:26px; font-weight:700; color:var(--bad); }
+  .big-num-lbl { font-size:12px; color:var(--muted); }
+
+  .synthesis {
+    margin-top:14px; padding:12px 16px; border:2px solid var(--ok); border-radius:10px;
+    background:rgba(158,206,106,0.07); font-size:13.5px; color:var(--text); line-height:1.55;
+  }
+  .synthesis b { color:var(--ok); }
+  .synthesis .v { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* ================= EMBED MODE ================= */
+  body.embed {
+    height:100vh; overflow:hidden; padding:8px;
+  }
+  body.embed .wrap {
+    height:100%; max-width:none; display:flex; flex-direction:column; min-height:0; gap:6px;
+  }
+  body.embed h1, body.embed .sub { display:none; }
+  body.embed .panels {
+    flex:1 1 0; min-height:0; flex-wrap:nowrap; gap:8px;
+  }
+  body.embed .panel {
+    flex:1 1 0; min-width:0; min-height:0; padding:9px; overflow:hidden;
+  }
+  body.embed .panel h2 { font-size:11.5px; margin-bottom:4px; flex:0 0 auto; }
+  body.embed svg#plane {
+    flex:1 1 60px; min-height:60px; height:100%; width:100%; display:block;
+  }
+  body.embed .ctrl-row { margin-top:5px; font-size:11px; gap:5px; flex:0 0 auto; flex-wrap:nowrap; }
+  body.embed .ctrl-row label { font-size:10px; white-space:nowrap; }
+  body.embed .btn { padding:4px 7px; font-size:10px; white-space:nowrap; }
+  body.embed .certify-row { display:none; }
+  body.embed .preset-row { margin-top:4px; gap:3px; flex:0 0 auto; }
+  body.embed .preset-row .btn { padding:3px 6px; font-size:9.5px; }
+  body.embed .readout-line { display:none; }
+  body.embed .verdict { margin-top:4px; padding:5px 8px; font-size:10.5px; max-height:4.4em; overflow:hidden; flex:0 0 auto; white-space:normal; }
+  body.embed .callout { margin-top:5px; padding:5px 8px; font-size:10px; flex:0 0 auto; }
+  body.embed .callout .tag { font-size:8.5px; margin-bottom:2px; }
+  body.embed .callout .full { display:none; }
+  body.embed .callout .short { display:inline; }
+  body.embed .gauge-wrap { flex:0 0 auto; }
+  body.embed .gauge-wrap label { font-size:10px !important; }
+  body.embed .gauge-track { height:20px; margin-top:3px; }
+  body.embed .gauge-marker { width:9px; height:9px; margin-top:-4.5px; margin-left:-4.5px; }
+  body.embed .gauge-sing-lbl { font-size:9px; }
+  body.embed .gauge-start-lbl { font-size:9px; }
+  body.embed input#dSlider { margin-top:4px !important; flex:0 0 auto; }
+  body.embed .big-num-row { margin-top:5px; flex:0 0 auto; }
+  body.embed .big-num { font-size:18px; }
+  body.embed .big-num-lbl { font-size:10px; }
+  body.embed .synthesis {
+    flex:0 0 auto; margin-top:6px; padding:6px 10px; font-size:10.8px;
+    max-height:4.2em; overflow:hidden; line-height:1.4; white-space:normal;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Vary the Circle &mdash; Why R = 3, Exactly</h1>
+  <p class="sub">Lesson 6 &middot; deriving (not asserting) that the radius of convergence of <i class="mv">f</i>(<i class="mv">z</i>) = 1/(<i class="mv">z</i> &minus; 3) at <i class="mv">z</i><sub>0</sub> = 0 equals the distance to the nearest singularity</p>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>The <i class="mv">z</i>-plane &nbsp;<span class="mono">f(z) = 1/(z&minus;3), z&#8320; = 0</span></h2>
+      <svg id="plane" viewBox="0 0 440 440" aria-label="complex plane with growing circle of convergence"></svg>
+
+      <div class="ctrl-row">
+        <label for="rSlider" id="rSliderLbl">circle radius r&prime;</label>
+        <input type="range" id="rSlider" min="0.3" max="2.75" step="0.001" value="1.3">
+        <button class="btn" id="playBtn">&#9654; Grow the circle</button>
+      </div>
+      <div class="certify-row">
+        <button class="btn small" id="certifyBtn">certify z: use r&prime; = (|z|+3)/2</button>
+      </div>
+
+      <div class="readout-line">r&prime; = <span class="v" id="ro-r">&mdash;</span> &nbsp;&middot;&nbsp; z = <span class="v" id="ro-z">&mdash;</span> &nbsp;&middot;&nbsp; |z| = <span class="v" id="ro-zabs">&mdash;</span></div>
+      <div class="verdict" id="verdict">&mdash;</div>
+
+      <div class="callout">
+        <span class="tag">Half 1 &mdash; R &ge; 3</span>
+        <span class="full">Neither <i class="mv">c<sub>n</sub></i> = <i class="mv">f</i><sup>(<i class="mv">n</i>)</sup>(0)/<i class="mv">n</i>! nor the Cauchy integral (1/2&pi;<i class="mv">i</i>)&oint;<sub>&gamma;<sub>r&prime;</sub></sub> <i class="mv">f</i>(<i class="mv">w</i>)/<i class="mv">w</i><sup><i class="mv">n</i>+1</sup> <i class="mv">dw</i> mentions r&prime; on the right &mdash; it's one fixed series no matter which admissible circle certified it. Any z with |z| &lt; 3 gets certified by <i>some</i> r&prime; strictly between |z| and 3, so the series converges on all of |z| &lt; 3.</span>
+        <span class="short">c<sub>n</sub> and the Cauchy integral never mention r&prime; &mdash; one fixed series, any admissible circle. Every |z| &lt; 3 has one, so the series converges there.</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Blow-up as <i class="mv">z</i> &rarr; 3 &nbsp;<span class="mono">real axis</span></h2>
+
+      <div class="gauge-wrap">
+        <label for="dSlider" style="font-size:12px;color:var(--muted);">z, from 2 &rarr; 3 (log scale near 3)</label>
+        <div class="gauge-track" id="gaugeTrack">
+          <div class="gauge-fill" id="gaugeFill"></div>
+          <div class="gauge-sing"></div>
+          <div class="gauge-sing-lbl">3</div>
+          <div class="gauge-marker" id="gaugeMarker"></div>
+          <div class="gauge-start-lbl">2</div>
+        </div>
+      </div>
+      <input type="range" id="dSlider" min="0" max="1" step="0.0001" value="0" style="width:100%;margin-top:6px;">
+      <div class="preset-row">
+        <button class="btn small" data-x="2.7">z = 2.7</button>
+        <button class="btn small" data-x="2.97">z = 2.97</button>
+        <button class="btn small" data-x="2.997">z = 2.997</button>
+        <button class="btn small" data-x="2.9997">z = 2.9997</button>
+      </div>
+
+      <div class="big-num-row">
+        <span class="big-num" id="ro-fabs">&mdash;</span>
+        <span class="big-num-lbl">= |f(z)| = 1/(3&minus;z)</span>
+      </div>
+      <div class="readout-line">z = <span class="v" id="ro-x">&mdash;</span> &nbsp;&middot;&nbsp; distance to 3 = <span class="v" id="ro-d">&mdash;</span></div>
+
+      <div class="callout">
+        <span class="tag">Half 2 &mdash; R &le; 3</span>
+        <span class="full">If R were &gt; 3, the series (= f wherever it converges) would have to stay bounded on a disk reaching past z = 3. It doesn't: |f(z)| has no finite ceiling as z &rarr; 3. So R can't exceed 3. General relation for real z &lt; 3: |f(z)| = 1/|z&minus;3| = 1/(3&minus;z).</span>
+        <span class="short">If R &gt; 3, f would stay bounded past z = 3. It doesn't &mdash; |f(z)| &rarr; &infin;. So R &le; 3.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="synthesis" id="synthesis">&mdash;</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const SZ = 440, C = 220;
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const LSPAN = 4.4;
+  const scale = C / LSPAN;
+  const R_MIN = 0.3, R_MAX = 2.75;
+  const DRAG_LIMIT = 2.4;
+  const SING_RE = 3;
+
+  // ---------- complex helpers ----------
+  const cx = (re, im) => ({ re, im });
+  const cabs = (z) => Math.hypot(z.re, z.im);
+
+  // ---------- state ----------
+  const isEmbed = new URLSearchParams(location.search).has("embed");
+  if (isEmbed) document.body.classList.add("embed");
+  let rCirc = 1.3;
+  let zTest = cx(2.15, 0.95);
+  let animating = false, animStart = null;
+  const ANIM_DUR = 3200;
+
+  // ---------- coord map (origin at center) ----------
+  const Lx = re => C + re * scale;
+  const Ly = im => C - im * scale;
+  const Linv = (sx, sy) => cx((sx - C) / scale, -(sy - C) / scale);
+
+  function el(tag, attrs) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function clear(svg) { while (svg.firstChild) svg.removeChild(svg.firstChild); }
+  function txt(x, y, s, color, anchor, size) {
+    const t = el("text", { x, y, fill: color || "var(--text)", "text-anchor": anchor || "middle", "font-size": size || 12, "font-family": "ui-monospace, SFMono-Regular, Menlo, monospace", class: "lbl-txt" });
+    t.textContent = s; return t;
+  }
+  function fmt(x) { return (Math.abs(x) < 1e-9 ? 0 : x).toFixed(3); }
+  function fmtC(zc) { const im = zc.im; return `${fmt(zc.re)} ${im >= 0 ? '+' : '−'} ${fmt(Math.abs(im))}i`; }
+
+  const plane = document.getElementById("plane");
+  const rSlider = document.getElementById("rSlider");
+  const playBtn = document.getElementById("playBtn");
+  const certifyBtn = document.getElementById("certifyBtn");
+
+  function drawGrid(svg) {
+    const g = el("g", {});
+    for (let v = -4; v <= 4; v++) {
+      const x = Lx(v), y = Ly(v);
+      g.appendChild(el("line", { x1: x, y1: 0, x2: x, y2: SZ, stroke: "var(--grid)", "stroke-width": 1 }));
+      g.appendChild(el("line", { x1: 0, y1: y, x2: SZ, y2: y, stroke: "var(--grid)", "stroke-width": 1 }));
+    }
+    g.appendChild(el("line", { x1: 0, y1: C, x2: SZ, y2: C, stroke: "var(--axis)", "stroke-width": 1.4 }));
+    g.appendChild(el("line", { x1: C, y1: 0, x2: C, y2: SZ, stroke: "var(--axis)", "stroke-width": 1.4 }));
+    svg.appendChild(g);
+  }
+
+  function renderPlane() {
+    clear(plane);
+    drawGrid(plane);
+
+    // reference circle at the TRUE radius of convergence, r = 3
+    plane.appendChild(el("circle", { cx: C, cy: C, r: SING_RE * scale, fill: "none", stroke: "var(--muted)", "stroke-width": 1.2, "stroke-dasharray": "5,4", opacity: 0.55 }));
+    plane.appendChild(txt(C, Ly(3) - 8, "|z| = 3  (= R, the true boundary)", "var(--muted)", "middle", 10.5));
+
+    // growing certified-convergence disk
+    plane.appendChild(el("circle", { cx: C, cy: C, r: rCirc * scale, fill: "var(--accent-dim)", stroke: "var(--accent)", "stroke-width": 2 }));
+
+    // z0
+    plane.appendChild(el("circle", { cx: C, cy: C, r: 5, fill: "#fff", stroke: "#0b0d14", "stroke-width": 2 }));
+    plane.appendChild(txt(C + 10, C - 9, "z₀ = 0", "var(--muted)", "start"));
+
+    // singularity marker (x) at z=3
+    const sx = Lx(SING_RE), sy = Ly(0), arm = 6;
+    plane.appendChild(el("line", { x1: sx - arm, y1: sy - arm, x2: sx + arm, y2: sy + arm, stroke: "var(--bad)", "stroke-width": 2 }));
+    plane.appendChild(el("line", { x1: sx - arm, y1: sy + arm, x2: sx + arm, y2: sy - arm, stroke: "var(--bad)", "stroke-width": 2 }));
+    plane.appendChild(txt(sx, sy + 22, "singularity", "var(--bad)", "middle", 11));
+    plane.appendChild(txt(sx, sy + 35, "z = 3, f undefined here", "var(--bad)", "middle", 9.5));
+
+    // z0 -> zTest segment
+    const zx = Lx(zTest.re), zy = Ly(zTest.im);
+    plane.appendChild(el("line", { x1: C, y1: C, x2: zx, y2: zy, stroke: "var(--muted)", "stroke-width": 1, "stroke-dasharray": "3,3" }));
+
+    // draggable / clickable test point z
+    const zAbs = cabs(zTest);
+    const certified = rCirc > zAbs;
+    plane.appendChild(el("circle", { cx: zx, cy: zy, r: 7, fill: certified ? "var(--ok)" : "var(--warn)", stroke: "#0b0d14", "stroke-width": 2, class: "handle", "data-h": "z" }));
+    plane.appendChild(txt(zx + 11, zy - 10, "z", certified ? "var(--ok)" : "var(--warn)", "start", 13));
+
+    // ---- text readouts ----
+    document.getElementById("ro-r").textContent = rCirc.toFixed(3);
+    document.getElementById("ro-z").textContent = fmtC(zTest);
+    document.getElementById("ro-zabs").textContent = zAbs.toFixed(3);
+
+    const vEl = document.getElementById("verdict");
+    if (certified) {
+      vEl.className = "verdict ok";
+      vEl.innerHTML = isEmbed
+        ? `<b>&#10003; certified:</b> |z|=${zAbs.toFixed(2)} &lt; r&prime;=${rCirc.toFixed(2)} &lt; 3.`
+        : `<b>&#10003; certified.</b> |z| = ${zAbs.toFixed(3)} &lt; r&prime; = ${rCirc.toFixed(3)} &lt; 3, so z sits strictly inside this admissible circle &mdash; the coefficient formula (which never mentions r&prime;) guarantees the series converges here.`;
+    } else {
+      const mid = (zAbs + SING_RE) / 2;
+      vEl.className = "verdict warn";
+      vEl.innerHTML = isEmbed
+        ? `<b>not certified yet</b> &mdash; grow r&prime; past ${zAbs.toFixed(2)} (e.g. to ${mid.toFixed(2)}).`
+        : `<b>not yet certified by this circle</b> (|z| = ${zAbs.toFixed(3)} &ge; r&prime; = ${rCirc.toFixed(3)}). Since |z| &lt; 3 still, some admissible r&prime; always exists &mdash; e.g. the midpoint r&prime; = (${zAbs.toFixed(3)}+3)/2 = ${mid.toFixed(3)}. Grow the slider, or click "certify z".`;
+    }
+
+    syncSynthesis();
+  }
+
+  function stepAnim(ts) {
+    if (!animStart) animStart = ts;
+    const p = Math.min(1, (ts - animStart) / ANIM_DUR);
+    const eased = 1 - Math.pow(1 - p, 3);
+    rCirc = R_MIN + (R_MAX - R_MIN) * eased;
+    rSlider.value = rCirc;
+    renderPlane();
+    if (p < 1 && animating) {
+      requestAnimationFrame(stepAnim);
+    } else {
+      animating = false;
+      playBtn.textContent = "↻ Replay growth";
+      playBtn.disabled = false;
+    }
+  }
+  playBtn.addEventListener("click", () => {
+    if (animating) return;
+    animating = true; animStart = null;
+    playBtn.disabled = true; playBtn.textContent = "growing…";
+    requestAnimationFrame(stepAnim);
+  });
+  rSlider.addEventListener("input", () => {
+    animating = false;
+    rCirc = +rSlider.value;
+    renderPlane();
+  });
+  certifyBtn.addEventListener("click", () => {
+    animating = false;
+    const zAbs = cabs(zTest);
+    const mid = Math.min(R_MAX, (zAbs + SING_RE) / 2);
+    rCirc = mid; rSlider.value = mid;
+    renderPlane();
+  });
+
+  // ---------- drag / click test point ----------
+  let dragging = false;
+  function svgPoint(svg, evt) {
+    const r = svg.getBoundingClientRect();
+    const sx = (evt.clientX - r.left) * SZ / r.width;
+    const sy = (evt.clientY - r.top) * SZ / r.height;
+    return { sx, sy };
+  }
+  function moveZTo(sx, sy) {
+    const m = Linv(sx, sy);
+    let cand = cx(m.re, m.im);
+    const r = cabs(cand);
+    if (r > DRAG_LIMIT) cand = cx(cand.re * DRAG_LIMIT / r, cand.im * DRAG_LIMIT / r);
+    if (r < 0.05) cand = cx(0.05, 0);
+    zTest = cand;
+    renderPlane();
+  }
+  plane.addEventListener("pointerdown", e => {
+    dragging = true;
+    plane.setPointerCapture(e.pointerId);
+    const { sx, sy } = svgPoint(plane, e);
+    moveZTo(sx, sy);
+    e.preventDefault();
+  });
+  plane.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    const { sx, sy } = svgPoint(plane, e);
+    moveZTo(sx, sy);
+  });
+  plane.addEventListener("pointerup", () => { dragging = false; });
+  plane.addEventListener("pointercancel", () => { dragging = false; });
+
+  // ===================================================================
+  // Blow-up panel (Half 2)
+  // ===================================================================
+  const D_MAX = 1.0, D_MIN = 0.0001; // distance-to-3 domain, log scale
+  const dSlider = document.getElementById("dSlider");
+  const gaugeFill = document.getElementById("gaugeFill");
+  const gaugeMarker = document.getElementById("gaugeMarker");
+
+  function dOfT(t) { return D_MAX * Math.pow(D_MIN / D_MAX, t); }
+  function tOfD(d) { return Math.log(d / D_MAX) / Math.log(D_MIN / D_MAX); }
+
+  function fmtBig(v) {
+    if (v < 10) return v.toFixed(2);
+    if (v < 100000) return v.toFixed(1).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return v.toExponential(2);
+  }
+
+  function renderBlow() {
+    const t = +dSlider.value;
+    const d = dOfT(t);
+    const x = SING_RE - d;
+    const fabs = 1 / d;
+
+    const pct = 2 + t * 94; // keep marker within visible track, singularity tick sits near 96%
+    gaugeFill.style.width = pct + "%";
+    gaugeMarker.style.left = pct + "%";
+
+    document.getElementById("ro-fabs").textContent = fmtBig(fabs);
+    document.getElementById("ro-x").textContent = x.toFixed(4);
+    document.getElementById("ro-d").textContent = d.toFixed(4);
+
+    syncSynthesis();
+  }
+
+  dSlider.addEventListener("input", renderBlow);
+  document.querySelectorAll(".preset-row .btn[data-x]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const x = +btn.getAttribute("data-x");
+      const d = SING_RE - x;
+      dSlider.value = tOfD(d);
+      renderBlow();
+    });
+  });
+
+  // ===================================================================
+  // Synthesis line, tying both halves together with live numbers
+  // ===================================================================
+  function syncSynthesis() {
+    const zAbs = cabs(zTest);
+    const t = +dSlider.value;
+    const d = dOfT(t);
+    const fabs = 1 / d;
+    const el2 = document.getElementById("synthesis");
+    el2.innerHTML = isEmbed
+      ? `<b>R&ge;3</b> (certifies |z|&lt;${rCirc.toFixed(2)}) + <b>R&le;3</b> (|f(z)|=${fmtBig(fabs)}&rarr;&infin;) &nbsp;&rArr;&nbsp; <b>R = 3, exactly.</b>`
+      : `<b>R &ge; 3:</b> r&prime; = <span class="v">${rCirc.toFixed(3)}</span> currently certifies every |z| &lt; ${rCirc.toFixed(3)} &nbsp;&mdash;&nbsp; ` +
+        `<b>R &le; 3:</b> at distance <span class="v">${d.toFixed(4)}</span> from 3, |f(z)| = <span class="v">${fmtBig(fabs)}</span> and climbing without bound. ` +
+        `Together: <b>R = 3, exactly</b> &mdash; the radius of convergence equals the distance from z&#8320; = 0 to the nearest singularity.`;
+  }
+
+  // ---------- init ----------
+  rSlider.value = rCirc;
+  dSlider.value = 0;
+  renderPlane();
+  renderBlow();
+})();
+</script>
+</body>
+</html>
