@@ -81,11 +81,7 @@ That whole argument plays out below. As you scroll, the pinned demo first replay
   </div>
 </section>
 
-On $C_\varepsilon$, parametrize $z=z_0+\varepsilon e^{i\theta}$:
-$$\oint_{C_\varepsilon} \frac{f(z)}{z-z_0}\\,dz = \int_0^{2\pi} \frac{f(z_0+\varepsilon e^{i\theta})}{\varepsilon e^{i\theta}}\cdot i\varepsilon e^{i\theta}\\,d\theta = i\int_0^{2\pi} f(z_0+\varepsilon e^{i\theta})\\,d\theta$$
-Two separate things happen here, worth keeping distinct: the $\varepsilon e^{i\theta}$ factor cancels *algebraically* — true for any $\varepsilon$, no limit needed yet. Only afterward does the limit $\varepsilon\to0$ come in, using continuity of $f$ to replace $f(z_0+\varepsilon e^{i\theta})$ with $f(z_0)$:
-$$\lim_{\varepsilon\to0} i\int_0^{2\pi} f(z_0+\varepsilon e^{i\theta})\\,d\theta = i\int_0^{2\pi} f(z_0)\\,d\theta = 2\pi i\\,f(z_0)$$
-Putting it together, $\oint_\gamma g\\,dz = 2\pi i f(z_0)$, which rearranges into the **Cauchy Integral Formula**:
+Steps 5 and 6 above are the whole derivation — parametrizing $C_\varepsilon$ cancels the $\varepsilon e^{i\theta}$ factor algebraically first, and only afterward does $\varepsilon\to0$ bring continuity in to collapse the integral to $2\pi i\\,f(z_0)$. Rearranged, that's the **Cauchy Integral Formula**:
 $$f(z_0)=\frac{1}{2\pi i}\oint_\gamma\frac{f(z)}{z-z_0}\\,dz$$
 
 In words: values of $f$ on the *boundary* $\gamma$ completely determine the value of $f$ at any interior point $z_0$. This direction — boundary determines interior — is the profound one, with no real-variable analogue. (The formula is technically usable in the other direction too — computing an integral from a known function value, as in the practice problem below — but that's a computational shortcut, not the conceptually deep content.)

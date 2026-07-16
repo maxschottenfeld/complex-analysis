@@ -36,6 +36,20 @@
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   if (!("IntersectionObserver" in window)) return;
 
+  // The "on this page" tracker card floats via position:sticky/fixed at
+  // wide viewports and visually overlaps the pinned scrolly figure's
+  // screen region — hide it for as long as any scrolly section is on
+  // screen, independent of the per-step observer below.
+  const activeSections = new Set();
+  const visibilityIO = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) activeSections.add(entry.target);
+      else activeSections.delete(entry.target);
+    });
+    document.body.classList.toggle("scrolly-active", activeSections.size > 0);
+  }, { threshold: 0 });
+  sections.forEach(section => visibilityIO.observe(section));
+
   sections.forEach(section => {
     const iframe = section.querySelector(".scrolly-figure iframe");
     const steps = Array.from(section.querySelectorAll(".scrolly-step"));

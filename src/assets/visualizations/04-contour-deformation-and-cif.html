@@ -6,16 +6,16 @@
 <title>Contour Deformation &amp; the Cauchy Integral Formula</title>
 <style>
   :root {
-    --surface-primary: #ffffff;
-    --surface-secondary: #f5f5f5;
-    --text-primary: #222222;
-    --text-secondary: #666666;
-    --text-accent: #6366f1;
-    --text-success: #16a34a;
-    --text-danger: #dc2626;
-    --border-default: #cccccc;
-    --shade-region: rgba(99, 102, 241, 0.14);
-    --shade-between: rgba(22, 163, 74, 0.18);
+    --surface-primary: #0f1117;
+    --surface-secondary: #1a1d29;
+    --text-primary: #e8e9ed;
+    --text-secondary: #9aa0b0;
+    --text-accent: #7aa2f7;
+    --text-success: #9ece6a;
+    --text-danger: #f7768e;
+    --border-default: #2a2e3f;
+    --shade-region: rgba(122, 162, 246, 0.18);
+    --shade-between: rgba(158, 206, 106, 0.20);
   }
   * { box-sizing: border-box; }
   body {
@@ -66,7 +66,7 @@
     transition: background 0.35s;
     margin: 4px 0;
   }
-  .readout.flash { background: #fde68a; transition: none; }
+  .readout.flash { background: rgba(224, 175, 104, 0.35); transition: none; }
   .readout .lbl { color: var(--text-secondary); font-size: 12px; }
   .btn {
     padding: 6px 12px; font-size: 13px; border-radius: 6px;
@@ -101,11 +101,11 @@
     font-family: Georgia, serif;
     font-size: 15px;
     text-align: center;
-    background: #fff;
+    background: var(--surface-secondary);
   }
   .chain-arrow { text-align: center; color: var(--text-secondary); font-size: 12px; padding: 2px 0; }
   .chain-arrow .arr { color: var(--text-accent); font-size: 16px; display: block; line-height: 1; }
-  .chain-box.result { border-width: 2.5px; background: rgba(99,102,241,0.07); font-size: 16px; }
+  .chain-box.result { border-width: 2.5px; background: rgba(122,162,246,0.14); font-size: 16px; }
   .frac { display: inline-block; text-align: center; vertical-align: -0.7em; line-height: 1.1; font-size: 0.92em; }
   .frac .num { display: block; border-bottom: 1px solid currentColor; padding: 0 3px; }
   .frac .den { display: block; padding: 0 3px; }
@@ -302,17 +302,17 @@ function drawPlane(ctx, W, H, S, cx, cy) {
   const X = x => cx + x * S, Y = y => cy - y * S;
   const xmin = -cx / S, xmax = (W - cx) / S, ymin = -(H - cy) / S, ymax = cy / S;
   ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
   for (let x = Math.ceil(xmin * 2) / 2; x <= xmax; x += 0.5) {
     ctx.beginPath(); ctx.moveTo(X(x), 0); ctx.lineTo(X(x), H); ctx.stroke();
   }
   for (let y = Math.ceil(ymin * 2) / 2; y <= ymax; y += 0.5) {
     ctx.beginPath(); ctx.moveTo(0, Y(y)); ctx.lineTo(W, Y(y)); ctx.stroke();
   }
-  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.32)';
   ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.font = '11px -apple-system, sans-serif';
   for (let x = Math.ceil(xmin); x <= xmax; x++) {
     if (x === 0) continue;
@@ -386,7 +386,7 @@ function arrowAt(ctx, s, i, X, Y, color) {
     /* interior shading */
     pathFrom(ctx, samp, X, Y);
     ctx.fillStyle = 'var(--shade-region)';
-    ctx.fillStyle = 'rgba(99,102,241,0.13)';
+    ctx.fillStyle = 'rgba(122,162,246,0.18)';
     ctx.fill('evenodd');
 
     /* compare contour + between-region */
@@ -402,15 +402,15 @@ function arrowAt(ctx, s, i, X, Y, color) {
       ctx.moveTo(X(samp2[0][0]), Y(samp2[0][1]));
       for (let i = 1; i < samp2.length; i++) ctx.lineTo(X(samp2[i][0]), Y(samp2[i][1]));
       ctx.closePath();
-      ctx.fillStyle = 'rgba(22,163,74,0.18)';
+      ctx.fillStyle = 'rgba(158,206,106,0.20)';
       ctx.fill('evenodd');
 
       ctx.setLineDash([6, 5]);
       pathFrom(ctx, samp2, X, Y);
-      ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = '#9ece6a'; ctx.lineWidth = 2; ctx.stroke();
       ctx.setLineDash([]);
-      arrowAt(ctx, samp2, 32, X, Y, '#16a34a');
-      ctx.fillStyle = '#16a34a';
+      arrowAt(ctx, samp2, 32, X, Y, '#9ece6a');
+      ctx.fillStyle = '#9ece6a';
       ctx.font = 'italic 15px Georgia, serif';
       ctx.fillText('γ′', X(samp2[48][0]) + 6, Y(samp2[48][1]) - 6);
 
@@ -423,9 +423,9 @@ function arrowAt(ctx, s, i, X, Y, color) {
 
     /* main contour */
     pathFrom(ctx, samp, X, Y);
-    ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 2.5; ctx.stroke();
-    arrowAt(ctx, samp, 0, X, Y, '#6366f1');
-    ctx.fillStyle = '#6366f1';
+    ctx.strokeStyle = '#7aa2f7'; ctx.lineWidth = 2.5; ctx.stroke();
+    arrowAt(ctx, samp, 0, X, Y, '#7aa2f7');
+    ctx.fillStyle = '#7aa2f7';
     ctx.font = 'italic 17px Georgia, serif';
     ctx.fillText('γ', X(pts[1][0]) + 10, Y(pts[1][1]) - 10);
 
@@ -433,17 +433,17 @@ function arrowAt(ctx, s, i, X, Y, color) {
     pts.forEach((p, i) => {
       ctx.beginPath();
       ctx.arc(X(p[0]), Y(p[1]), i === dragging ? 7 : 5.5, 0, TAU);
-      ctx.fillStyle = '#6366f1'; ctx.fill();
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#7aa2f7'; ctx.fill();
+      ctx.strokeStyle = '#1a1d29'; ctx.lineWidth = 2; ctx.stroke();
     });
 
     /* singularity at 0 */
-    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#f7768e'; ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(X(0) - 6, Y(0) - 6); ctx.lineTo(X(0) + 6, Y(0) + 6);
     ctx.moveTo(X(0) - 6, Y(0) + 6); ctx.lineTo(X(0) + 6, Y(0) - 6);
     ctx.stroke();
-    ctx.fillStyle = '#dc2626';
+    ctx.fillStyle = '#f7768e';
     ctx.font = 'italic 13px Georgia, serif';
     ctx.fillText('singularity of 1/z', X(0) + 10, Y(0) + 18);
 
@@ -650,9 +650,9 @@ function arrowAt(ctx, s, i, X, Y, color) {
       ctx.moveTo(X(z0[0] + e), Y(z0[1]));
       ctx.arc(X(z0[0]), Y(z0[1]), e * S, 0, TAU);
       ctx.closePath();
-      ctx.fillStyle = 'rgba(22,163,74,0.16)';
+      ctx.fillStyle = 'rgba(158,206,106,0.18)';
       ctx.fill('evenodd');
-      ctx.fillStyle = '#15803d';
+      ctx.fillStyle = '#9ece6a';
       ctx.font = '11.5px -apple-system, sans-serif';
       const lx = X(gammaSamp[128][0] * 0.72 + z0[0] * 0.28), ly = Y(gammaSamp[128][1] * 0.72 + z0[1] * 0.28);
       ctx.fillText('g holomorphic here (no singularity)', lx - 90, ly);
@@ -662,9 +662,9 @@ function arrowAt(ctx, s, i, X, Y, color) {
 
     /* gamma */
     pathFrom(ctx, gammaSamp, X, Y);
-    ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 2.5; ctx.stroke();
-    arrowAt(ctx, gammaSamp, 128, X, Y, '#6366f1');
-    ctx.fillStyle = '#6366f1';
+    ctx.strokeStyle = '#7aa2f7'; ctx.lineWidth = 2.5; ctx.stroke();
+    arrowAt(ctx, gammaSamp, 128, X, Y, '#7aa2f7');
+    ctx.fillStyle = '#7aa2f7';
     ctx.font = 'italic 18px Georgia, serif';
     ctx.fillText('γ', X(gammaSamp[64][0]) + 12, Y(gammaSamp[64][1]) - 6);
 
@@ -672,9 +672,9 @@ function arrowAt(ctx, s, i, X, Y, color) {
     if (step >= 2) {
       ctx.beginPath();
       ctx.arc(X(z0[0]), Y(z0[1]), e * S, 0, TAU);
-      ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = '#f7768e'; ctx.lineWidth = 2; ctx.stroke();
       /* orientation arrow at top of circle */
-      ctx.fillStyle = '#dc2626';
+      ctx.fillStyle = '#f7768e';
       const ax = X(z0[0]), ay = Y(z0[1]) - e * S, sz = 6;
       ctx.beginPath();
       ctx.moveTo(ax - sz, ay); ctx.lineTo(ax + 2, ay - sz * 0.7); ctx.lineTo(ax + 2, ay + sz * 0.7);
@@ -689,15 +689,15 @@ function arrowAt(ctx, s, i, X, Y, color) {
         const px = X(z0[0] + e * Math.cos(t)), py = Y(z0[1] + e * Math.sin(t));
         ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU);
         ctx.fillStyle = COLORS[i]; ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.strokeStyle = '#1a1d29'; ctx.lineWidth = 1.5; ctx.stroke();
       });
       /* sweeping point z = z0 + eps e^{i theta} */
       const sx = X(z0[0] + e * Math.cos(sweepTheta)), sy = Y(z0[1] + e * Math.sin(sweepTheta));
       ctx.beginPath(); ctx.arc(sx, sy, 4, 0, TAU);
-      ctx.fillStyle = '#222'; ctx.fill();
-      ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1;
+      ctx.fillStyle = '#e8e9ed'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(X(z0[0]), Y(z0[1])); ctx.lineTo(sx, sy); ctx.stroke();
-      ctx.fillStyle = '#333';
+      ctx.fillStyle = '#e8e9ed';
       ctx.font = 'italic 13px Georgia, serif';
       ctx.fillText('z = z₀ + εe^iθ', sx + 8, sy - 8);
     }
@@ -705,9 +705,9 @@ function arrowAt(ctx, s, i, X, Y, color) {
     /* z0 */
     ctx.beginPath();
     ctx.arc(X(z0[0]), Y(z0[1]), dragZ0 ? 7 : 5.5, 0, TAU);
-    ctx.fillStyle = '#dc2626'; ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = '#dc2626';
+    ctx.fillStyle = '#f7768e'; ctx.fill();
+    ctx.strokeStyle = '#1a1d29'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#f7768e';
     ctx.font = 'italic 15px Georgia, serif';
     ctx.fillText('z₀', X(z0[0]) + 9, Y(z0[1]) + 16);
     if (step === 1) {

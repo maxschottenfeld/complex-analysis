@@ -404,6 +404,16 @@ main.wide { max-width: 1100px; }
   margin: 1.4rem 0 0.6rem;
 }
 
+/* Breaks a wide embed (e.g. a side-by-side stage+controls explorer) out of
+   the 760px prose column, matching the width .scrolly sections use — some
+   visualizations genuinely need more than 760px to lay their panels out
+   without wrapping/clipping. */
+.viz-embed-wide-wrap {
+  width: min(1080px, calc(100vw - 2.5rem));
+  margin: 1.5rem 0 1.5rem calc((100% - min(1080px, 100vw - 2.5rem)) / 2);
+}
+.viz-embed-wide-wrap .viz-embed { margin: 0; height: 640px; }
+
 /* ---------- Lessons & content ---------- */
 
 .lesson-list {
@@ -646,6 +656,15 @@ blockquote strong, blockquote b { color: var(--text); }
     margin: 0;
     max-height: calc(100vh - 7rem);
     overflow-y: auto;
+    transition: opacity 0.2s ease;
+  }
+
+  /* The pinned scrolly figure breaks out to a wider column than the prose
+     and can occupy the same screen region as this fixed sidebar — hide it
+     for as long as any scrolly section is on screen (see scrolly.js). */
+  body.scrolly-active .lesson-side {
+    opacity: 0;
+    pointer-events: none;
   }
 }
 

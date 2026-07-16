@@ -56,7 +56,7 @@ Finding them is a "solve in polar form, match mod $2\pi$" argument that's genuin
 
 The roots: $1$, $e^{i2\pi/3}=-\tfrac12+\tfrac{\sqrt3}{2}i$, $e^{i4\pi/3}=-\tfrac12-\tfrac{\sqrt3}{2}i$ — three points spaced $120°$ apart on the unit circle, forming an equilateral triangle.
 
-<iframe class="viz-embed" src="/assets/visualizations/01-roots-of-unity.html" title="Roots of unity visualization"></iframe>
+<div class="viz-embed-wide-wrap"><iframe class="viz-embed" src="/assets/visualizations/01-roots-of-unity.html?embed" title="Roots of unity visualization"></iframe></div>
 
 All three roots are powers of the primitive root $\omega=e^{i2\pi/3}$: $\omega^0,\omega^1,\omega^2$. And since a degree-3 polynomial has at most 3 roots, there are no more to find.
 

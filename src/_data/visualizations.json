@@ -61,5 +61,26 @@
     "lesson": "Lesson 5",
     "hue": 320,
     "description": "A single proof chain, animated end to end: the Cauchy Integral Formula gives derivative formulas, which give Cauchy's estimates, which give Liouville's theorem, which proves that every nonconstant polynomial has a root. Each link pairs a visualization with a step-through proof. Lesson 5 embeds a shorter scrolly recap of this same chain (9 steps) — this standalone page is the long-form version."
+  },
+  {
+    "slug": "06-isolated-zeros-floor-argument",
+    "title": "Isolated Zeros — the Floor Argument",
+    "lesson": "Lesson 6",
+    "hue": 240,
+    "description": "Why continuity forces g(z) away from 0 near z₀, so a zero of a holomorphic function can never have another zero arbitrarily close by. Drag z and watch the reverse-triangle-inequality floor hold live, synced to the general proof it's demonstrating."
+  },
+  {
+    "slug": "06-vary-the-circle-radius-of-convergence",
+    "title": "Vary the Circle — Why R = 3, Exactly",
+    "lesson": "Lesson 6",
+    "hue": 240,
+    "description": "Deriving, not asserting, that a power series' radius of convergence equals the distance to the nearest singularity. Grow a certifying circle toward the singularity for the R≥3 half; watch |f(z)| blow up approaching it for the R≤3 half."
+  },
+  {
+    "slug": "06-singularity-zoo-domain-coloring",
+    "title": "Singularity Zoo — Domain Coloring",
+    "lesson": "Lesson 6",
+    "hue": 240,
+    "description": "Three isolated singularities, same domain-coloring convention, one shared zoom slider: removable stays smooth, a pole brightens to a clean double-wound white center, and an essential singularity cycles through every color at every zoom level — Casorati-Weierstrass made visible."
   }
 ]
