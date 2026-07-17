@@ -82,5 +82,12 @@
     "lesson": "Lesson 6",
     "hue": 240,
     "description": "Three isolated singularities, same domain-coloring convention, one shared zoom slider: removable stays smooth, a pole brightens to a clean double-wound white center, and an essential singularity cycles through every color at every zoom level — Casorati-Weierstrass made visible."
+  },
+  {
+    "slug": "07-crosscut-construction",
+    "title": "The Crosscut Construction",
+    "lesson": "Lesson 7",
+    "hue": 100,
+    "description": "Turning a region with holes into one connected boundary, so Cauchy's theorem applies. Shrink the crosscut's width to zero and watch the two opposite-direction traversals cancel exactly — an orientation-reversal identity, not a limiting argument."
   }
 ]
