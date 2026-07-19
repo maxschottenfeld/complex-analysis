@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerald</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #0b0d16;
+        overflow: hidden;
+      }
+      #app {
+        width: 100%;
+        height: 100%;
+      }
+      /* M3.3: hide-cursor-on-idle. Cursor is inherited by children (the
+         canvas doesn't set its own), so one class on #app is enough. */
+      #app.gerald-idle {
+        cursor: none;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+      #ui-root {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-family: ui-monospace, Menlo, monospace;
+        color: #e8e9ed;
+      }
+      .gerald-dropzone {
+        margin: auto;
+        padding: 10px 18px;
+        background: rgba(11, 13, 22, 0.7);
+        border: 1px dashed #3a4055;
+        border-radius: 8px;
+        font-size: 14px;
+        pointer-events: none;
+      }
+      .gerald-dropzone--hidden {
+        display: none;
+      }
+      .gerald-transport {
+        pointer-events: auto;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin: 16px;
+        /* Pins this to the bottom of #ui-root's column flex layout on its
+           own, independent of whether .gerald-dropzone (the only other
+           child) is visible. Without this, #ui-root's justify-content:
+           space-between relied on having two visible flex children to
+           push one to each end - once a song loads and the dropzone
+           gets display:none (.gerald-dropzone--hidden), this became the
+           *only* flex child and space-between collapsed it to the top,
+           landing behind the HUD/controls panel. margin-top: auto
+           absorbs all remaining vertical space above this element
+           regardless of sibling count, so it always sits at the bottom. */
+        margin-top: auto;
+        padding: 8px 14px;
+        background: rgba(26, 29, 41, 0.85);
+        border: 1px solid #2a2e3f;
+        border-radius: 10px;
+        font-size: 13px;
+      }
+      .gerald-transport__play {
+        background: none;
+        border: 1px solid #3a4055;
+        color: #e8e9ed;
+        border-radius: 6px;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        flex: none;
+      }
+      .gerald-transport__seek {
+        flex: 1;
+        min-width: 100px;
+      }
+      .gerald-transport__volume {
+        width: 80px;
+        flex: none;
+      }
+      .gerald-transport__time {
+        flex: none;
+        white-space: nowrap;
+      }
+      .gerald-transport__filebtn {
+        cursor: pointer;
+        border: 1px solid #3a4055;
+        border-radius: 6px;
+        padding: 6px 10px;
+        white-space: nowrap;
+        flex: none;
+      }
+      .gerald-transport__play:disabled,
+      .gerald-transport__seek:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .gerald-transport__mic,
+      .gerald-transport__demo,
+      .gerald-transport__panel-toggle,
+      .gerald-transport__fs {
+        background: none;
+        border: 1px solid #3a4055;
+        color: #e8e9ed;
+        border-radius: 6px;
+        padding: 6px 10px;
+        white-space: nowrap;
+        flex: none;
+        cursor: pointer;
+        font: inherit;
+      }
+      .gerald-transport__demo[hidden] {
+        display: none;
+      }
+      .gerald-transport__mic--active {
+        border-color: #f7768e;
+        color: #f7768e;
+      }
+      #hud-root {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        pointer-events: none;
+        font-family: ui-monospace, Menlo, monospace;
+        color: #e8e9ed;
+      }
+      .gerald-hud {
+        pointer-events: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 12px;
+        background: rgba(26, 29, 41, 0.85);
+        border: 1px solid #2a2e3f;
+        border-radius: 10px;
+        font-size: 12px;
+        width: 180px;
+      }
+      .gerald-hud__bands {
+        display: flex;
+        gap: 6px;
+      }
+      .gerald-hud__band {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .gerald-hud__meter {
+        width: 100%;
+        height: 48px;
+        background: #11141d;
+        border: 1px solid #2a2e3f;
+        border-radius: 3px;
+        display: flex;
+        align-items: flex-end;
+        overflow: hidden;
+      }
+      .gerald-hud__meter--wide {
+        height: 10px;
+        width: 100%;
+        flex: 1;
+        align-items: stretch;
+      }
+      .gerald-hud__meter-fill {
+        width: 100%;
+        height: 0%;
+        background: #7aa2f7;
+      }
+      .gerald-hud__meter--wide .gerald-hud__meter-fill {
+        height: 100%;
+        width: 0%;
+      }
+      .gerald-hud__band-label {
+        color: #9aa0b0;
+        font-size: 10px;
+      }
+      .gerald-hud__row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .gerald-hud__row-label {
+        color: #9aa0b0;
+        min-width: 34px;
+        white-space: nowrap;
+        flex: none;
+      }
+      .gerald-hud__centroid {
+        white-space: nowrap;
+      }
+      .gerald-hud__onset-flash {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #2a2e3f;
+        margin-left: auto;
+        flex: none;
+      }
+      .gerald-hud__onset-flash--active {
+        background: #f7768e;
+      }
+      .gerald-hud__rec,
+      .gerald-hud__save,
+      .gerald-hud__dance-rec,
+      .gerald-hud__dance-save {
+        background: none;
+        border: 1px solid #3a4055;
+        color: #e8e9ed;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .gerald-hud__rec:disabled,
+      .gerald-hud__save:disabled,
+      .gerald-hud__dance-rec:disabled,
+      .gerald-hud__dance-save:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .gerald-hud__frame-count,
+      .gerald-hud__dance-frame-count {
+        color: #9aa0b0;
+        font-size: 11px;
+      }
+      #panel-root {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        pointer-events: none;
+        font-family: ui-monospace, Menlo, monospace;
+        color: #e8e9ed;
+      }
+      .gerald-panel {
+        pointer-events: auto;
+        width: 240px;
+        max-width: calc(100vw - 32px); /* phones: never wider than the viewport */
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+        background: rgba(26, 29, 41, 0.9);
+        border: 1px solid #2a2e3f;
+        border-radius: 10px;
+        font-size: 12px;
+      }
+      .gerald-panel__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #2a2e3f;
+        position: sticky;
+        top: 0;
+        background: rgba(26, 29, 41, 0.95);
+      }
+      .gerald-panel__preset-name {
+        color: #9aa0b0;
+        font-size: 10px;
+      }
+      .gerald-panel__body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 12px;
+      }
+      .gerald-panel--collapsed .gerald-panel__body {
+        display: none;
+      }
+      .gerald-panel label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        color: #9aa0b0;
+        font-size: 11px;
+      }
+      .gerald-panel input[type="range"] {
+        width: 100%;
+      }
+      .gerald-panel select {
+        background: #11141d;
+        color: #e8e9ed;
+        border: 1px solid #2a2e3f;
+        border-radius: 4px;
+        padding: 2px 4px;
+      }
+      .gerald-panel__val {
+        color: #e8e9ed;
+        float: right;
+      }
+      .gerald-panel__group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px 0;
+        border-top: 1px solid #2a2e3f;
+      }
+      .gerald-panel__group-title {
+        color: #7aa2f7;
+        font-size: 11px;
+      }
+      .gerald-panel__row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .gerald-panel__checkbox-row {
+        flex-direction: row !important;
+        align-items: center;
+        gap: 6px;
+      }
+      .gerald-panel__checkbox-row input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+      }
+      .gerald-panel__row select,
+      .gerald-panel__row input[type="text"] {
+        flex: 1;
+        min-width: 0;
+      }
+      .gerald-panel input[type="text"] {
+        background: #11141d;
+        color: #e8e9ed;
+        border: 1px solid #2a2e3f;
+        border-radius: 4px;
+        padding: 4px 6px;
+        font: inherit;
+      }
+      .gerald-panel button {
+        background: none;
+        border: 1px solid #3a4055;
+        color: #e8e9ed;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        flex: none;
+      }
+      .gerald-panel button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .gerald-panel__filebtn {
+        cursor: pointer;
+        border: 1px solid #3a4055;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        display: inline-block;
+      }
+      .gerald-panel__error {
+        color: #f7768e;
+        font-size: 11px;
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-C_pqYXn2.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="gerald-canvas"></canvas>
+      <div id="ui-root"></div>
+      <div id="hud-root"></div>
+      <div id="panel-root"></div>
+    </div>
+  </body>
+</html>
