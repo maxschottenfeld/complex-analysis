@@ -54,6 +54,31 @@
     font-size: 14px; line-height: 1.4;
     background: var(--surface-secondary); color: var(--text-primary);
   }
+
+  /* Compact chrome when embedded via <iframe src="...?embed"> (lesson pages
+     provide their own caption around the iframe). The whole embed is a flex
+     column pinned to the iframe's height: the plane flexes, everything else
+     keeps its natural size — so the iframe NEVER scrolls internally.
+     box-sizing is NOT set globally in this file, so the 12px padding would
+     otherwise add onto the 100vh height and force a 24px internal scroll. */
+  body.embed { box-sizing: border-box; margin: 0; padding: 12px; height: 100vh; overflow: hidden; }
+  body.embed h1 { display: none; }
+  body.embed .wrap { display: flex; flex-direction: column; height: 100%; min-height: 0; max-width: 100%; }
+  body.embed .controls { flex: none; margin-bottom: 8px; }
+  /* Both axes auto + a 1:1 ratio + max caps on BOTH sides, so the plane shrinks
+     to fit whichever axis runs out first — height on desktop, width on mobile.
+     At narrow widths flex-grow still wins on the main (vertical) axis, so the
+     box ends up taller than wide and preserveAspectRatio letterboxes the
+     drawing inside it; getSvgCoords() maps through the SVG's screen CTM, which
+     stays correct under that letterboxing. */
+  body.embed svg {
+    flex: 1 1 auto; min-height: 0; min-width: 0;
+    width: auto; height: auto; aspect-ratio: 1 / 1;
+    max-width: 100%; max-height: 100%;
+    align-self: center; margin: auto;
+  }
+  body.embed .slider-row { flex: none; margin-top: 8px; }
+  body.embed #verdict { flex: none; margin-top: 8px; padding: 8px 12px; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -87,6 +112,8 @@
 
 <script>
 (function(){
+  if(location.search.indexOf("embed") >= 0) document.body.classList.add("embed");
+
   const svg = document.getElementById('canvas');
   const pt = document.getElementById('pt');
   const epsCircle = document.getElementById('epsCircle');
@@ -184,12 +211,22 @@
 
   let dragging = false;
   function getSvgCoords(evt){
-    const rect = svg.getBoundingClientRect();
     const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
     const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-    const x = (clientX - rect.left) / rect.width * 400;
-    const y = (clientY - rect.top) / rect.height * 400;
-    return [x,y];
+    // Map through the SVG's own screen CTM rather than dividing by the
+    // element's bounding box. When the box isn't exactly square (embed mode at
+    // narrow widths), preserveAspectRatio letterboxes the 400x400 viewBox
+    // inside it, and naive rect math skews the axis that has slack.
+    const m = svg.getScreenCTM();
+    if(m){
+      const p = svg.createSVGPoint();
+      p.x = clientX; p.y = clientY;
+      const q = p.matrixTransform(m.inverse());
+      return [q.x, q.y];
+    }
+    const rect = svg.getBoundingClientRect();
+    return [(clientX - rect.left) / rect.width * 400,
+            (clientY - rect.top) / rect.height * 400];
   }
   function startDrag(evt){ dragging = true; pt.style.cursor='grabbing'; moveDrag(evt); evt.preventDefault(); }
   function moveDrag(evt){

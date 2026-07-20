@@ -90,6 +90,6 @@ by the **triangle inequality**, and then
 $$|w-z_0|<\varepsilon+(r-\varepsilon)=r.$$
 So every point of $D(z_0,r)$ has room to spare — the disk is open.
 
-<iframe class="viz-embed" src="/assets/visualizations/01-open-sets-explorer.html" title="Open sets explorer visualization"></iframe>
+<iframe class="viz-embed" src="/assets/visualizations/01-open-sets-explorer.html?embed" title="Open sets explorer visualization"></iframe>
 
 > **Key takeaways:** Open set: every point has some $\varepsilon$-disk contained in the set. Closed set: complement is open. Open and closed are **not** opposites — $A=\lbrace0<|z|\le1\rbrace$ is neither. Region/domain = open + connected. Triangle inequality: $|a+b|\le|a|+|b|$. $D(z_0,r)$ is open: given $z_1\in D(z_0,r)$, take $\varepsilon=r-|z_1-z_0|$; the triangle inequality gives $|w-z_0|\le|w-z_1|+|z_1-z_0|<\varepsilon+(r-\varepsilon)=r$.
