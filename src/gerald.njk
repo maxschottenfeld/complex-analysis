@@ -1,0 +1,18 @@
+---
+layout: base.njk
+title: Gerald
+description: "Gerald — an audio-reactive geometric series. Drop a song and watch the partial sums of Σ zⁿ dance to it."
+hue: 300
+wide: true
+permalink: /gerald/
+---
+
+<div class="viz-page-header" style="--h: {{ hue }}">
+  <p class="crumb"><a href="/">&larr; Home</a></p>
+  <h1>Gerald <span class="viz-card-lesson">audio toy</span></h1>
+  <p class="viz-page-description">The geometric series &Sigma;&thinsp;z&#8319;, dancing to music. Each spiral is the path of partial sums S&#8320;, S&#8321;, S&#8322;, &hellip; for a point z hugging the unit circle — where convergence is slow and the coils get intricate — and each one is driven by a different frequency band of whatever you're playing. Drop any song (audio never leaves your browser), or hit the mic button and play something live. Open the controls panel to retune how it moves, and save or share your own presets.</p>
+</div>
+
+<iframe class="viz-embed viz-embed-full" src="/assets/gerald/index.html?embed" title="Gerald — audio-reactive geometric series" allow="microphone; fullscreen" allowfullscreen></iframe>
+
+<p class="viz-page-footer"><a href="/assets/gerald/index.html" target="_blank" rel="noopener">Open full screen &nearr;</a> &middot; Same math as <a href="/visualizations/03b-geometric-series-partial-sums/">the partial-sums explorer</a> — this one just listens.</p>
