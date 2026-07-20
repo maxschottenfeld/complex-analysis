@@ -5,15 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Open Sets Explorer</title>
 <style>
+  /* House dark palette, matching the other lesson visualizations
+     (02, 03b, 06, 07): #0f1117 page, #7aa2f7 accent. */
   :root {
-    --surface-primary: #ffffff;
-    --surface-secondary: #f5f5f5;
-    --text-primary: #222222;
-    --text-secondary: #666666;
-    --text-accent: #6366f1;
-    --text-success: #16a34a;
-    --text-danger: #dc2626;
-    --border-default: #cccccc;
+    /* Makes UA-rendered chrome (the range track behind the thumb, scrollbars,
+       focus rings) follow the dark theme; accent-color only covers the filled
+       part of the slider, leaving a light track without this. */
+    color-scheme: dark;
+    --surface-primary: #0f1117;
+    --surface-secondary: #1a1d29;
+    --plot-bg: #0b0d14;
+    --text-primary: #e8e9ed;
+    --text-secondary: #9aa0b0;
+    --text-accent: #7aa2f7;
+    --text-success: #9ece6a;
+    --text-danger: #f7768e;
+    --border-default: #2a2e3f;
+    --axis: #3a4055;
   }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -33,21 +41,23 @@
   .set-btn {
     padding: 6px 12px; font-size: 13px; border-radius: 6px;
     border: 1px solid var(--border-default);
-    background: var(--surface-primary); color: var(--text-primary);
+    background: var(--surface-secondary); color: var(--text-primary);
     cursor: pointer;
   }
+  /* Dark ink on the light accent — white would be near-illegible on #7aa2f7. */
   .set-btn.active {
-    background: var(--text-accent); color: #fff; border-color: var(--text-accent);
+    background: var(--text-accent); color: var(--surface-primary);
+    border-color: var(--text-accent);
   }
   svg {
     width: 100%; height: auto;
-    background: var(--surface-secondary);
+    background: var(--plot-bg);
     border-radius: 8px;
     touch-action: none;
   }
   .slider-row { display:flex; align-items:center; gap:10px; margin-top:10px; }
   .slider-row label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
-  .slider-row input[type=range] { flex:1; }
+  .slider-row input[type=range] { flex:1; accent-color: var(--text-accent); }
   .slider-row span { font-size: 13px; color: var(--text-secondary); width: 34px; }
   #verdict {
     margin-top: 10px; padding: 10px 12px; border-radius: 8px;
@@ -93,8 +103,8 @@
   </div>
 
   <svg id="canvas" viewBox="0 0 400 400">
-    <line x1="200" y1="0" x2="200" y2="400" stroke="var(--border-default)" stroke-width="1"/>
-    <line x1="0" y1="200" x2="400" y2="200" stroke="var(--border-default)" stroke-width="1"/>
+    <line x1="200" y1="0" x2="200" y2="400" stroke="var(--axis)" stroke-width="1"/>
+    <line x1="0" y1="200" x2="400" y2="200" stroke="var(--axis)" stroke-width="1"/>
     <circle id="setCircle" cx="200" cy="200" r="150" fill="none" stroke="var(--text-accent)" stroke-width="2"/>
     <circle id="punctureDot" cx="200" cy="200" r="4" fill="var(--text-danger)" visibility="hidden"/>
     <circle id="epsCircle" cx="120" cy="120" r="30" fill="var(--text-accent)" fill-opacity="0.15" stroke="var(--text-accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
