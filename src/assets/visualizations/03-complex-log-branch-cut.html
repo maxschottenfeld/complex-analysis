@@ -416,8 +416,11 @@ function hsl2rgb(h,s,l){
     const h=theta; // height = Im(log z)
     const cy=Math.cos(yaw), sy=Math.sin(yaw);
     const X=x*cy - z*sy, Z=x*sy + z*cy;
-    const scale=62, tilt=0.5, vscale=26;
-    return [ W/2 + X*scale, H/2 - h*vscale + Z*scale*tilt ];
+    // scale (radial->horizontal) is decoupled from tiltPx (Z's vertical wobble);
+    // scale is sized to fill the canvas width (previously coupled to tilt and
+    // left the surface using only ~27% of the panel's width)
+    const scale=165, tiltPx=31, vscale=26;
+    return [ W/2 + X*scale, H/2 - h*vscale + Z*tiltPx ];
   }
   function sheetColor(theta,shade){
     // hue by where in (-pi,pi] this theta sits (mod 2pi) so principal sheet is green band
