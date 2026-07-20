@@ -1,6 +1,6 @@
 # Complex Analysis, Visually
 
-A self-study project by Max Schottenfeld — complex analysis lessons paired with interactive visualizations, built alongside Claude.
+A self-study project by Max Schottenfeld — complex analysis lessons paired with interactive visualizations.
 
 **Live site:** https://maxschottenfeld.github.io/complex-analysis/
 
