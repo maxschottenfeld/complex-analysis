@@ -63,6 +63,10 @@ So in general: **any line missing the origin becomes, under inversion, a circle 
 
 Two more cases make the pattern concrete. The line $\text{Re}(z)=2$ also misses the origin, so it too becomes a circle through the origin, just at a different offset. The line $y=x$ *passes through* the origin, so $A=0$ and $D=0$ both hold; after the swap both stay zero, and the image is still a line through the origin. Worth one extra step of care, though — parametrizing $y=x$ as $z=t(1+i)$ gives $\frac1z=\frac{1-i}{2t}$, which traces $y=-x$. The *type* is preserved exactly as predicted, but the specific line is the mirror image, not the original.
 
+Drag the source curve below and watch its image redraw under $w=1/z$. The one interaction worth doing deliberately: drag a line until it crosses the origin, and watch its image snap from a circle back to a line at the instant $D$ hits zero. The coefficient equation sits below the panels, where $A$ and $D$ visibly trade places as the shape changes type.
+
+<div class="viz-embed-wide-wrap"><iframe class="viz-embed" src="/assets/visualizations/08-circles-and-lines-inversion.html?embed" title="Circles and lines under inversion: the A↔D swap"></iframe></div>
+
 > **Key takeaway:** write any circle-or-line as $Az\bar z+Ez+\bar E\bar z+D=0$; inversion swaps $A\leftrightarrow D$ and conjugates $E$. Since Möbius maps decompose into affine–inversion–affine, they all send circles and lines to circles and lines. Reading the swap: $A=0$ means line, $D=0$ means through the origin — so a line missing the origin becomes a circle through it.
 
 ## Möbius maps are conformal everywhere
@@ -133,7 +137,7 @@ A region is **simply connected** if it is connected and has no holes — every l
 
 This is a genuinely startling statement. $\Omega$ can be jagged, elongated, slit, or otherwise nothing like a disk, and a conformal map still identifies it with $\mathbb{D}$ — because a conformal map only sees angles and local structure, never global shape. Every tool built up over the previous seven lessons (Cauchy's formula, power series, the identity theorem) transfers between $\Omega$ and $\mathbb{D}$ along $f$. In that precise sense the two regions are **conformally indistinguishable**: no holomorphic invariant can tell them apart.
 
-The visualization below makes that concrete. Both presets use genuine closed-form conformal maps of the disk, so the deformed region really is $\mathbb{D}$ in disguise — not an approximation of one. Drag the probe: its two arms meet at exactly $90°$ in both panels, at every point and every stage of the morph, because the map's derivative is a rotation-and-scaling. The Koebe preset is the one to push to its extreme — the region stretches past $25\times$ the disk's radius while remaining, provably, the same object.
+The visualization below shows this directly. Both presets are genuine closed-form conformal maps of the disk — the deformed region really is $\mathbb{D}$, not an approximation of one — and the probe's two arms stay exactly perpendicular in both panels throughout the morph, since the map's derivative is a rotation-and-scaling.
 
 <iframe class="viz-embed" src="/assets/visualizations/08-riemann-mapping-morph.html?embed" title="Conformal indistinguishability: morphing regions onto the unit disk"></iframe>
 
