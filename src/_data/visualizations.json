@@ -89,5 +89,12 @@
     "lesson": "Lesson 7",
     "hue": 100,
     "description": "Turning a region with holes into one connected boundary, so Cauchy's theorem applies. Shrink the crosscut's width to zero and watch the two opposite-direction traversals cancel exactly — an orientation-reversal identity, not a limiting argument."
+  },
+  {
+    "slug": "08-riemann-mapping-morph",
+    "title": "Conformal Indistinguishability & the Riemann Mapping Theorem",
+    "lesson": "Lesson 8",
+    "hue": 292,
+    "description": "The Riemann Mapping Theorem says every simply connected proper subset of ℂ is conformally the unit disk. Morph a lobed region — or a Koebe slit domain stretched past 25× the disk's radius — back to 𝔻 along a genuine closed-form conformal map, with a probe showing angles held at exactly 90° throughout. A third preset shows why ℂ itself is the one exception."
   }
 ]
