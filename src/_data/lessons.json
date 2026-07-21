@@ -61,5 +61,12 @@
     "title": "Residues & Contour Integration",
     "hue": 100,
     "description": "Of the infinitely many coefficients in a Laurent series, exactly one is worth computing for contour integration. That single coefficient becomes the Residue Theorem, and — via a semicircular contour and an ML-estimate — a genuine way to evaluate a real integral with no antiderivative in sight."
+  },
+  {
+    "num": "8",
+    "slug": "08-conformal-mapping",
+    "title": "Conformal Mapping & Möbius Transformations",
+    "hue": 292,
+    "description": "What complex functions *do* to shapes. Möbius transformations send circles and lines to circles and lines, are conformal everywhere, and are pinned down by three points — building to the Riemann Mapping Theorem, where nearly every simply connected region turns out to be the unit disk in disguise."
   }
 ]

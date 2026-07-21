@@ -74,6 +74,16 @@ a:hover { text-decoration-color: var(--accent); }
    so Computer Modern's x-height matches Source Serif's */
 .katex { font-size: 1.08em; }
 
+/* Long display equations must scroll inside their own box rather than
+   pushing the page sideways (README "Interactive patterns" convention:
+   wide content scrolls in its own container, the body never scrolls
+   horizontally). */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+
 /* ---------- Nav ---------- */
 
 .site-nav {

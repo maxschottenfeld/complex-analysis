@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circles and Lines Under Inversion &mdash; the A&harr;D Swap</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d29;
+    --panel2: #12141c;
+    --text: #e8e9ed;
+    --muted: #9aa0b0;
+    --accent: #7aa2f7;
+    --accent-dim: rgba(122,162,246,0.14);
+    --border: #2a2e3f;
+    --grid: #232838;
+    --axis: #3a4055;
+    --ok: #9ece6a;
+    --warn: #e0af68;
+    --bad: #f7768e;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+  }
+  i.mv { font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; }
+
+  /* ---------- top controls ---------- */
+  .top-controls { display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+  .ctrl-group { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .ctrl-group .glabel { font-size:11px; color:var(--muted); margin-right:2px; white-space:nowrap; }
+  .btn {
+    background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    padding:6px 11px; border-radius:6px; font-size:12px; cursor:pointer; white-space:nowrap;
+  }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn:disabled { opacity:0.5; cursor:default; }
+  .btn.small { padding:4px 9px; font-size:11.5px; }
+  .btn.active { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); font-weight:600; }
+
+  .decomp-check { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); cursor:pointer; user-select:none; }
+  .decomp-check input { accent-color:var(--accent); width:14px; height:14px; }
+
+  .decomp-controls {
+    display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin:0 0 10px;
+    padding:8px 11px; background:var(--panel2); border:1px dashed var(--border); border-radius:8px;
+  }
+  .decomp-controls label { font-size:11px; color:var(--muted); display:flex; align-items:center; gap:5px; white-space:nowrap; }
+  .decomp-controls input[type=range] { width:90px; accent-color: var(--accent); }
+
+  /* ---------- panels ---------- */
+  .panels { display:flex; gap:14px; flex-wrap:wrap; align-items:stretch; }
+  .panel {
+    flex:1 1 460px; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:13px; display:flex; flex-direction:column;
+  }
+  .panel h2 { font-size:14px; margin:0 0 8px; color:var(--accent); font-weight:600; display:flex; align-items:center; flex-wrap:wrap; gap:2px; }
+  .panel h2 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--text); font-weight:400; font-size:12px; }
+
+  svg.plane { width:100%; height:auto; display:block; background:#0b0d14; border-radius:6px; touch-action:none; }
+  .handle { cursor:grab; } .handle:active { cursor:grabbing; }
+  .lbl-txt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:11px; }
+  .curve-path { transition: stroke-width .15s ease, filter .15s ease; }
+  .curve-path.hover { stroke-width:4.2; filter: drop-shadow(0 0 5px var(--accent)); }
+
+  /* ---------- equation strip (the ENTIRE algebraic surface area, per design rule) ---------- */
+  .eqn-strip {
+    margin-top:12px; padding:10px 14px; background:var(--panel2); border:1px solid var(--border);
+    border-radius:8px; position:relative;
+  }
+  .eqn-line {
+    font-family: Georgia, 'Times New Roman', serif; font-size:14px; color:var(--muted);
+    line-height:1.7; white-space:nowrap; overflow-x:auto;
+  }
+  .eqn-line .num { color:var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px; padding:0 1px; border-radius:3px; transition:background .3s ease, color .3s ease; }
+  .eqn-line .num.flash { background:var(--accent-dim); color:var(--accent); }
+  .eqn-line .arrow { color:var(--accent); margin:0 10px; font-family:sans-serif; }
+  .eqn-note { font-size:10.5px; color:var(--muted); margin-top:5px; font-style:italic; }
+  .swap-chip {
+    position:absolute; pointer-events:none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:12.5px; font-weight:700; color:var(--bg); background:var(--accent); border-radius:4px;
+    padding:1px 5px; z-index:5; transition: transform .55s cubic-bezier(.3,0,.2,1), opacity .55s ease;
+    opacity:0;
+  }
+
+  /* ---------- type indicator: one payoff sentence ---------- */
+  .type-caption {
+    margin-top:8px; padding:9px 14px; border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
+    background:rgba(122,162,246,0.07); font-size:13.5px; line-height:1.5; color:var(--text);
+  }
+  .type-caption b { color:var(--accent); }
+  .type-caption .note { color:var(--muted); font-style:italic; }
+
+  /* ================= EMBED MODE ================= */
+  body.embed { height:100vh; overflow:hidden; padding:8px; }
+  body.embed .wrap { height:100%; max-width:none; display:flex; flex-direction:column; min-height:0; gap:4px; }
+  body.embed h1, body.embed .sub { display:none; }
+  body.embed .top-controls { margin-bottom:0; gap:8px; flex:0 0 auto; }
+  body.embed .ctrl-group .glabel { font-size:9.5px; }
+  body.embed .btn.small { padding:3px 7px; font-size:9.5px; }
+  body.embed .decomp-check { font-size:9.5px; }
+  body.embed .decomp-controls { flex:0 0 auto; margin:0 0 4px; padding:5px 8px; gap:8px; }
+  body.embed .decomp-controls label { font-size:9.5px; }
+  body.embed .decomp-controls input[type=range] { width:60px; }
+  body.embed .panels { flex:1 1 0; min-height:0; flex-wrap:nowrap; gap:8px; }
+  body.embed .panel { flex:1 1 0; min-width:0; min-height:0; padding:7px; overflow:hidden; }
+  body.embed .panel h2 { font-size:10.5px; margin-bottom:3px; flex:0 0 auto; }
+  body.embed .panel h2 .mono { font-size:9.5px; }
+  body.embed svg.plane { flex:1 1 60px; min-height:60px; height:100%; width:100%; display:block; }
+  body.embed .eqn-strip { margin-top:4px; padding:5px 9px; flex:0 0 auto; }
+  body.embed .eqn-line { font-size:10.5px; }
+  body.embed .eqn-line .num { font-size:9.5px; }
+  body.embed .eqn-note { font-size:8.5px; margin-top:2px; }
+  body.embed .type-caption { margin-top:4px; padding:5px 10px; font-size:10.8px; flex:0 0 auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Circles and Lines Under Inversion</h1>
+  <p class="sub">Lesson 8 &middot; every circle or line maps to a circle or line under <i class="mv">w</i> = 1/<i class="mv">z</i> &mdash; drag the shape, watch <i class="mv">A</i> and <i class="mv">D</i> trade places</p>
+
+  <div class="top-controls">
+    <div class="ctrl-group" id="modeGroup">
+      <span class="glabel">shape</span>
+      <button class="btn small active" data-mode="line">Line</button>
+      <button class="btn small" data-mode="circle">Circle</button>
+    </div>
+    <div class="ctrl-group" id="presetGroup">
+      <span class="glabel">preset</span>
+      <button class="btn small" data-preset="re1">Re(z)=1</button>
+      <button class="btn small" data-preset="re2">Re(z)=2</button>
+      <button class="btn small" data-preset="yx">y=x</button>
+      <button class="btn small" data-preset="unit">|z|=1</button>
+      <button class="btn small" data-preset="z2">|z&minus;2|=1</button>
+    </div>
+    <label class="decomp-check"><input type="checkbox" id="decompToggle"> show affine &rarr; inversion &rarr; affine decomposition</label>
+  </div>
+
+  <div class="decomp-controls" id="decompControls" style="display:none;">
+    <div class="ctrl-group" id="stageGroup">
+      <span class="glabel">stage</span>
+      <button class="btn small" data-stage="1">affine&#8321;</button>
+      <button class="btn small" data-stage="2">inversion</button>
+      <button class="btn small active" data-stage="3">affine&#8322; (=T(z))</button>
+    </div>
+    <label>pre-affine scale <input type="range" id="aff1Scale" min="0.4" max="3" step="0.01" value="1.3"></label>
+    <label>pre-affine rotate <input type="range" id="aff1Rot" min="-180" max="180" step="1" value="20"></label>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <h2 id="leftTitle"><i class="mv">z</i>-plane &nbsp;<span class="mono">(source &mdash; drag it)</span></h2>
+      <svg class="plane" id="zplane" viewBox="0 0 400 400" aria-label="z-plane, source curve"></svg>
+    </div>
+    <div class="panel">
+      <h2 id="rightTitle"><i class="mv">w</i>-plane &nbsp;<span class="mono">(image, w = 1/z)</span></h2>
+      <svg class="plane" id="wplane" viewBox="0 0 400 400" aria-label="w-plane, image curve"></svg>
+    </div>
+  </div>
+
+  <div class="eqn-strip" id="eqnStrip">
+    <div class="eqn-line" id="eqnSrcLine">&mdash;</div>
+    <div class="eqn-line" id="eqnImgLine">&mdash;</div>
+    <div class="eqn-note" id="eqnNote" style="display:none;">(shown for the inversion sub-step &mdash; the affine stages only move and resize the picture)</div>
+  </div>
+
+  <div class="type-caption" id="typeCaption">&mdash;</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const TAU = Math.PI * 2;
+  const SZ = 400, C = 200;
+  const LSPAN = 3.2;
+  const scale = C / LSPAN;
+  const EPS = 1e-6;
+
+  const isEmbed = new URLSearchParams(location.search).has("embed");
+  if (isEmbed) document.body.classList.add("embed");
+
+  /* ================= complex helpers ================= */
+  const cx = (re, im) => ({ re, im });
+  const cAdd = (a, b) => ({ re: a.re + b.re, im: a.im + b.im });
+  const cSub = (a, b) => ({ re: a.re - b.re, im: a.im - b.im });
+  const cMul = (a, b) => ({ re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re });
+  const cScale = (a, s) => ({ re: a.re * s, im: a.im * s });
+  const cAbs2 = (z) => z.re * z.re + z.im * z.im;
+  const cAbs = (z) => Math.hypot(z.re, z.im);
+  function cInv(z) { const m = cAbs2(z); if (m < EPS * EPS) return null; return { re: z.re / m, im: -z.im / m }; }
+
+  /* ================= coordinate map (both panels share the same fixed scale) ================= */
+  const Lx = re => C + re * scale;
+  const Ly = im => C - im * scale;
+  const LxInv = (sx, sy) => cx((sx - C) / scale, -(sy - C) / scale);
+
+  /* ================= state ================= */
+  let mode = 'line'; // 'line' | 'circle'
+  let lineP1 = cx(1, -0.5), lineP2 = cx(1, 0.5);
+  let circCenter = cx(0, 0), circAngle = 0, circRadius = 1;
+  let activePreset = 're1';
+  let decompOn = false;
+  let decompStage = 3; // 1=affine1, 2=inversion, 3=affine2 (final)
+  let aff1Scale = 1.3, aff1RotDeg = 20;
+  // fixed, illustrative post-affine + translations — not user-controlled, keeps the control surface small
+  const AFF1_MU = cx(0.15, 0.10);
+  const AFF2 = { scale: 0.7, rotDeg: -25, mu: cx(-0.10, -0.05) };
+
+  let hovering = false;
+  let dragTarget = null; // 'p1' | 'p2' | 'center' | 'radius'
+  let dragStartA = 0, dragStartD = 0;
+  let lastEqA = null, lastEqD = null;
+
+  /* ================= DOM refs ================= */
+  const svgZ = document.getElementById('zplane');
+  const svgW = document.getElementById('wplane');
+  const modeGroup = document.getElementById('modeGroup');
+  const presetGroup = document.getElementById('presetGroup');
+  const decompToggle = document.getElementById('decompToggle');
+  const decompControls = document.getElementById('decompControls');
+  const stageGroup = document.getElementById('stageGroup');
+  const aff1ScaleInput = document.getElementById('aff1Scale');
+  const aff1RotInput = document.getElementById('aff1Rot');
+  const rightTitle = document.getElementById('rightTitle');
+  const eqnSrcLine = document.getElementById('eqnSrcLine');
+  const eqnImgLine = document.getElementById('eqnImgLine');
+  const eqnNote = document.getElementById('eqnNote');
+  const eqnStrip = document.getElementById('eqnStrip');
+  const typeCaption = document.getElementById('typeCaption');
+
+  /* ================= svg helpers ================= */
+  function el(tag, attrs) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function clear(svg) { while (svg.firstChild) svg.removeChild(svg.firstChild); }
+  function txt(x, y, s, color, anchor, size) {
+    const t = el("text", { x, y, fill: color || "var(--muted)", "text-anchor": anchor || "middle", "font-size": size || 10.5, "font-family": "ui-monospace, SFMono-Regular, Menlo, monospace", class: "lbl-txt" });
+    t.textContent = s; return t;
+  }
+  function pathFromPointsWithGaps(pts) {
+    let d = '', started = false;
+    pts.forEach(p => {
+      if (p === null) { started = false; return; }
+      const x = p.x, y = p.y;
+      if (!started) { d += 'M ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' '; started = true; }
+      else { d += 'L ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' '; }
+    });
+    return d;
+  }
+  function fmt(x, d) { d = (d === undefined) ? 3 : d; return (Math.abs(x) < Math.pow(10, -d) / 2 ? 0 : x).toFixed(d); }
+  function fmtC(z, d) { const im = z.im; return `${fmt(z.re, d)}${im >= 0 ? '+' : '−'}${fmt(Math.abs(im), d)}i`; }
+
+  function niceStep(range) {
+    const raw = range / 8;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const nn = raw / pow;
+    let m; if (nn < 1.5) m = 1; else if (nn < 3) m = 2; else if (nn < 7) m = 5; else m = 10;
+    return m * pow;
+  }
+
+  function drawGrid(svg) {
+    const g = el("g", {});
+    const step = niceStep(LSPAN * 2);
+    for (let v = -Math.ceil(LSPAN / step) * step; v <= LSPAN; v += step) {
+      const x = Lx(v), y = Ly(v);
+      g.appendChild(el("line", { x1: x, y1: 0, x2: x, y2: SZ, stroke: "var(--grid)", "stroke-width": 1 }));
+      g.appendChild(el("line", { x1: 0, y1: y, x2: SZ, y2: y, stroke: "var(--grid)", "stroke-width": 1 }));
+    }
+    g.appendChild(el("line", { x1: 0, y1: C, x2: SZ, y2: C, stroke: "var(--axis)", "stroke-width": 1.4 }));
+    g.appendChild(el("line", { x1: C, y1: 0, x2: C, y2: SZ, stroke: "var(--axis)", "stroke-width": 1.4 }));
+    svg.appendChild(g);
+  }
+  function drawOrigin(svg) {
+    // origin matters enormously (it decides D=0) — mark it distinctly in both panels
+    svg.appendChild(el("circle", { cx: C, cy: C, r: 4.5, fill: "#0b0d14", stroke: "var(--warn)", "stroke-width": 2 }));
+    svg.appendChild(txt(C + 9, C + 14, "0", "var(--warn)", "start", 12));
+  }
+
+  /* ================= curve algebra: A(x²+y²)+Bx+Cy+D=0 ================= */
+  function lineABCD(P1, P2) {
+    const B = P2.im - P1.im, Cc = P1.re - P2.re;
+    const D = -(B * P1.re + Cc * P1.im);
+    return { A: 0, B, C: Cc, D };
+  }
+  function circleABCD(center, r) {
+    return { A: 1, B: -2 * center.re, C: -2 * center.im, D: center.re * center.re + center.im * center.im - r * r };
+  }
+  function invertABCD(g) { return { A: g.D, B: g.B, C: -g.C, D: g.A }; } // (A,B,C,D) -> (D,B,-C,A)
+  function Eof(g) { return cx(g.B / 2, -g.C / 2); }
+
+  function currentSourceGeom() {
+    return mode === 'line' ? lineABCD(lineP1, lineP2) : circleABCD(circCenter, circRadius);
+  }
+
+  /* image circle/line geometry, for the "maps to itself / mirrored" check — epsilon-tolerant */
+  function geomOf(g) {
+    if (Math.abs(g.A) < 1e-7) {
+      // line: direction angle mod pi, from Bx+Cy+D=0 -> direction vector (-C,B)
+      let ang = Math.atan2(g.B, -g.C);
+      ang = ((ang % Math.PI) + Math.PI) % Math.PI;
+      return { isLine: true, angle: ang };
+    }
+    const cxr = -g.B / (2 * g.A), cyr = -g.C / (2 * g.A);
+    const r2 = cxr * cxr + cyr * cyr - g.D / g.A;
+    return { isLine: false, center: cx(cxr, cyr), radius: Math.sqrt(Math.max(0, r2)) };
+  }
+
+  /* ================= sampling / pointwise mapping (used for BOTH panels' curve paths) ================= */
+  function sampleSourcePoints(N) {
+    N = N || 480;
+    const pts = [];
+    if (mode === 'line') {
+      const dir = cSub(lineP2, lineP1);
+      const dlen = cAbs(dir) || 1;
+      const dirU = cx(dir.re / dlen, dir.im / dlen);
+      for (let k = 0; k <= N; k++) {
+        const theta = -1.555 + (3.11) * k / N; // just under ±π/2: compactifies the whole infinite line
+        const t = Math.tan(theta);
+        pts.push(cAdd(lineP1, cScale(dirU, t)));
+      }
+    } else {
+      for (let k = 0; k <= N; k++) {
+        const a = TAU * k / N;
+        pts.push(cAdd(circCenter, cx(circRadius * Math.cos(a), circRadius * Math.sin(a))));
+      }
+    }
+    return pts;
+  }
+
+  function affine1(z) {
+    const th = aff1RotDeg * Math.PI / 180;
+    const lam = cx(aff1Scale * Math.cos(th), aff1Scale * Math.sin(th));
+    return cAdd(cMul(lam, z), AFF1_MU);
+  }
+  function affine2(z) {
+    const th = AFF2.rotDeg * Math.PI / 180;
+    const lam = cx(AFF2.scale * Math.cos(th), AFF2.scale * Math.sin(th));
+    return cAdd(cMul(lam, z), AFF2.mu);
+  }
+
+  /* the function mapping z -> current image point, respecting decomposition stage */
+  function imageMapFn() {
+    if (!decompOn) return (z) => cInv(z);
+    if (decompStage === 1) return (z) => affine1(z);
+    if (decompStage === 2) return (z) => { const a1 = affine1(z); return cInv(a1); };
+    return (z) => { const a1 = affine1(z); const iv = cInv(a1); if (iv === null) return null; return affine2(iv); };
+  }
+
+  function toScreen(z) { return { x: Lx(z.re), y: Ly(z.im) }; }
+
+  function renderCurve(svg, points, color, extraClass) {
+    const scr = points.map(p => p === null ? null : toScreen(p));
+    const path = el('path', { d: pathFromPointsWithGaps(scr), fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-linecap': 'round', class: 'curve-path' + (extraClass ? ' ' + extraClass : '') });
+    svg.appendChild(path);
+    return path;
+  }
+
+  /* ================= handles (z-plane only) ================= */
+  function drawHandles() {
+    if (mode === 'line') {
+      [['p1', lineP1], ['p2', lineP2]].forEach(([id, p]) => {
+        const s = toScreen(p);
+        svgZ.appendChild(el('line', { x1: s.x, y1: s.y, x2: Lx(0), y2: Ly(0), stroke: 'none' })); // no-op keeps order stable
+        svgZ.appendChild(el('circle', { cx: s.x, cy: s.y, r: 7, fill: 'var(--bad)', stroke: '#0b0d14', 'stroke-width': 2, class: 'handle', 'data-h': id }));
+      });
+    } else {
+      const cs = toScreen(circCenter);
+      const rp = cAdd(circCenter, cx(circRadius * Math.cos(circAngle), circRadius * Math.sin(circAngle)));
+      const rs = toScreen(rp);
+      svgZ.appendChild(el('line', { x1: cs.x, y1: cs.y, x2: rs.x, y2: rs.y, stroke: 'var(--muted)', 'stroke-width': 1, 'stroke-dasharray': '3,3' }));
+      svgZ.appendChild(el('circle', { cx: cs.x, cy: cs.y, r: 7, fill: 'var(--bad)', stroke: '#0b0d14', 'stroke-width': 2, class: 'handle', 'data-h': 'center' }));
+      svgZ.appendChild(el('circle', { cx: rs.x, cy: rs.y, r: 6, fill: 'var(--warn)', stroke: '#0b0d14', 'stroke-width': 2, class: 'handle', 'data-h': 'radius' }));
+    }
+  }
+
+  /* ================= equation strip ================= */
+  function setNum(id, s, changed) {
+    const e = document.getElementById(id);
+    e.textContent = s;
+    if (changed) { e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); setTimeout(() => e.classList.remove('flash'), 650); }
+  }
+
+  function renderEqnStrip(g, animate) {
+    const E = Eof(g), Eb = cx(E.re, -E.im);
+    const changedA = lastEqA !== null && Math.abs(g.A - lastEqA) > 1e-6;
+    const changedD = lastEqD !== null && Math.abs(g.D - lastEqD) > 1e-6;
+
+    eqnSrcLine.innerHTML =
+      `<span class="num" id="eqSrcA">${fmt(g.A)}</span>&middot;<i class="mv">z</i><span style="font-size:10px">&#772;</span><i class="mv">z</i> + ` +
+      `<span class="num" id="eqSrcE">(${fmtC(E)})</span><i class="mv">z</i> + ` +
+      `<span class="num">(${fmtC(Eb)})</span><i class="mv">z</i><span style="font-size:10px">&#772;</span> + ` +
+      `<span class="num" id="eqSrcD">${fmt(g.D)}</span> = 0`;
+
+    eqnImgLine.innerHTML =
+      `<span class="arrow">&rarr;</span>` +
+      `<span class="num" id="eqImgD">${fmt(g.D)}</span>&middot;<i class="mv">w</i><span style="font-size:10px">&#772;</span><i class="mv">w</i> + ` +
+      `<span class="num">(${fmtC(Eb)})</span><i class="mv">w</i> + ` +
+      `<span class="num" id="eqImgE">(${fmtC(E)})</span><i class="mv">w</i><span style="font-size:10px">&#772;</span> + ` +
+      `<span class="num" id="eqImgA">${fmt(g.A)}</span> = 0`;
+
+    if (animate && (changedA || changedD)) {
+      flySwapChips(g.A, g.D);
+      ['eqSrcA', 'eqSrcD', 'eqImgD', 'eqImgA'].forEach(id => { const e = document.getElementById(id); if (e) { e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); setTimeout(() => e.classList.remove('flash'), 700); } });
+    }
+    lastEqA = g.A; lastEqD = g.D;
+  }
+
+  /* small FLIP-style flourish: A's number flies from the source-lead slot to the image-constant slot,
+     and D's number flies from source-constant to image-lead. Gracefully no-ops if rects aren't measurable. */
+  function flySwapChips(Aval, Dval) {
+    try {
+      const srcA = document.getElementById('eqSrcA'), srcD = document.getElementById('eqSrcD');
+      const imgD = document.getElementById('eqImgD'), imgA = document.getElementById('eqImgA');
+      if (!srcA || !srcD || !imgD || !imgA) return;
+      const stripRect = eqnStrip.getBoundingClientRect();
+      if (!stripRect || (stripRect.width === 0 && stripRect.height === 0)) return; // jsdom / no layout — skip silently
+      [[srcA, imgA, Aval], [srcD, imgD, Dval]].forEach(([fromEl, toEl, val]) => {
+        const r1 = fromEl.getBoundingClientRect(), r2 = toEl.getBoundingClientRect();
+        if (r1.width === 0 || r2.width === 0) return;
+        const chip = document.createElement('div');
+        chip.className = 'swap-chip';
+        chip.textContent = fmt(val);
+        chip.style.left = (r1.left - stripRect.left) + 'px';
+        chip.style.top = (r1.top - stripRect.top) + 'px';
+        eqnStrip.appendChild(chip);
+        requestAnimationFrame(() => {
+          chip.style.opacity = '1';
+          requestAnimationFrame(() => {
+            const dx = (r2.left - r1.left), dy = (r2.top - r1.top);
+            chip.style.transform = `translate(${dx}px, ${dy}px)`;
+            chip.style.opacity = '0.85';
+          });
+        });
+        setTimeout(() => { chip.style.opacity = '0'; }, 500);
+        setTimeout(() => { chip.remove(); }, 900);
+      });
+    } catch (e) { /* purely decorative — never let it break rendering */ }
+  }
+
+  /* ================= type caption ================= */
+  function renderTypeCaption(g, g2) {
+    const sourceIsLine = Math.abs(g.A) < 1e-9;
+    const sourceThroughOrigin = Math.abs(g.D) < 1e-4;
+    const imageIsLine = Math.abs(g2.A) < 1e-6;
+    const imageThroughOrigin = Math.abs(g2.D) < 1e-6;
+
+    const desc = (isLine, throughOrigin) => (isLine ? 'line' : 'circle') + ' ' + (throughOrigin ? 'through the origin' : 'missing the origin');
+    let sentence = `<b>${cap(desc(sourceIsLine, sourceThroughOrigin))}</b> &rarr; <b>${desc(imageIsLine, imageThroughOrigin)}</b>.`;
+
+    let note = '';
+    if (!sourceIsLine && !imageIsLine) {
+      const gs = geomOf(g), gi = geomOf(g2);
+      if (!gs.isLine && !gi.isLine) {
+        const dc = Math.hypot(gs.center.re - gi.center.re, gs.center.im - gi.center.im);
+        if (dc < 0.01 && Math.abs(gs.radius - gi.radius) < 0.01) note = 'maps to itself';
+      }
+    } else if (sourceIsLine && imageIsLine) {
+      const gs = geomOf(g), gi = geomOf(g2);
+      const dAng = Math.min(Math.abs(gs.angle - gi.angle), Math.PI - Math.abs(gs.angle - gi.angle));
+      note = dAng < 0.01 ? 'maps to itself' : 'mirrored — a genuinely different line, not itself';
+    }
+    if (note) sentence += ` <span class="note">(${note})</span>`;
+    typeCaption.innerHTML = sentence;
+  }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  /* ================= render ================= */
+  function render(animateEqn) {
+    const g = currentSourceGeom();
+    const g2 = invertABCD(g); // the equation strip & type caption always describe the pure inversion step
+
+    clear(svgZ); clear(svgW);
+    drawGrid(svgZ); drawGrid(svgW);
+
+    // z-plane: source curve
+    const srcPts = sampleSourcePoints(480);
+    renderCurve(svgZ, srcPts, 'var(--accent)', 'src-curve');
+    drawOrigin(svgZ);
+    drawHandles();
+
+    // w-plane: image curve — pointwise mapped, respecting decomposition stage if enabled
+    const mapFn = imageMapFn();
+    const imgPts = srcPts.map(p => mapFn(p));
+    renderCurve(svgW, imgPts, 'var(--accent)', 'img-curve');
+    drawOrigin(svgW);
+
+    // right-panel title reflects current stage
+    if (!decompOn) {
+      rightTitle.innerHTML = '<i class="mv">w</i>-plane &nbsp;<span class="mono">(image, w = 1/z)</span>';
+    } else if (decompStage === 1) {
+      rightTitle.innerHTML = '<i class="mv">z</i>&prime;-plane &nbsp;<span class="mono">(after affine&#8321;: &lambda;&#8321;e<sup>i&theta;&#8321;</sup>z+&mu;&#8321;)</span>';
+    } else if (decompStage === 2) {
+      rightTitle.innerHTML = '&zeta;-plane &nbsp;<span class="mono">(after inversion of z&prime;)</span>';
+    } else {
+      rightTitle.innerHTML = '<i class="mv">w</i>-plane &nbsp;<span class="mono">(after affine&#8322; &mdash; final, w = T(z))</span>';
+    }
+
+    renderEqnStrip(g, animateEqn);
+    renderTypeCaption(g, g2);
+    eqnNote.style.display = decompOn ? 'block' : 'none';
+
+    // hover sync
+    document.querySelectorAll('.curve-path').forEach(p => p.classList.toggle('hover', hovering));
+  }
+
+  /* ================= controls ================= */
+  function clearActivePreset() { activePreset = null; presetGroup.querySelectorAll('button').forEach(b => b.classList.remove('active')); }
+
+  modeGroup.addEventListener('click', e => {
+    const b = e.target.closest('button[data-mode]');
+    if (!b) return;
+    mode = b.getAttribute('data-mode');
+    modeGroup.querySelectorAll('button').forEach(bb => bb.classList.toggle('active', bb === b));
+    clearActivePreset();
+    render(true);
+  });
+
+  const PRESETS = {
+    re1:  { mode: 'line', p1: cx(1, -0.5), p2: cx(1, 0.5) },
+    re2:  { mode: 'line', p1: cx(2, -0.5), p2: cx(2, 0.5) },
+    yx:   { mode: 'line', p1: cx(0.5, 0.5), p2: cx(-0.5, -0.5) },
+    unit: { mode: 'circle', center: cx(0, 0), radius: 1 },
+    z2:   { mode: 'circle', center: cx(2, 0), radius: 1 }
+  };
+  presetGroup.addEventListener('click', e => {
+    const b = e.target.closest('button[data-preset]');
+    if (!b) return;
+    const key = b.getAttribute('data-preset');
+    const p = PRESETS[key];
+    mode = p.mode;
+    if (mode === 'line') { lineP1 = cx(p.p1.re, p.p1.im); lineP2 = cx(p.p2.re, p.p2.im); }
+    else { circCenter = cx(p.center.re, p.center.im); circRadius = p.radius; circAngle = 0; }
+    activePreset = key;
+    modeGroup.querySelectorAll('button').forEach(bb => bb.classList.toggle('active', bb.getAttribute('data-mode') === mode));
+    presetGroup.querySelectorAll('button').forEach(bb => bb.classList.toggle('active', bb === b));
+    render(true);
+  });
+
+  decompToggle.addEventListener('change', () => {
+    decompOn = decompToggle.checked;
+    decompControls.style.display = decompOn ? 'flex' : 'none';
+    render(false);
+  });
+  stageGroup.addEventListener('click', e => {
+    const b = e.target.closest('button[data-stage]');
+    if (!b) return;
+    decompStage = +b.getAttribute('data-stage');
+    stageGroup.querySelectorAll('button').forEach(bb => bb.classList.toggle('active', bb === b));
+    render(false);
+  });
+  aff1ScaleInput.addEventListener('input', () => { aff1Scale = +aff1ScaleInput.value; render(false); });
+  aff1RotInput.addEventListener('input', () => { aff1RotDeg = +aff1RotInput.value; render(false); });
+
+  /* ---------- hover sync between panels ---------- */
+  [svgZ, svgW].forEach(svg => {
+    svg.addEventListener('pointerenter', () => { hovering = true; render(false); });
+    svg.addEventListener('pointerleave', () => { if (!dragTarget) { hovering = false; render(false); } });
+  });
+
+  /* ---------- dragging (z-plane only) ---------- */
+  function svgPoint(svg, evt) {
+    const r = svg.getBoundingClientRect();
+    const sx = (evt.clientX - r.left) * SZ / r.width;
+    const sy = (evt.clientY - r.top) * SZ / r.height;
+    return { sx, sy };
+  }
+  svgZ.addEventListener('pointerdown', e => {
+    const h = e.target.getAttribute && e.target.getAttribute('data-h');
+    if (!h) return;
+    dragTarget = h;
+    svgZ.setPointerCapture(e.pointerId);
+    const g0 = currentSourceGeom();
+    dragStartA = g0.A; dragStartD = g0.D;
+    clearActivePreset();
+    e.preventDefault();
+  });
+  svgZ.addEventListener('pointermove', e => {
+    if (!dragTarget) return;
+    const { sx, sy } = svgPoint(svgZ, e);
+    const m = LxInv(sx, sy);
+    if (dragTarget === 'p1' || dragTarget === 'p2') {
+      const other = dragTarget === 'p1' ? lineP2 : lineP1;
+      let cand = cx(m.re, m.im);
+      if (Math.hypot(cand.re - other.re, cand.im - other.im) < 0.06) return; // avoid degenerate coincident handles
+      if (dragTarget === 'p1') lineP1 = cand; else lineP2 = cand;
+    } else if (dragTarget === 'center') {
+      circCenter = cx(m.re, m.im);
+    } else if (dragTarget === 'radius') {
+      const v = cx(m.re - circCenter.re, m.im - circCenter.im);
+      let rr = cAbs(v);
+      if (rr < 0.12) rr = 0.12;
+      circRadius = rr;
+      circAngle = Math.atan2(v.im, v.re);
+    }
+    render(false);
+  });
+  function endDrag() {
+    if (!dragTarget) return;
+    dragTarget = null;
+    const g1 = currentSourceGeom();
+    const changed = Math.abs(g1.A - dragStartA) > 1e-3 || Math.abs(g1.D - dragStartD) > 1e-3;
+    render(changed);
+  }
+  svgZ.addEventListener('pointerup', endDrag);
+  svgZ.addEventListener('pointercancel', endDrag);
+
+  /* ---------- init ---------- */
+  render(false);
+})();
+</script>
+</body>
+</html>
