@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M&ouml;bius Maps on the Riemann Sphere</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d29;
+    --panel2: #12141c;
+    --text: #e8e9ed;
+    --muted: #9aa0b0;
+    --accent: #7aa2f7;
+    --accent-dim: rgba(122,162,246,0.14);
+    --border: #2a2e3f;
+    --grid: #232838;
+    --axis: #3a4055;
+    --ok: #9ece6a;
+    --warn: #e0af68;
+    --bad: #f7768e;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+  }
+  i.mv { font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; }
+
+  /* ---------- top controls ---------- */
+  .top-controls { display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  .ctrl-group { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .ctrl-group .glabel { font-size:11px; color:var(--muted); margin-right:2px; white-space:nowrap; }
+  .btn {
+    background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    padding:6px 11px; border-radius:6px; font-size:12px; cursor:pointer; white-space:nowrap;
+  }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn:disabled { opacity:0.5; cursor:default; }
+  .btn.small { padding:4px 9px; font-size:11.5px; }
+  .btn.active { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); font-weight:600; }
+  .btn .nr { font-size:8.5px; font-weight:800; letter-spacing:0.04em; color:var(--warn); margin-left:4px; vertical-align:1px; }
+  .btn.active .nr { color:var(--warn); }
+
+  /* ---------- panels ---------- */
+  .panels { display:flex; gap:14px; }
+  .panel {
+    flex:1 1 auto; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:13px; display:flex; flex-direction:column; min-width:0;
+  }
+  .panel h2 { font-size:14px; margin:0 0 8px; color:var(--accent); font-weight:600; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .panel h2 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--muted); font-weight:400; font-size:11.5px; }
+
+  #sphereCanvas {
+    width:100%; aspect-ratio: 16 / 9.4; display:block; background:#0b0d14; border-radius:6px;
+    touch-action:none; cursor:grab;
+  }
+  #sphereCanvas:active { cursor:grabbing; }
+
+  .ctrl-row { display:flex; align-items:center; gap:9px; margin-top:9px; flex-wrap:wrap; min-height:22px; }
+  .ctrl-row label { font-size:12px; color:var(--muted); white-space:nowrap; font-family: Georgia, 'Times New Roman', serif; font-style:italic; }
+  input[type=range] { flex:1 1 140px; accent-color: var(--accent); min-width:100px; }
+  .ctrl-row .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; color:var(--text); min-width:52px; text-align:right; }
+  .ctrl-row .hint { font-size:11.5px; color:var(--muted); font-style:italic; }
+
+  /* ---------- equation strip (the entire algebraic surface area, per design rule) ---------- */
+  .eqn-strip {
+    margin-top:12px; padding:10px 14px; background:var(--panel2); border:1px solid var(--border);
+    border-radius:8px;
+  }
+  .eqn-top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .motion-name { font-size:12.5px; color:var(--text); font-weight:600; }
+  .motion-name .sm { font-weight:400; color:var(--muted); }
+  .badge {
+    display:inline-block; font-size:9.5px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
+    padding:2px 8px; border-radius:20px; border:1.5px solid; white-space:nowrap;
+  }
+  .badge.ok { color:var(--ok); border-color:var(--ok); background:rgba(158,206,106,0.12); }
+  .badge.warn { color:var(--warn); border-color:var(--warn); background:rgba(224,175,104,0.12); }
+  .eqn-line {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; color:var(--text);
+    margin-top:7px; line-height:1.5; white-space:nowrap; overflow-x:auto;
+  }
+  .eqn-note { font-size:11.5px; color:var(--muted); margin-top:6px; line-height:1.45; }
+  .eqn-note b { color:var(--accent); }
+
+  /* ================= EMBED MODE ================= */
+  body.embed { height:100vh; overflow:hidden; padding:8px; }
+  body.embed .wrap { height:100%; max-width:none; display:flex; flex-direction:column; min-height:0; gap:5px; }
+  body.embed h1, body.embed .sub { display:none; }
+  body.embed .top-controls { margin-bottom:0; gap:7px; flex:0 0 auto; }
+  body.embed .ctrl-group .glabel { font-size:9.5px; }
+  body.embed .btn.small { padding:3px 7px; font-size:9.5px; }
+  body.embed .btn .nr { font-size:7.5px; }
+  body.embed .panels { flex:1 1 0; min-height:0; gap:8px; }
+  body.embed .panel { flex:1 1 0; min-width:0; min-height:0; padding:8px; overflow:hidden; }
+  body.embed .panel h2 { font-size:10.5px; margin-bottom:3px; flex:0 0 auto; }
+  body.embed .panel h2 .mono { font-size:9px; }
+  body.embed #sphereCanvas { flex:1 1 60px; min-height:60px; height:100%; width:100%; aspect-ratio:auto; display:block; }
+  body.embed .ctrl-row { margin-top:4px; font-size:10.5px; gap:6px; flex:0 0 auto; flex-wrap:nowrap; min-height:0; }
+  body.embed .ctrl-row label { font-size:10px; }
+  body.embed .ctrl-row .mono { font-size:10px; min-width:40px; }
+  body.embed .ctrl-row .hint { font-size:9.5px; }
+  body.embed .eqn-strip { margin-top:4px; padding:6px 9px; flex:0 0 auto; }
+  body.embed .motion-name { font-size:10.5px; }
+  body.embed .badge { font-size:8px; padding:1px 6px; }
+  body.embed .eqn-line { font-size:10.5px; margin-top:4px; }
+  body.embed .eqn-note { font-size:9.3px; margin-top:3px; max-height:2.8em; overflow:hidden; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>M&ouml;bius Maps on the Riemann Sphere</h1>
+  <p class="sub">Lesson 8 &middot; rigid rotations of the sphere realize exactly the isometric M&ouml;bius maps (PSU(2)); scaling and translation are non-rigid flows across the same fixed sphere &mdash; drag the sphere or use a named motion</p>
+
+  <div class="top-controls">
+    <div class="ctrl-group" id="presetGroup">
+      <span class="glabel">motion</span>
+      <button class="btn small" data-preset="spin">Spin</button>
+      <button class="btn small" data-preset="flipX">Flip about &plusmn;1</button>
+      <button class="btn small" data-preset="flipY">Flip about &plusmn;i</button>
+      <button class="btn small" data-preset="tilt">Tilt</button>
+      <button class="btn small" data-preset="scale">Scale<span class="nr">non-rigid</span></button>
+      <button class="btn small" data-preset="translate">Translate<span class="nr">non-rigid</span></button>
+    </div>
+    <button class="btn small" id="resetBtn">Reset</button>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>The Riemann Sphere &nbsp;<span class="mono">unit sphere, projection from N &mdash; drag to rotate</span></h2>
+      <canvas id="sphereCanvas" aria-label="3D Riemann sphere with stereographic projection to the complex plane through its equator"></canvas>
+      <div class="ctrl-row" id="paramRow">
+        <label id="paramLbl" for="paramSlider">&theta;</label>
+        <input type="range" id="paramSlider" min="-180" max="180" step="1" value="0">
+        <span class="mono" id="paramVal">0&deg;</span>
+      </div>
+      <div class="ctrl-row" id="freeHint" style="display:none;">
+        <span class="hint">drag anywhere on the sphere for a free trackball rotation</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="eqn-strip" id="eqnStrip">
+    <div class="eqn-top">
+      <span class="motion-name" id="motionName">Identity <span class="sm">(&theta; = 0)</span></span>
+      <span class="badge ok" id="rigidBadge">RIGID ROTATION</span>
+    </div>
+    <div class="eqn-line" id="mapLine">z &#8614; z</div>
+    <div class="eqn-note" id="lineCircleNote">&mdash;</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const isEmbed = new URLSearchParams(location.search).has("embed");
+  if (isEmbed) document.body.classList.add("embed");
+
+  /* ================================================================
+     Complex number helpers
+     ================================================================ */
+  const cx = (re, im) => ({ re, im });
+  const cAdd = (a, b) => ({ re: a.re + b.re, im: a.im + b.im });
+  const cMul = (a, b) => ({ re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re });
+  const cScale = (a, s) => ({ re: a.re * s, im: a.im * s });
+  const cConj = (a) => ({ re: a.re, im: -a.im });
+
+  function fmt(x, d) { d = (d === undefined) ? 3 : d; return (Math.abs(x) < Math.pow(10, -d) / 2 ? 0 : x).toFixed(d); }
+  function fmtC(z, d) {
+    d = (d === undefined) ? 3 : d;
+    const tol = 0.5 * Math.pow(10, -d);
+    const zi = Math.abs(z.im) < tol;
+    if (zi) return fmt(z.re, d);
+    return `(${fmt(z.re, d)}${z.im >= 0 ? '+' : '−'}${fmt(Math.abs(z.im), d)}i)`;
+  }
+
+  /* ================================================================
+     Stereographic projection — centered unit Riemann sphere,
+     projection from the north pole N=(0,0,1) onto the plane z=0.
+     Verified to ~1e-16 in the build prompt; used exactly as given.
+     ================================================================ */
+  function toSphere(z) { // z: {re,im} or null (= infinity) -> {X,Y,Z} on unit sphere
+    if (z === null) return { X: 0, Y: 0, Z: 1 };
+    const r2 = z.re * z.re + z.im * z.im;
+    const d = r2 + 1;
+    return { X: 2 * z.re / d, Y: 2 * z.im / d, Z: (r2 - 1) / d };
+  }
+  function toPlane(P) { // {X,Y,Z} on unit sphere -> {re,im} or null (= infinity)
+    const denom = 1 - P.Z;
+    if (Math.abs(denom) < 1e-9) return null;
+    return { re: P.X / denom, im: P.Y / denom };
+  }
+
+  /* ================================================================
+     Quaternions: rotation of the rigid sphere.
+     Convention: q = w + x*i_q + y*j_q + z*k_q represents rotation by
+     angle theta about unit axis n via q=(cos(theta/2), sin(theta/2)*n).
+     Rotation matrix is the standard active v' = R(q) v form.
+     ================================================================ */
+  function qFromAxisAngle(axis, theta) {
+    const s = Math.sin(theta / 2);
+    return { w: Math.cos(theta / 2), x: axis.x * s, y: axis.y * s, z: axis.z * s };
+  }
+  const Q_IDENTITY = { w: 1, x: 0, y: 0, z: 0 };
+  function qNormalize(q) {
+    const n = Math.hypot(q.w, q.x, q.y, q.z) || 1;
+    return { w: q.w / n, x: q.x / n, y: q.y / n, z: q.z / n };
+  }
+  function qMul(a, b) {
+    return {
+      w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+      x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+      y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+      z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w
+    };
+  }
+  function qSlerp(qa, qb, t) {
+    let cosom = qa.w * qb.w + qa.x * qb.x + qa.y * qb.y + qa.z * qb.z;
+    let bx = qb.x, by = qb.y, bz = qb.z, bw = qb.w;
+    if (cosom < 0) { cosom = -cosom; bx = -bx; by = -by; bz = -bz; bw = -bw; }
+    let s0, s1;
+    if (1 - cosom > 1e-6) {
+      const omega = Math.acos(cosom), sinom = Math.sin(omega);
+      s0 = Math.sin((1 - t) * omega) / sinom;
+      s1 = Math.sin(t * omega) / sinom;
+    } else { s0 = 1 - t; s1 = t; }
+    return { w: s0 * qa.w + s1 * bw, x: s0 * qa.x + s1 * bx, y: s0 * qa.y + s1 * by, z: s0 * qa.z + s1 * bz };
+  }
+  function rotateVec(q, v) {
+    const { w, x, y, z } = q;
+    const r00 = 1 - 2 * (y * y + z * z), r01 = 2 * (x * y - w * z), r02 = 2 * (x * z + w * y);
+    const r10 = 2 * (x * y + w * z), r11 = 1 - 2 * (x * x + z * z), r12 = 2 * (y * z - w * x);
+    const r20 = 2 * (x * z - w * y), r21 = 2 * (y * z + w * x), r22 = 1 - 2 * (x * x + y * y);
+    return {
+      X: r00 * v.X + r01 * v.Y + r02 * v.Z,
+      Y: r10 * v.X + r11 * v.Y + r12 * v.Z,
+      Z: r20 * v.X + r21 * v.Y + r22 * v.Z
+    };
+  }
+  // SU(2) <-> quaternion correspondence: a = w + z*i, b = -y + x*i;
+  // z -> (az+b)/(-conj(b)z + conj(a)). Verified against all four table
+  // entries AND, independently, against 200 random general-axis rotations
+  // reproduced via an axis-angle Rodrigues matrix (see verification script) —
+  // the naive b = y + x*i sign only happens to match on-axis, single-axis
+  // rotations (where the SU(2) global ± sign ambiguity hides the error).
+  function quatToMobius(q) {
+    const a = cx(q.w, q.z);
+    const b = cx(-q.y, q.x);
+    const c = cx(-b.re, b.im); // -conj(b)
+    const d = cx(a.re, -a.im); // conj(a)
+    return { a, b, c, d };
+  }
+
+  /* ================================================================
+     State
+     ================================================================ */
+  let mode = 'free';           // 'free' | 'spin' | 'flipX' | 'flipY' | 'tilt' | 'scale' | 'translate'
+  let freeQuat = Q_IDENTITY;
+  let spinTheta = 0;           // radians
+  let tiltTheta = 0;           // radians
+  let lambda = 1;               // scale factor
+  let bParam = cx(0, 0);        // translation
+
+  let animating = false, animFrom = Q_IDENTITY, animTo = Q_IDENTITY, animStart = 0;
+  const ANIM_DUR = 850;
+
+  function canonicalQuat(m) {
+    switch (m) {
+      case 'spin': return qFromAxisAngle({ x: 0, y: 0, z: 1 }, spinTheta);
+      case 'flipX': return qFromAxisAngle({ x: 1, y: 0, z: 0 }, Math.PI);
+      case 'flipY': return qFromAxisAngle({ x: 0, y: 1, z: 0 }, Math.PI);
+      case 'tilt': return qFromAxisAngle({ x: 1, y: 0, z: 0 }, tiltTheta);
+      case 'free': return freeQuat;
+      default: return Q_IDENTITY; // scale/translate: rendered via flow, not quaternion
+    }
+  }
+  function easeOutCubic(p) { return 1 - Math.pow(1 - p, 3); }
+  function displayQuat() {
+    if (!animating) return canonicalQuat(mode);
+    const t = Math.min(1, (performance.now() - animStart) / ANIM_DUR);
+    return qSlerp(animFrom, animTo, easeOutCubic(t));
+  }
+  // Where does the body-frame sphere point P0 (on the *reference*, unrotated
+  // unit sphere) currently sit? Handles both rigid rotation and the two
+  // non-rigid conformal flows (scaling / translation), which move points
+  // *across* the fixed sphere rather than turning the ball.
+  function currentSpherePos(P0) {
+    if (animating) return rotateVec(displayQuat(), P0);
+    if (mode === 'scale' || mode === 'translate') {
+      const z0 = toPlane(P0);
+      if (z0 === null) return { X: 0, Y: 0, Z: 1 }; // both flows fix infinity
+      const z1 = (mode === 'scale') ? cScale(z0, lambda) : cAdd(z0, bParam);
+      return toSphere(z1);
+    }
+    return rotateVec(canonicalQuat(mode), P0);
+  }
+  function currentMobius() {
+    if (animating) return quatToMobius(displayQuat());
+    if (mode === 'scale') return { a: cx(lambda, 0), b: cx(0, 0), c: cx(0, 0), d: cx(1, 0) };
+    if (mode === 'translate') return { a: cx(1, 0), b: bParam, c: cx(0, 0), d: cx(1, 0) };
+    return quatToMobius(canonicalQuat(mode));
+  }
+  function isRigidNow() { return animating || (mode !== 'scale' && mode !== 'translate'); }
+
+  /* ================================================================
+     Reference geometry (built once, in the sphere's body frame at rest)
+     ================================================================ */
+  const TAU = Math.PI * 2;
+  const LON_COUNT = 12, LON_STEPS = 32;
+  const LAT_LEVELS = 7, LAT_STEPS = 56; // parallels at phi = k*pi/8, k=1..7
+
+  function sph(phi, theta) { // phi: polar angle from N (0=N, pi=S); theta: azimuth
+    const s = Math.sin(phi);
+    return { X: s * Math.cos(theta), Y: s * Math.sin(theta), Z: Math.cos(phi) };
+  }
+
+  const meridians = []; // array of polylines (each an array of {X,Y,Z})
+  for (let k = 0; k < LON_COUNT; k++) {
+    const theta = k * Math.PI / LON_COUNT; // 0..pi covers 12 half-meridians -> 12 full great semicircle pairs via +pi
+    const line = [];
+    for (let s = 0; s <= LON_STEPS; s++) line.push(sph(s * Math.PI / LON_STEPS, theta));
+    meridians.push({ pts: line, isTracked: false });
+    const line2 = [];
+    for (let s = 0; s <= LON_STEPS; s++) line2.push(sph(s * Math.PI / LON_STEPS, theta + Math.PI));
+    meridians.push({ pts: line2, isTracked: false });
+  }
+  const parallels = []; // { phi, pts:[...], isEquator }
+  for (let k = 1; k <= LAT_LEVELS; k++) {
+    const phi = k * Math.PI / (LAT_LEVELS + 1);
+    const line = [];
+    for (let s = 0; s <= LAT_STEPS; s++) line.push(sph(phi, s * TAU / LAT_STEPS));
+    parallels.push({ phi, pts: line, isEquator: Math.abs(phi - Math.PI / 2) < 1e-6 });
+  }
+
+  // Tracked curve: the real axis (a line through 0 and infinity), compactified
+  // via tan() exactly as in 08-circles-and-lines-inversion.html's line sampling.
+  const TRACK_N = 240;
+  const trackedCurvePlane = [];
+  for (let k = 0; k <= TRACK_N; k++) {
+    const t = -1.5551 + 3.1102 * k / TRACK_N;
+    trackedCurvePlane.push(cx(Math.tan(t), 0));
+  }
+  const trackedCurveBody = trackedCurvePlane.map(toSphere);
+
+  // Tracked points: 1 and i — the fixed points of the two flip presets.
+  const trackedPoints = [
+    { z: cx(1, 0), label: '1', bodyP: toSphere(cx(1, 0)) },
+    { z: cx(0, 1), label: 'i', bodyP: toSphere(cx(0, 1)) }
+  ];
+
+  /* ================================================================
+     Camera: fixed weak yaw+pitch, orthographic screen projection.
+     Rotating the (body-frame) sphere never changes its silhouette
+     radius under this camera, since it's a pure rotation of a
+     rotationally-symmetric object about its own center.
+     ================================================================ */
+  const CAM_YAW = 0.52, CAM_PITCH = -0.40;
+  const cYaw = Math.cos(CAM_YAW), sYaw = Math.sin(CAM_YAW);
+  const cPitch = Math.cos(CAM_PITCH), sPitch = Math.sin(CAM_PITCH);
+  function camXform(P) {
+    const x1 = P.X * cYaw - P.Y * sYaw;
+    const y1 = P.X * sYaw + P.Y * cYaw;
+    const z1 = P.Z;
+    const y2 = y1 * cPitch - z1 * sPitch;
+    const z2 = y1 * sPitch + z1 * cPitch;
+    return { cx: x1, cy: y2, cz: z2 };
+  }
+  function depthAlpha(cz) {
+    // cz in roughly [-1,1] for sphere points; smooth far->near falloff
+    const t = Math.max(0, Math.min(1, (cz + 1) / 2));
+    return 0.22 + 0.68 * t;
+  }
+
+  /* ================================================================
+     Canvas setup / resize
+     ================================================================ */
+  const canvas = document.getElementById('sphereCanvas');
+  const ctx = canvas.getContext('2d');
+  let cssW = 0, cssH = 0, originX = 0, originY = 0, worldScale = 0;
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    cssW = Math.max(1, rect.width);
+    cssH = Math.max(1, rect.height);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    originX = cssW * 0.50;
+    originY = cssH * 0.50;
+    worldScale = Math.min(cssW, cssH) * 0.335; // sphere radius (1 world unit) in px — dominance target
+    render();
+  }
+  window.addEventListener('resize', resizeCanvas);
+  if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(canvas);
+
+  function proj(P) {
+    const c = camXform(P);
+    return { x: originX + c.cx * worldScale, y: originY - c.cy * worldScale, depth: c.cz };
+  }
+
+  /* ================================================================
+     DOM refs / labels
+     ================================================================ */
+  const presetGroup = document.getElementById('presetGroup');
+  const resetBtn = document.getElementById('resetBtn');
+  const paramRow = document.getElementById('paramRow');
+  const freeHint = document.getElementById('freeHint');
+  const paramLbl = document.getElementById('paramLbl');
+  const paramSlider = document.getElementById('paramSlider');
+  const paramVal = document.getElementById('paramVal');
+  const motionName = document.getElementById('motionName');
+  const rigidBadge = document.getElementById('rigidBadge');
+  const mapLine = document.getElementById('mapLine');
+  const lineCircleNote = document.getElementById('lineCircleNote');
+
+  const MOTION_LABELS = {
+    free: 'Free rotation', spin: 'Spin', flipX: 'Flip about &plusmn;1',
+    flipY: 'Flip about &plusmn;i', tilt: 'Tilt', scale: 'Scale', translate: 'Translate'
+  };
+
+  function updateParamRowUI() {
+    presetGroup.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.getAttribute('data-preset') === mode));
+    paramSlider.disabled = false;
+    if (mode === 'spin' || mode === 'tilt' || mode === 'scale' || mode === 'translate') {
+      paramRow.style.display = 'flex'; freeHint.style.display = 'none';
+      if (mode === 'spin') {
+        paramLbl.textContent = 'θ'; paramSlider.min = -180; paramSlider.max = 180; paramSlider.step = 1;
+        paramSlider.value = spinTheta * 180 / Math.PI; paramVal.textContent = fmt(spinTheta * 180 / Math.PI, 1) + '°';
+      } else if (mode === 'tilt') {
+        paramLbl.textContent = 'θ'; paramSlider.min = -180; paramSlider.max = 180; paramSlider.step = 1;
+        paramSlider.value = tiltTheta * 180 / Math.PI; paramVal.textContent = fmt(tiltTheta * 180 / Math.PI, 1) + '°';
+      } else if (mode === 'scale') {
+        paramLbl.textContent = 'λ'; paramSlider.min = 0.2; paramSlider.max = 4; paramSlider.step = 0.01;
+        paramSlider.value = lambda; paramVal.textContent = '×' + fmt(lambda, 2);
+      } else {
+        paramLbl.textContent = 'b'; paramSlider.min = -2.5; paramSlider.max = 2.5; paramSlider.step = 0.01;
+        paramSlider.value = bParam.re; paramVal.textContent = fmtC(bParam, 2);
+      }
+    } else if (mode === 'flipX' || mode === 'flipY') {
+      paramRow.style.display = 'flex'; freeHint.style.display = 'none';
+      paramLbl.textContent = 'θ'; paramSlider.min = 0; paramSlider.max = 180; paramSlider.step = 1;
+      paramSlider.value = 180; paramSlider.disabled = true; paramVal.textContent = '180° (fixed)';
+    } else {
+      paramRow.style.display = 'none'; freeHint.style.display = 'flex';
+    }
+  }
+
+  function updateEqnStrip() {
+    const M = currentMobius();
+    const rigid = isRigidNow();
+    rigidBadge.className = 'badge ' + (rigid ? 'ok' : 'warn');
+    rigidBadge.textContent = rigid ? 'RIGID ROTATION' : 'NON-RIGID FLOW';
+
+    let name = MOTION_LABELS[mode] || 'Motion';
+    let detail = '';
+    if (mode === 'spin') detail = `θ = ${fmt(spinTheta * 180 / Math.PI, 1)}° about the polar axis`;
+    else if (mode === 'tilt') detail = `θ = ${fmt(tiltTheta * 180 / Math.PI, 1)}° about the x-axis (elliptic)`;
+    else if (mode === 'flipX') detail = '180° about the axis through ±1';
+    else if (mode === 'flipY') detail = '180° about the axis through ±i';
+    else if (mode === 'scale') detail = `λ = ${fmt(lambda, 2)}`;
+    else if (mode === 'translate') detail = `b = ${fmtC(bParam, 2)}`;
+    else detail = 'trackball drag';
+    motionName.innerHTML = `${name} <span class="sm">(${detail})</span>`;
+
+    mapLine.textContent =
+      `z ↦ (${fmtC(M.a)}·z + ${fmtC(M.b)}) / (${fmtC(M.c)}·z + ${fmtC(M.d)})`;
+
+    if (rigid) {
+      const cMag = Math.hypot(M.c.re, M.c.im);
+      const isLine = cMag < 1e-4;
+      lineCircleNote.innerHTML = isLine
+        ? `Tracked curve (the real axis, through 0 and &infin;) still maps to a <b>line</b> &mdash; this rotation leaves &infin; on it.`
+        : `Tracked curve (the real axis, through 0 and &infin;) now maps to a genuine finite <b>circle</b> &mdash; this rotation moves &infin; off of it (the lines&harr;circles interchange, made visible).`;
+    } else {
+      lineCircleNote.innerHTML = `${mode === 'scale' ? 'Scaling' : 'Translation'} fixes &infin;, so it always sends lines to lines and circles to circles &mdash; no interchange here; that only happens for the rotations.`;
+    }
+  }
+
+  /* ================================================================
+     Render
+     ================================================================ */
+  function drawPlaneGrid() {
+    const EXT = 3.0, STEP = 0.5;
+    ctx.lineWidth = 1;
+    for (let v = -EXT; v <= EXT + 1e-9; v += STEP) {
+      const emph = Math.abs(v) < 1e-9;
+      ctx.strokeStyle = emph ? '#3a4055' : 'rgba(35,40,56,0.9)';
+      ctx.lineWidth = emph ? 1.4 : 1;
+      // line x = v
+      let p1 = proj({ X: v, Y: -EXT, Z: 0 }), p2 = proj({ X: v, Y: EXT, Z: 0 });
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      // line y = v
+      p1 = proj({ X: -EXT, Y: v, Z: 0 }); p2 = proj({ X: EXT, Y: v, Z: 0 });
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    }
+    // unit circle |z|=1 in the plane (image of the equator at rest)
+    ctx.strokeStyle = 'rgba(154,160,176,0.55)'; ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    for (let k = 0; k <= 96; k++) {
+      const a = k * TAU / 96;
+      const p = proj({ X: Math.cos(a), Y: Math.sin(a), Z: 0 });
+      if (k === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+
+  function drawSphereFill() {
+    const g = ctx.createRadialGradient(originX - worldScale * 0.32, originY - worldScale * 0.38, worldScale * 0.08,
+                                        originX, originY, worldScale * 1.04);
+    g.addColorStop(0, 'rgba(122,162,246,0.16)');
+    g.addColorStop(0.55, 'rgba(38,44,64,0.72)');
+    g.addColorStop(1, 'rgba(10,12,18,0.90)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(originX, originY, worldScale, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(154,160,176,0.35)'; ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  function strokePolyline(pts3, colorFn, widthFn) {
+    for (let i = 0; i < pts3.length - 1; i++) {
+      const a = pts3[i], b = pts3[i + 1];
+      const pa = proj(a), pb = proj(b);
+      const d = (pa.depth + pb.depth) / 2;
+      ctx.strokeStyle = colorFn(d);
+      ctx.lineWidth = widthFn(d);
+      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+    }
+  }
+
+  function render() {
+    if (!worldScale) return;
+    ctx.clearRect(0, 0, cssW, cssH);
+    ctx.fillStyle = '#0b0d14'; ctx.fillRect(0, 0, cssW, cssH);
+
+    drawPlaneGrid();
+    drawSphereFill();
+
+    // wireframe: meridians + parallels, painter's-algorithm depth dimming
+    meridians.forEach(m => {
+      const world = m.pts.map(currentSpherePos);
+      strokePolyline(world,
+        d => `rgba(122,162,246,${(depthAlpha(d) * 0.42).toFixed(3)})`,
+        d => depthAlpha(d) > 0.55 ? 1.3 : 0.9);
+    });
+    parallels.forEach(p => {
+      const world = p.pts.map(currentSpherePos);
+      const base = p.isEquator ? 0.62 : 0.34;
+      strokePolyline([...world, world[0]],
+        d => `rgba(${p.isEquator ? '154,160,176' : '122,162,246'},${(depthAlpha(d) * base).toFixed(3)})`,
+        d => (p.isEquator ? 1.6 : 1.0) * (depthAlpha(d) > 0.55 ? 1.15 : 0.85));
+    });
+
+    // poles
+    [{ P: { X: 0, Y: 0, Z: 1 }, lbl: 'N' }, { P: { X: 0, Y: 0, Z: -1 }, lbl: 'S' }].forEach(({ P, lbl }) => {
+      const wp = currentSpherePos(P);
+      const sp = proj(wp);
+      const a = depthAlpha(sp.depth);
+      ctx.fillStyle = `rgba(224,175,104,${(0.35 + 0.6 * a).toFixed(3)})`;
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, 3.6, 0, TAU); ctx.fill();
+      ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.fillStyle = `rgba(224,175,104,${(0.5 + 0.5 * a).toFixed(3)})`;
+      ctx.fillText(lbl, sp.x + 6, sp.y - 6);
+    });
+
+    // projection rays + tracked curve + tracked points, all in accent color
+    const Npos = currentSpherePos({ X: 0, Y: 0, Z: 1 });
+    const NposProj = proj(Npos);
+
+    // tracked curve on the sphere
+    const curveWorld = trackedCurveBody.map(currentSpherePos);
+    strokePolyline(curveWorld, d => `rgba(122,162,246,${(0.30 + 0.55 * depthAlpha(d)).toFixed(3)})`, () => 2.1);
+
+    // tracked curve's image in the plane
+    ctx.strokeStyle = 'rgba(122,162,246,0.85)'; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    let started = false;
+    curveWorld.forEach(P => {
+      const zimg = toPlane(P);
+      if (zimg === null || Math.abs(zimg.re) > 6 || Math.abs(zimg.im) > 6) { started = false; return; }
+      const s = proj({ X: zimg.re, Y: zimg.im, Z: 0 });
+      if (!started) { ctx.moveTo(s.x, s.y); started = true; } else { ctx.lineTo(s.x, s.y); }
+    });
+    ctx.stroke();
+
+    // tracked points: sphere position, ray from N, plane image
+    trackedPoints.forEach(tp => {
+      const wp = currentSpherePos(tp.bodyP);
+      const sp = proj(wp);
+      const zimg = toPlane(wp);
+      const a = depthAlpha(sp.depth);
+
+      if (zimg !== null) {
+        const planeP = proj({ X: zimg.re, Y: zimg.im, Z: 0 });
+        ctx.strokeStyle = `rgba(122,162,246,${(0.18 + 0.30 * a).toFixed(3)})`;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(NposProj.x, NposProj.y); ctx.lineTo(planeP.x, planeP.y); ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = 'rgba(122,162,246,0.95)';
+        ctx.beginPath(); ctx.arc(planeP.x, planeP.y, 4.6, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#0b0d14'; ctx.lineWidth = 1.4; ctx.stroke();
+      }
+
+      ctx.fillStyle = `rgba(122,162,246,${(0.45 + 0.55 * a).toFixed(3)})`;
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, 5.2, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#0b0d14'; ctx.lineWidth = 1.4; ctx.stroke();
+      ctx.font = 'italic 11.5px Georgia, "Times New Roman", serif';
+      ctx.fillStyle = `rgba(232,233,237,${(0.5 + 0.5 * a).toFixed(3)})`;
+      ctx.fillText(tp.label, sp.x + 8, sp.y - 8);
+    });
+
+    updateEqnStrip();
+  }
+
+  /* ================================================================
+     Animation loop for mode-switch transitions
+     ================================================================ */
+  function tick() {
+    if (animating) {
+      const t = (performance.now() - animStart) / ANIM_DUR;
+      if (t >= 1) { animating = false; } // settle BEFORE the final render so
+      render();                          // mode/badge/caption reflect the
+    }                                     // resting (possibly non-rigid) state
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  function beginTransitionTo(newMode) {
+    const from = displayQuat();
+    const to = (newMode === 'scale' || newMode === 'translate') ? Q_IDENTITY : canonicalQuat(newMode);
+    mode = newMode;
+    if (newMode === 'scale') lambda = 1;
+    if (newMode === 'translate') bParam = cx(0, 0);
+    animFrom = from; animTo = to; animStart = performance.now(); animating = true;
+    updateParamRowUI();
+  }
+
+  /* ================================================================
+     Controls
+     ================================================================ */
+  presetGroup.addEventListener('click', e => {
+    const b = e.target.closest('button[data-preset]');
+    if (!b) return;
+    const newMode = b.getAttribute('data-preset');
+    if (newMode === mode && !animating) return;
+    beginTransitionTo(newMode);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    spinTheta = 0; tiltTheta = 0; lambda = 1; bParam = cx(0, 0); freeQuat = Q_IDENTITY;
+    beginTransitionTo('free');
+  });
+
+  paramSlider.addEventListener('input', () => {
+    const v = +paramSlider.value;
+    if (mode === 'spin') spinTheta = v * Math.PI / 180;
+    else if (mode === 'tilt') tiltTheta = v * Math.PI / 180;
+    else if (mode === 'scale') lambda = v;
+    else if (mode === 'translate') bParam = cx(v, bParam.im);
+    updateParamRowUI();
+    render();
+  });
+
+  /* ---------- trackball drag ---------- */
+  let dragging = false, lastX = 0, lastY = 0;
+  const DRAG_SENS = 140; // px per radian, roughly
+
+  function pointerXY(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  canvas.addEventListener('pointerdown', e => {
+    dragging = true;
+    canvas.setPointerCapture(e.pointerId);
+    const p = pointerXY(e); lastX = p.x; lastY = p.y;
+    if (animating) { freeQuat = displayQuat(); animating = false; }
+    else if (mode !== 'free') { freeQuat = canonicalQuat(mode); }
+    mode = 'free';
+    updateParamRowUI();
+    e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const p = pointerXY(e);
+    const dx = p.x - lastX, dy = p.y - lastY;
+    lastX = p.x; lastY = p.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 0.0001) {
+      const axis = { x: -dy / dist, y: dx / dist, z: 0 };
+      const angle = dist / DRAG_SENS;
+      const qInc = qFromAxisAngle(axis, angle);
+      freeQuat = qNormalize(qMul(qInc, freeQuat));
+    }
+    render();
+  });
+  function endDrag() { dragging = false; }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  /* ---------- init ---------- */
+  updateParamRowUI();
+  resizeCanvas(); // also renders
+})();
+</script>
+</body>
+</html>

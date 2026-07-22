@@ -127,6 +127,12 @@ a quadratic with at most $2$ roots — unless $c=0$, in which case it's linear w
 
 **Theorem.** Given distinct $z_1,z_2,z_3$ and distinct $w_1,w_2,w_3$, there is a *unique* Möbius map with $T(z_i)=w_i$.
 
+There's a way to *see* this whole group at once. Add the point $\infty$ to the plane and the result is a sphere — the **Riemann sphere** — via stereographic projection from the north pole: the origin sits at the south pole, the unit circle becomes the equator, and $\infty$ is the north pole itself. On the sphere the group structure turns geometric. Grab the sphere below and spin it: every rigid rotation projects down to a Möbius map of the plane. Spinning about the polar axis gives $z\mapsto e^{i\theta}z$; flipping it $180°$ about the axis through $\pm1$ gives $z\mapsto 1/z$, swapping the two poles $0$ and $\infty$. And because a straight line lifts to a circle *through* the north pole while an ordinary circle doesn't, moving the sphere makes lines and circles trade places — the Segment 1 theorem, now visually inevitable, since on the sphere they are all simply circles.
+
+Not every Möbius map is a rigid rotation, though, and the visualization is honest about it: scalings $z\mapsto\lambda z$ and translations $z\mapsto z+b$ act on the same sphere as *non-rigid flows*, sliding points across the surface rather than turning the ball. The rotations are exactly the Möbius maps that are rigid motions of the sphere — a proper subgroup of the whole group. This is also the cleanest way to picture the Riemann Mapping Theorem's uniqueness clause in the next section: the disk's own symmetries are Möbius maps, and "unique up to a disk automorphism" is precisely the freedom to compose with one of them.
+
+<div class="viz-embed-wide-wrap"><iframe class="viz-embed" src="/assets/visualizations/08-riemann-sphere-mobius.html?embed" title="Mobius maps as rigid rotations of the Riemann sphere"></iframe></div>
+
 > **Key takeaway:** Möbius maps form a group under composition. The canonical map $T(z)=\frac{(z-z_1)(z_2-z_3)}{(z-z_3)(z_2-z_1)}$ sends $z_1,z_2,z_3\to0,1,\infty$; composing two of these sends any three points to any other three. Uniqueness follows because a non-identity Möbius map has at most two fixed points.
 
 ## The Riemann Mapping Theorem

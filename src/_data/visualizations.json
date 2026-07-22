@@ -103,5 +103,12 @@
     "lesson": "Lesson 8",
     "hue": 292,
     "description": "The Riemann Mapping Theorem says every simply connected proper subset of ℂ is conformally the unit disk. Morph a lobed region — or a Koebe slit domain stretched past 25× the disk's radius — back to 𝔻 along a genuine closed-form conformal map, with a probe showing angles held at exactly 90° throughout. A third preset shows why ℂ itself is the one exception."
+  },
+  {
+    "slug": "08-riemann-sphere-mobius",
+    "title": "Möbius Maps on the Riemann Sphere",
+    "lesson": "Lesson 8",
+    "hue": 292,
+    "description": "Every Möbius map is a rigid rotation of the Riemann sphere. Grab the sphere and spin it — the induced transformation plays out on the plane below, 1/z is a 180° flip, and lines and circles trade places because on the sphere they're all just circles. Scalings and translations are the maps that need a non-rigid flow instead — the reason the sphere's rotations are only a subgroup of all Möbius maps."
   }
 ]
