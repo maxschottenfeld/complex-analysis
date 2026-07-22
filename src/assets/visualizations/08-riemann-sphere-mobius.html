@@ -351,10 +351,11 @@
   // it doesn't replace the space. Its lift covers the lower part of the
   // sphere, leaving a cap around N; when a motion carries the patch across N
   // the projected image runs out through ∞ (the reveal moment).
-  const PATCH_EXT = 1.5;   // small enough that the whole square (edges included)
-                           // sits inside the camera window at identity — the
-                           // patch must read as bounded, not as the whole plane
-  const GRID_STEP = 0.25;  // 13 lines per family — ≈ the video's cell density
+  const PATCH_EXT = 2.5;   // large enough that its near edge shows in the
+                           // foreground in front of the sphere under the low
+                           // side camera, as in the video; still bounded, over
+                           // an untransformed reference grid
+  const GRID_STEP = 0.5;   // 11 lines per family — ≈ the video's cell density
   const GRID_SAMPLES = 80;
   const gridLines = [];    // { family:'v'|'h', isAxis, isEdge, bodyPts }
   (function buildGrid() {
@@ -443,25 +444,35 @@
   ];
 
   /* ================================================================
-     Camera: fixed weak yaw+pitch, orthographic screen projection.
-     Rotating the (body-frame) sphere never changes its silhouette
-     radius under this camera, since it's a pure rotation of a
-     rotationally-symmetric object about its own center.
+     Camera: perspective pinhole, viewed from the side and slightly
+     above (per Max, matching the Arnold–Rogness framing) — pole axis
+     vertical on screen, low elevation, near floor large, far plane
+     receding. The camera orbits the origin (sphere center), so the
+     sphere's silhouette stays an exact screen circle of radius
+     focal/sqrt(D²−1), which the fill and per-pixel layers rely on.
      ================================================================ */
-  const CAM_YAW = 0.52, CAM_PITCH = -0.40;
-  const cYaw = Math.cos(CAM_YAW), sYaw = Math.sin(CAM_YAW);
-  const cPitch = Math.cos(CAM_PITCH), sPitch = Math.sin(CAM_PITCH);
-  function camXform(P) {
-    const x1 = P.X * cYaw - P.Y * sYaw;
-    const y1 = P.X * sYaw + P.Y * cYaw;
-    const z1 = P.Z;
-    const y2 = y1 * cPitch - z1 * sPitch;
-    const z2 = y1 * sPitch + z1 * cPitch;
-    return { cx: x1, cy: y2, cz: z2 };
-  }
-  function depthAlpha(cz) {
-    // cz in roughly [-1,1] for sphere points; smooth far->near falloff
-    const t = Math.max(0, Math.min(1, (cz + 1) / 2));
+  const CAM_YAW = 0.55;   // azimuth around the pole axis
+  const CAM_ELEV = 0.42;  // elevation above the plane (~24°) — low enough to read
+                          // side-on, high enough that the patch shows in front
+  const CAM_DIST = 5.5;   // distance from the origin, world units
+  const camC = {
+    X: CAM_DIST * Math.cos(CAM_ELEV) * Math.cos(CAM_YAW),
+    Y: CAM_DIST * Math.cos(CAM_ELEV) * Math.sin(CAM_YAW),
+    Z: CAM_DIST * Math.sin(CAM_ELEV)
+  };
+  const camF = { X: -camC.X / CAM_DIST, Y: -camC.Y / CAM_DIST, Z: -camC.Z / CAM_DIST }; // forward (unit, at origin)
+  const camR = (() => { // right = forward × worldUp, horizontal
+    const rx = camF.Y, ry = -camF.X, L = Math.hypot(rx, ry) || 1;
+    return { X: rx / L, Y: ry / L, Z: 0 };
+  })();
+  const camU = { // up = right × forward
+    X: camR.Y * camF.Z,
+    Y: -camR.X * camF.Z,
+    Z: camR.X * camF.Y - camR.Y * camF.X
+  };
+  function depthAlpha(depth) {
+    // depth = CAM_DIST − z_cam; in [-1,1] for sphere points, 1 = nearest
+    const t = Math.max(0, Math.min(1, (depth + 1) / 2));
     return 0.22 + 0.68 * t;
   }
 
@@ -470,7 +481,7 @@
      ================================================================ */
   const canvas = document.getElementById('sphereCanvas');
   const ctx = canvas.getContext('2d');
-  let cssW = 0, cssH = 0, originX = 0, originY = 0, worldScale = 0;
+  let cssW = 0, cssH = 0, originX = 0, originY = 0, focal = 0, sphereScreenR = 0;
 
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
@@ -481,13 +492,14 @@
     canvas.height = Math.round(cssH * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     originX = cssW * 0.50;
-    originY = cssH * 0.50;
-    worldScale = Math.min(cssW, cssH) * 0.31; // sphere radius (1 world unit) in px — slightly pulled back so the patch boundary + reference grid beyond it stay visible
+    originY = cssH * 0.33; // sphere center sits upper-middle; the floor fills the foreground below
+    sphereScreenR = Math.min(cssW, cssH) * 0.22; // sphere silhouette radius on screen
+    focal = sphereScreenR * Math.sqrt(CAM_DIST * CAM_DIST - 1);
     planeCan.width = Math.ceil(cssW / PLANE_RES);
     planeCan.height = Math.ceil(cssH / PLANE_RES);
-    sphOx = originX - worldScale - 2;
-    sphOy = originY - worldScale - 2;
-    const sphSide = Math.ceil((2 * worldScale + 4) / PLANE_RES);
+    sphOx = originX - sphereScreenR - 2;
+    sphOy = originY - sphereScreenR - 2;
+    const sphSide = Math.ceil((2 * sphereScreenR + 4) / PLANE_RES);
     sphereCanF.width = sphereCanB.width = sphSide;
     sphereCanF.height = sphereCanB.height = sphSide;
     render();
@@ -496,8 +508,12 @@
   if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(canvas);
 
   function proj(P) {
-    const c = camXform(P);
-    return { x: originX + c.cx * worldScale, y: originY - c.cy * worldScale, depth: c.cz };
+    const dX = P.X - camC.X, dY = P.Y - camC.Y, dZ = P.Z - camC.Z;
+    let zc = dX * camF.X + dY * camF.Y + dZ * camF.Z;
+    if (zc < 0.05) zc = 0.05; // behind/at-camera guard
+    const xc = dX * camR.X + dY * camR.Y;                 // camR.Z = 0
+    const yc = dX * camU.X + dY * camU.Y + dZ * camU.Z;
+    return { x: originX + focal * xc / zc, y: originY - focal * yc / zc, depth: CAM_DIST - zc };
   }
 
   /* ================================================================
@@ -595,7 +611,7 @@
   function drawPlaneReference() {
     // static untransformed reference grid + unit circle — the fixed frame the
     // transformed grid is compared against; never moves under any motion
-    const EXT = 4.0, STEP = 0.5;
+    const EXT = 6.0, STEP = 0.5; // wide enough to cover the near foreground under the low camera
     for (let v = -EXT; v <= EXT + 1e-9; v += STEP) {
       const emph = Math.abs(v) < 1e-9;
       ctx.strokeStyle = emph ? '#6c7386' : 'rgba(130,136,152,0.55)';
@@ -638,13 +654,19 @@
     let k = 0;
     for (let ty = 0; ty < ph; ty++) {
       const sy = (ty + 0.5) * PLANE_RES;
-      const v = -(sy - originY) / (worldScale * cPitch);
+      const v = (originY - sy) / focal;
+      const dz = camF.Z + v * camU.Z; // camR.Z = 0
+      if (dz >= -1e-6) { // at/above the horizon: no plane there
+        for (let tx = 0; tx < pw; tx++, k += 4) px[k + 3] = 0;
+        continue;
+      }
+      const t = -camC.Z / dz;
       for (let tx = 0; tx < pw; tx++) {
         const sx = (tx + 0.5) * PLANE_RES;
-        const u = (sx - originX) / worldScale;
-        // screen → world plane (inverse of the affine proj on Z=0)
-        const wRe = u * cYaw + v * sYaw;
-        const wIm = -u * sYaw + v * cYaw;
+        const u = (sx - originX) / focal;
+        // ray from the camera through this pixel, intersected with Z=0
+        const wRe = camC.X + t * (camF.X + u * camR.X + v * camU.X);
+        const wIm = camC.Y + t * (camF.Y + u * camR.Y + v * camU.Y);
         // z = M⁻¹(w)
         const numRe = d.re * wRe - d.im * wIm - b.re, numIm = d.re * wIm + d.im * wRe - b.im;
         const denRe = -(c.re * wRe - c.im * wIm) + a.re, denIm = -(c.re * wIm + c.im * wRe) + a.im;
@@ -699,34 +721,41 @@
       }
       return toPlane(rotateVec(qi, P));
     };
+    const cc = CAM_DIST * CAM_DIST - 1; // |C|² − r², constant of the quadratic
+    const invD = 1 / CAM_DIST;
     let k = 0;
     for (let ty = 0; ty < sh; ty++) {
       const sy = sphOy + (ty + 0.5) * PLANE_RES;
-      const v = (originY - sy) / worldScale; // camera cy
+      const v = (originY - sy) / focal;
       for (let tx = 0; tx < sw; tx++, k += 4) {
         const sx = sphOx + (tx + 0.5) * PLANE_RES;
-        const u = (sx - originX) / worldScale; // camera cx
-        const r2 = u * u + v * v;
+        const u = (sx - originX) / focal;
         pf[k + 3] = 0; pb[k + 3] = 0;
-        if (r2 > 1) continue;
-        const cz = Math.sqrt(1 - r2);
-        // camera -> world (inverse pitch then inverse yaw), for both faces
+        // ray from the camera through this pixel, intersected with |P| = 1
+        const dx = camF.X + u * camR.X + v * camU.X;
+        const dy = camF.Y + u * camR.Y + v * camU.Y;
+        const dz = camF.Z + v * camU.Z;
+        const dd = dx * dx + dy * dy + dz * dz;
+        const cd = camC.X * dx + camC.Y * dy + camC.Z * dz;
+        const disc = cd * cd - dd * cc;
+        if (disc <= 0) continue; // outside the silhouette
+        const sq = Math.sqrt(disc);
         for (let face = 0; face < 2; face++) {
-          const z2 = face === 0 ? cz : -cz;
-          const y1 = v * cPitch + z2 * sPitch;
-          const Z = -v * sPitch + z2 * cPitch;
-          const X = u * cYaw + y1 * sYaw;
-          const Y = -u * sYaw + y1 * cYaw;
-          const z0 = sourceZ({ X, Y, Z });
+          const t = face === 0 ? (-cd - sq) / dd : (-cd + sq) / dd; // near, far hit
+          const P = { X: camC.X + t * dx, Y: camC.Y + t * dy, Z: camC.Z + t * dz };
+          const z0 = sourceZ(P);
           if (z0 === null || z0.re < -PATCH_EXT || z0.re > PATCH_EXT ||
               z0.im < -PATCH_EXT || z0.im > PATCH_EXT) continue;
           const rgb = sampleTex(z0.re, z0.im);
-          if (face === 0) { // front: vivid, slight depth shading
+          const depth = CAM_DIST - ((P.X - camC.X) * camF.X + (P.Y - camC.Y) * camF.Y + (P.Z - camC.Z) * camF.Z);
+          if (face === 0) { // front: vivid, shaded toward the rim
+            const fr = Math.max(0, Math.min(1, (depth - invD) / (1 - invD)));
             pf[k] = rgb[0]; pf[k + 1] = rgb[1]; pf[k + 2] = rgb[2];
-            pf[k + 3] = Math.round(150 + 90 * z2);
+            pf[k + 3] = Math.round(150 + 90 * fr);
           } else {          // back: dimmed — the picture seen through the glass
+            const bk = Math.max(0, Math.min(1, (depth + 1) / (1 + invD)));
             pb[k] = rgb[0]; pb[k + 1] = rgb[1]; pb[k + 2] = rgb[2];
-            pb[k + 3] = Math.round(140 + 55 * (1 + z2));
+            pb[k + 3] = Math.round(140 + 55 * bk);
           }
         }
       }
@@ -774,14 +803,14 @@
 
   function drawSphereFill() {
     // frosted-glass white sphere, like the video's
-    const g = ctx.createRadialGradient(originX - worldScale * 0.32, originY - worldScale * 0.38, worldScale * 0.08,
-                                        originX, originY, worldScale * 1.04);
+    const g = ctx.createRadialGradient(originX - sphereScreenR * 0.32, originY - sphereScreenR * 0.38, sphereScreenR * 0.08,
+                                        originX, originY, sphereScreenR * 1.04);
     g.addColorStop(0, 'rgba(255,255,255,0.92)');
     g.addColorStop(0.55, 'rgba(232,235,241,0.78)');
     g.addColorStop(1, 'rgba(152,160,178,0.84)');
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.arc(originX, originY, worldScale, 0, TAU);
+    ctx.arc(originX, originY, sphereScreenR, 0, TAU);
     ctx.fill();
     ctx.strokeStyle = 'rgba(90,96,112,0.50)'; ctx.lineWidth = 1;
     ctx.stroke();
@@ -799,7 +828,7 @@
   }
 
   function render() {
-    if (!worldScale) return;
+    if (!focal) return;
     ctx.clearRect(0, 0, cssW, cssH);
     ctx.fillStyle = SCENE_BG; ctx.fillRect(0, 0, cssW, cssH);
 
@@ -957,9 +986,14 @@
     lastX = p.x; lastY = p.y;
     const dist = Math.hypot(dx, dy);
     if (dist > 0.0001) {
-      const axis = { x: -dy / dist, y: dx / dist, z: 0 };
+      // trackball axis in the camera frame: horizontal drag spins about
+      // camera-up, vertical drag about camera-right
+      const ax = camU.X * (dx / dist) + camR.X * (dy / dist);
+      const ay = camU.Y * (dx / dist) + camR.Y * (dy / dist);
+      const az = camU.Z * (dx / dist);
+      const L = Math.hypot(ax, ay, az) || 1;
       const angle = dist / DRAG_SENS;
-      const qInc = qFromAxisAngle(axis, angle);
+      const qInc = qFromAxisAngle({ x: ax / L, y: ay / L, z: az / L }, angle);
       freeQuat = qNormalize(qMul(qInc, freeQuat));
     }
     render();
