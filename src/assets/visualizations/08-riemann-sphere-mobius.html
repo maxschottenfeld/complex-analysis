@@ -49,6 +49,7 @@
   .btn.active { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); font-weight:600; }
   .btn .nr { font-size:8.5px; font-weight:800; letter-spacing:0.04em; color:var(--warn); margin-left:4px; vertical-align:1px; }
   .btn.active .nr { color:var(--warn); }
+  .btn .fn { font-size:9.5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--accent); margin-left:5px; vertical-align:0.5px; }
 
   /* ---------- panels ---------- */
   .panels { display:flex; gap:14px; }
@@ -60,7 +61,7 @@
   .panel h2 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--muted); font-weight:400; font-size:11.5px; }
 
   #sphereCanvas {
-    width:100%; aspect-ratio: 16 / 9.4; display:block; background:#0b0d14; border-radius:6px;
+    width:100%; aspect-ratio: 16 / 9.4; display:block; background:#dfe1e6; border-radius:6px;
     touch-action:none; cursor:grab;
   }
   #sphereCanvas:active { cursor:grabbing; }
@@ -100,6 +101,7 @@
   body.embed .ctrl-group .glabel { font-size:9.5px; }
   body.embed .btn.small { padding:3px 7px; font-size:9.5px; }
   body.embed .btn .nr { font-size:7.5px; }
+  body.embed .btn .fn { font-size:8px; margin-left:4px; }
   body.embed .panels { flex:1 1 0; min-height:0; gap:8px; }
   body.embed .panel { flex:1 1 0; min-width:0; min-height:0; padding:8px; overflow:hidden; }
   body.embed .panel h2 { font-size:10.5px; margin-bottom:3px; flex:0 0 auto; }
@@ -119,14 +121,14 @@
 <body>
 <div class="wrap">
   <h1>M&ouml;bius Maps on the Riemann Sphere</h1>
-  <p class="sub">Lesson 8 &middot; rigid rotations of the sphere realize exactly the isometric M&ouml;bius maps (PSU(2)); scaling and translation are non-rigid flows across the same fixed sphere &mdash; drag the sphere or use a named motion</p>
+  <p class="sub">Lesson 8 &middot; a square grid patch rides on the sphere: move the sphere and the patch's projected shadow deforms under the induced M&ouml;bius map, over a fixed reference grid &mdash; rigid rotations realize exactly the isometric maps (PSU(2)); scaling and translation are non-rigid flows across the same fixed sphere. Inspiration drawn from Douglas Arnold &amp; Jonathan Rogness's video <i>M&ouml;bius Transformations Revealed</i>.</p>
 
   <div class="top-controls">
     <div class="ctrl-group" id="presetGroup">
       <span class="glabel">motion</span>
       <button class="btn small" data-preset="spin">Spin</button>
-      <button class="btn small" data-preset="flipX">Flip about &plusmn;1</button>
-      <button class="btn small" data-preset="flipY">Flip about &plusmn;i</button>
+      <button class="btn small" data-preset="flipX">Flip about &plusmn;1<span class="fn">z &#8614; 1/z</span></button>
+      <button class="btn small" data-preset="flipY">Flip about &plusmn;i<span class="fn">z &#8614; &minus;1/z</span></button>
       <button class="btn small" data-preset="tilt">Tilt</button>
       <button class="btn small" data-preset="scale">Scale<span class="nr">non-rigid</span></button>
       <button class="btn small" data-preset="translate">Translate<span class="nr">non-rigid</span></button>
@@ -341,15 +343,99 @@
     parallels.push({ phi, pts: line, isEquator: Math.abs(phi - Math.PI / 2) < 1e-6 });
   }
 
-  // Tracked curve: the real axis (a line through 0 and infinity), compactified
-  // via tan() exactly as in 08-circles-and-lines-inversion.html's line sampling.
-  const TRACK_N = 240;
-  const trackedCurvePlane = [];
-  for (let k = 0; k <= TRACK_N; k++) {
-    const t = -1.5551 + 3.1102 * k / TRACK_N;
-    trackedCurvePlane.push(cx(Math.tan(t), 0));
+  // Arnold–Rogness grid patch (Möbius Transformations Revealed): a FINITE
+  // square patch of the coordinate grid — verticals x=c (cool) and horizontals
+  // y=c (warm) over [-PATCH_EXT, PATCH_EXT]² — lifted onto the sphere once,
+  // carried by currentSpherePos, and projected back down every frame. The
+  // patch is deliberately bounded: it deforms over the static reference grid,
+  // it doesn't replace the space. Its lift covers the lower part of the
+  // sphere, leaving a cap around N; when a motion carries the patch across N
+  // the projected image runs out through ∞ (the reveal moment).
+  const PATCH_EXT = 2.5;   // large enough that its near edge shows in the
+                           // foreground in front of the sphere under the low
+                           // side camera, as in the video; still bounded, over
+                           // an untransformed reference grid
+  const GRID_STEP = 0.5;   // 11 lines per family — ≈ the video's cell density
+  const GRID_SAMPLES = 80;
+  const gridLines = [];    // { family:'v'|'h', isAxis, isEdge, bodyPts }
+  (function buildGrid() {
+    const nC = Math.round(2 * PATCH_EXT / GRID_STEP);
+    for (let i = 0; i <= nC; i++) {
+      const c = -PATCH_EXT + i * GRID_STEP;
+      const isAxis = Math.abs(c) < 1e-9;
+      const isEdge = Math.abs(Math.abs(c) - PATCH_EXT) < 1e-9;
+      const vPts = [], hPts = [];
+      for (let k = 0; k <= GRID_SAMPLES; k++) {
+        const t = -PATCH_EXT + 2 * PATCH_EXT * k / GRID_SAMPLES;
+        vPts.push(toSphere(cx(c, t))); // vertical segment x = c
+        hPts.push(toSphere(cx(t, c))); // horizontal segment y = c
+      }
+      gridLines.push({ family: 'v', isAxis, isEdge, bodyPts: vPts });
+      gridLines.push({ family: 'h', isAxis, isEdge, bodyPts: hPts });
+    }
+  })();
+
+  // Domain-colored fill for the patch (per Max), in the spirit of the Lesson
+  // 6 zoo / Lesson 0 overview but simplified to a fully SMOOTH gradient (also
+  // per Max — no |z| contour rings, they read as shadows here): hue = arg z,
+  // saturation 0.85, and a single monotone radial brightness ramp so |z|
+  // still reads — dark at the origin brightening smoothly to the patch
+  // corners. Colors are fixed to SOURCE points, so the coloring rides with
+  // the patch under every motion — where a color lands tells you where that
+  // source point went.
+  function domainColorRGB(x, y, rmax) {
+    let hue = Math.atan2(y, x) / TAU; hue -= Math.floor(hue);
+    const v = 0.38 + 0.62 * Math.min(1, Math.sqrt(x * x + y * y) / rmax);
+    const s = 0.85;
+    const i6 = Math.floor(hue * 6), f = hue * 6 - i6;
+    const p = v * (1 - s), q = v * (1 - f * s), tt = v * (1 - (1 - f) * s);
+    let r, g, b;
+    switch (i6 % 6) {
+      case 0: r = v; g = tt; b = p; break;
+      case 1: r = q; g = v; b = p; break;
+      case 2: r = p; g = v; b = tt; break;
+      case 3: r = p; g = q; b = v; break;
+      case 4: r = tt; g = p; b = v; break;
+      default: r = v; g = p; b = q; break;
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
   }
-  const trackedCurveBody = trackedCurvePlane.map(toSphere);
+
+  // Source texture: the domain coloring of the square patch, computed once at
+  // high resolution. The PLANE image samples this per-pixel through the
+  // inverse Möbius map (smooth gradient at any stretch — no per-cell flats);
+  // the SPHERE paint uses the quad mesh below (cells there never stretch big).
+  const TEX_SIZE = 512;
+  const texData = new Uint8ClampedArray(TEX_SIZE * TEX_SIZE * 3);
+  (function buildTex() {
+    const rmax = PATCH_EXT * Math.SQRT2; // brightness peaks at the patch corners
+    let k = 0;
+    for (let py = 0; py < TEX_SIZE; py++) {
+      const y = -PATCH_EXT + 2 * PATCH_EXT * (py + 0.5) / TEX_SIZE;
+      for (let px = 0; px < TEX_SIZE; px++) {
+        const x = -PATCH_EXT + 2 * PATCH_EXT * (px + 0.5) / TEX_SIZE;
+        const rgb = domainColorRGB(x, y, rmax);
+        texData[k++] = rgb[0]; texData[k++] = rgb[1]; texData[k++] = rgb[2];
+      }
+    }
+  })();
+  // bilinear sample of texData at plane point (x,y) inside the patch
+  const _rgb = [0, 0, 0];
+  function sampleTex(x, y) {
+    const fx = (x + PATCH_EXT) / (2 * PATCH_EXT) * (TEX_SIZE - 1);
+    const fy = (y + PATCH_EXT) / (2 * PATCH_EXT) * (TEX_SIZE - 1);
+    const x0 = fx | 0, y0 = fy | 0;
+    const x1 = x0 + 1 < TEX_SIZE ? x0 + 1 : x0, y1 = y0 + 1 < TEX_SIZE ? y0 + 1 : y0;
+    const ax = fx - x0, ay = fy - y0;
+    const i00 = (y0 * TEX_SIZE + x0) * 3, i10 = (y0 * TEX_SIZE + x1) * 3,
+          i01 = (y1 * TEX_SIZE + x0) * 3, i11 = (y1 * TEX_SIZE + x1) * 3;
+    const w00 = (1 - ax) * (1 - ay), w10 = ax * (1 - ay), w01 = (1 - ax) * ay, w11 = ax * ay;
+    _rgb[0] = texData[i00] * w00 + texData[i10] * w10 + texData[i01] * w01 + texData[i11] * w11;
+    _rgb[1] = texData[i00 + 1] * w00 + texData[i10 + 1] * w10 + texData[i01 + 1] * w01 + texData[i11 + 1] * w11;
+    _rgb[2] = texData[i00 + 2] * w00 + texData[i10 + 2] * w10 + texData[i01 + 2] * w01 + texData[i11 + 2] * w11;
+    return _rgb;
+  }
+
 
   // Tracked points: 1 and i — the fixed points of the two flip presets.
   const trackedPoints = [
@@ -358,25 +444,35 @@
   ];
 
   /* ================================================================
-     Camera: fixed weak yaw+pitch, orthographic screen projection.
-     Rotating the (body-frame) sphere never changes its silhouette
-     radius under this camera, since it's a pure rotation of a
-     rotationally-symmetric object about its own center.
+     Camera: perspective pinhole, viewed from the side and slightly
+     above (per Max, matching the Arnold–Rogness framing) — pole axis
+     vertical on screen, low elevation, near floor large, far plane
+     receding. The camera orbits the origin (sphere center), so the
+     sphere's silhouette stays an exact screen circle of radius
+     focal/sqrt(D²−1), which the fill and per-pixel layers rely on.
      ================================================================ */
-  const CAM_YAW = 0.52, CAM_PITCH = -0.40;
-  const cYaw = Math.cos(CAM_YAW), sYaw = Math.sin(CAM_YAW);
-  const cPitch = Math.cos(CAM_PITCH), sPitch = Math.sin(CAM_PITCH);
-  function camXform(P) {
-    const x1 = P.X * cYaw - P.Y * sYaw;
-    const y1 = P.X * sYaw + P.Y * cYaw;
-    const z1 = P.Z;
-    const y2 = y1 * cPitch - z1 * sPitch;
-    const z2 = y1 * sPitch + z1 * cPitch;
-    return { cx: x1, cy: y2, cz: z2 };
-  }
-  function depthAlpha(cz) {
-    // cz in roughly [-1,1] for sphere points; smooth far->near falloff
-    const t = Math.max(0, Math.min(1, (cz + 1) / 2));
+  const CAM_YAW = 0.55;   // azimuth around the pole axis
+  const CAM_ELEV = 0.42;  // elevation above the plane (~24°) — low enough to read
+                          // side-on, high enough that the patch shows in front
+  const CAM_DIST = 5.5;   // distance from the origin, world units
+  const camC = {
+    X: CAM_DIST * Math.cos(CAM_ELEV) * Math.cos(CAM_YAW),
+    Y: CAM_DIST * Math.cos(CAM_ELEV) * Math.sin(CAM_YAW),
+    Z: CAM_DIST * Math.sin(CAM_ELEV)
+  };
+  const camF = { X: -camC.X / CAM_DIST, Y: -camC.Y / CAM_DIST, Z: -camC.Z / CAM_DIST }; // forward (unit, at origin)
+  const camR = (() => { // right = forward × worldUp, horizontal
+    const rx = camF.Y, ry = -camF.X, L = Math.hypot(rx, ry) || 1;
+    return { X: rx / L, Y: ry / L, Z: 0 };
+  })();
+  const camU = { // up = right × forward
+    X: camR.Y * camF.Z,
+    Y: -camR.X * camF.Z,
+    Z: camR.X * camF.Y - camR.Y * camF.X
+  };
+  function depthAlpha(depth) {
+    // depth = CAM_DIST − z_cam; in [-1,1] for sphere points, 1 = nearest
+    const t = Math.max(0, Math.min(1, (depth + 1) / 2));
     return 0.22 + 0.68 * t;
   }
 
@@ -385,7 +481,7 @@
      ================================================================ */
   const canvas = document.getElementById('sphereCanvas');
   const ctx = canvas.getContext('2d');
-  let cssW = 0, cssH = 0, originX = 0, originY = 0, worldScale = 0;
+  let cssW = 0, cssH = 0, originX = 0, originY = 0, focal = 0, sphereScreenR = 0;
 
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
@@ -396,16 +492,28 @@
     canvas.height = Math.round(cssH * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     originX = cssW * 0.50;
-    originY = cssH * 0.50;
-    worldScale = Math.min(cssW, cssH) * 0.335; // sphere radius (1 world unit) in px — dominance target
+    originY = cssH * 0.33; // sphere center sits upper-middle; the floor fills the foreground below
+    sphereScreenR = Math.min(cssW, cssH) * 0.22; // sphere silhouette radius on screen
+    focal = sphereScreenR * Math.sqrt(CAM_DIST * CAM_DIST - 1);
+    planeCan.width = Math.ceil(cssW / PLANE_RES);
+    planeCan.height = Math.ceil(cssH / PLANE_RES);
+    sphOx = originX - sphereScreenR - 2;
+    sphOy = originY - sphereScreenR - 2;
+    const sphSide = Math.ceil((2 * sphereScreenR + 4) / PLANE_RES);
+    sphereCanF.width = sphereCanB.width = sphSide;
+    sphereCanF.height = sphereCanB.height = sphSide;
     render();
   }
   window.addEventListener('resize', resizeCanvas);
   if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(canvas);
 
   function proj(P) {
-    const c = camXform(P);
-    return { x: originX + c.cx * worldScale, y: originY - c.cy * worldScale, depth: c.cz };
+    const dX = P.X - camC.X, dY = P.Y - camC.Y, dZ = P.Z - camC.Z;
+    let zc = dX * camF.X + dY * camF.Y + dZ * camF.Z;
+    if (zc < 0.05) zc = 0.05; // behind/at-camera guard
+    const xc = dX * camR.X + dY * camR.Y;                 // camR.Z = 0
+    const yc = dX * camU.X + dY * camU.Y + dZ * camU.Z;
+    return { x: originX + focal * xc / zc, y: originY - focal * yc / zc, depth: CAM_DIST - zc };
   }
 
   /* ================================================================
@@ -465,8 +573,8 @@
     let detail = '';
     if (mode === 'spin') detail = `θ = ${fmt(spinTheta * 180 / Math.PI, 1)}° about the polar axis`;
     else if (mode === 'tilt') detail = `θ = ${fmt(tiltTheta * 180 / Math.PI, 1)}° about the x-axis (elliptic)`;
-    else if (mode === 'flipX') detail = '180° about the axis through ±1';
-    else if (mode === 'flipY') detail = '180° about the axis through ±i';
+    else if (mode === 'flipX') detail = '180° about the axis through ±1 — the map z ↦ 1/z';
+    else if (mode === 'flipY') detail = '180° about the axis through ±i — the map z ↦ −1/z';
     else if (mode === 'scale') detail = `λ = ${fmt(lambda, 2)}`;
     else if (mode === 'translate') detail = `b = ${fmtC(bParam, 2)}`;
     else detail = 'trackball drag';
@@ -479,32 +587,42 @@
       const cMag = Math.hypot(M.c.re, M.c.im);
       const isLine = cMag < 1e-4;
       lineCircleNote.innerHTML = isLine
-        ? `Tracked curve (the real axis, through 0 and &infin;) still maps to a <b>line</b> &mdash; this rotation leaves &infin; on it.`
-        : `Tracked curve (the real axis, through 0 and &infin;) now maps to a genuine finite <b>circle</b> &mdash; this rotation moves &infin; off of it (the lines&harr;circles interchange, made visible).`;
+        ? `This rotation keeps &infin; in place, so the patch's grid lines map to straight <b>lines</b> &mdash; compare against the fixed gray grid.`
+        : `This rotation moves &infin;, so the patch's straight grid lines bend into <b>circular arcs</b> over the fixed gray grid &mdash; M&ouml;bius maps carry lines-and-circles to lines-and-circles (the interchange, made visible).`;
     } else {
-      lineCircleNote.innerHTML = `${mode === 'scale' ? 'Scaling' : 'Translation'} fixes &infin;, so it always sends lines to lines and circles to circles &mdash; no interchange here; that only happens for the rotations.`;
+      lineCircleNote.innerHTML = `${mode === 'scale' ? 'Scaling' : 'Translation'} fixes &infin;, so it sends lines to lines and circles to circles &mdash; the patch distorts but stays straight; the interchange only happens for the rotations.`;
     }
   }
 
   /* ================================================================
      Render
      ================================================================ */
-  function drawPlaneGrid() {
-    const EXT = 3.0, STEP = 0.5;
-    ctx.lineWidth = 1;
+  // Light-gray 3D scene (per Max, matching the Arnold–Rogness floor): the
+  // untransformed reference is NEUTRAL GRAY on light ground; the warped patch
+  // carries the domain-colored fill under dark grid lines (like the video's
+  // picture), so transformed-vs-reference cannot be confused.
+  const SCENE_BG = '#dfe1e6';
+  const MARKER_BLUE = '38,86,210'; // the 1 / i tracked-point dots
+  const PLANE_CLIP = 6;    // same visible-extent break the tracked curve used
+  const JUMP_BREAK = 2.5;  // legit consecutive-sample steps stay ≲1.5 inside
+                           // the clip box; a line that runs out through ∞ and
+                           // returns would otherwise draw a ~12-unit false chord
+
+  function drawPlaneReference() {
+    // static untransformed reference grid + unit circle — the fixed frame the
+    // transformed grid is compared against; never moves under any motion
+    const EXT = 6.0, STEP = 0.5; // wide enough to cover the near foreground under the low camera
     for (let v = -EXT; v <= EXT + 1e-9; v += STEP) {
       const emph = Math.abs(v) < 1e-9;
-      ctx.strokeStyle = emph ? '#3a4055' : 'rgba(35,40,56,0.9)';
+      ctx.strokeStyle = emph ? '#6c7386' : 'rgba(130,136,152,0.55)';
       ctx.lineWidth = emph ? 1.4 : 1;
-      // line x = v
       let p1 = proj({ X: v, Y: -EXT, Z: 0 }), p2 = proj({ X: v, Y: EXT, Z: 0 });
       ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-      // line y = v
       p1 = proj({ X: -EXT, Y: v, Z: 0 }); p2 = proj({ X: EXT, Y: v, Z: 0 });
       ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
     }
-    // unit circle |z|=1 in the plane (image of the equator at rest)
-    ctx.strokeStyle = 'rgba(154,160,176,0.55)'; ctx.lineWidth = 1.3;
+    // unit circle |z|=1 (image of the equator at rest)
+    ctx.strokeStyle = 'rgba(100,106,122,0.60)'; ctx.lineWidth = 1.2;
     ctx.beginPath();
     for (let k = 0; k <= 96; k++) {
       const a = k * TAU / 96;
@@ -514,17 +632,187 @@
     ctx.stroke();
   }
 
+  // The domain-colored fill of the patch, in the plane — rendered PER-PIXEL:
+  // every screen pixel of the (orthographically projected) plane is pulled
+  // back through the screen→world affine inverse and then through M⁻¹; if the
+  // source lands inside the patch square, sample the texture (bilinear).
+  // Smooth gradient at any stretch — regions that blow up toward ∞ stay
+  // continuous, never blocky. Runs at half resolution and upscales.
+  const PLANE_RES = 2; // css px per fill texel
+  const planeCan = document.createElement('canvas');
+  const planeCtx = planeCan.getContext('2d');
+  let planeImg = null;
+  function drawPlanePatchPixels() {
+    const M = currentMobius();
+    // M⁻¹(w) = (d·w − b) / (−c·w + a)
+    const { a, b, c, d } = M;
+    const pw = planeCan.width, ph = planeCan.height;
+    if (!pw || !ph) return;
+    if (!planeImg || planeImg.width !== pw || planeImg.height !== ph)
+      planeImg = planeCtx.createImageData(pw, ph);
+    const px = planeImg.data;
+    let k = 0;
+    for (let ty = 0; ty < ph; ty++) {
+      const sy = (ty + 0.5) * PLANE_RES;
+      const v = (originY - sy) / focal;
+      const dz = camF.Z + v * camU.Z; // camR.Z = 0
+      if (dz >= -1e-6) { // at/above the horizon: no plane there
+        for (let tx = 0; tx < pw; tx++, k += 4) px[k + 3] = 0;
+        continue;
+      }
+      const t = -camC.Z / dz;
+      for (let tx = 0; tx < pw; tx++) {
+        const sx = (tx + 0.5) * PLANE_RES;
+        const u = (sx - originX) / focal;
+        // ray from the camera through this pixel, intersected with Z=0
+        const wRe = camC.X + t * (camF.X + u * camR.X + v * camU.X);
+        const wIm = camC.Y + t * (camF.Y + u * camR.Y + v * camU.Y);
+        // z = M⁻¹(w)
+        const numRe = d.re * wRe - d.im * wIm - b.re, numIm = d.re * wIm + d.im * wRe - b.im;
+        const denRe = -(c.re * wRe - c.im * wIm) + a.re, denIm = -(c.re * wIm + c.im * wRe) + a.im;
+        const den2 = denRe * denRe + denIm * denIm;
+        const zRe = (numRe * denRe + numIm * denIm) / den2;
+        const zIm = (numIm * denRe - numRe * denIm) / den2;
+        if (zRe >= -PATCH_EXT && zRe <= PATCH_EXT && zIm >= -PATCH_EXT && zIm <= PATCH_EXT && den2 > 1e-18) {
+          const rgb = sampleTex(zRe, zIm);
+          px[k] = rgb[0]; px[k + 1] = rgb[1]; px[k + 2] = rgb[2]; px[k + 3] = 235;
+        } else {
+          px[k + 3] = 0;
+        }
+        k += 4;
+      }
+    }
+    planeCtx.putImageData(planeImg, 0, 0);
+    ctx.drawImage(planeCan, 0, 0, cssW, cssH);
+  }
+
+  // The same fill painted on the sphere — also PER-PIXEL: each pixel of the
+  // sphere silhouette is inverse-projected to the front (and back) sphere
+  // point, pulled back through the inverse motion to its body-frame source
+  // z₀, and textured if z₀ lies in the patch. The back hemisphere is drawn
+  // dim under the frosted glass, the front over it.
+  const sphereCanF = document.createElement('canvas');
+  const sphereCtxF = sphereCanF.getContext('2d');
+  const sphereCanB = document.createElement('canvas');
+  const sphereCtxB = sphereCanB.getContext('2d');
+  let sphImgF = null, sphImgB = null, sphOx = 0, sphOy = 0;
+  function computeSpherePatchLayers() {
+    const sw = sphereCanF.width, sh = sphereCanF.height;
+    if (!sw || !sh) return;
+    if (!sphImgF || sphImgF.width !== sw || sphImgF.height !== sh) {
+      sphImgF = sphereCtxF.createImageData(sw, sh);
+      sphImgB = sphereCtxB.createImageData(sw, sh);
+    }
+    const pf = sphImgF.data, pb = sphImgB.data;
+    // hoist the inverse motion out of the pixel loop
+    const flow = !animating && (mode === 'scale' || mode === 'translate');
+    let qi = null;
+    if (!flow) {
+      const q = animating ? displayQuat() : canonicalQuat(mode);
+      qi = { w: q.w, x: -q.x, y: -q.y, z: -q.z }; // unit quat inverse
+    }
+    const sourceZ = (P) => { // world sphere point -> body-frame source z₀ (or null)
+      if (flow) {
+        const z1 = toPlane(P);
+        if (z1 === null) return null;
+        return mode === 'scale'
+          ? { re: z1.re / lambda, im: z1.im / lambda }
+          : { re: z1.re - bParam.re, im: z1.im - bParam.im };
+      }
+      return toPlane(rotateVec(qi, P));
+    };
+    const cc = CAM_DIST * CAM_DIST - 1; // |C|² − r², constant of the quadratic
+    const invD = 1 / CAM_DIST;
+    let k = 0;
+    for (let ty = 0; ty < sh; ty++) {
+      const sy = sphOy + (ty + 0.5) * PLANE_RES;
+      const v = (originY - sy) / focal;
+      for (let tx = 0; tx < sw; tx++, k += 4) {
+        const sx = sphOx + (tx + 0.5) * PLANE_RES;
+        const u = (sx - originX) / focal;
+        pf[k + 3] = 0; pb[k + 3] = 0;
+        // ray from the camera through this pixel, intersected with |P| = 1
+        const dx = camF.X + u * camR.X + v * camU.X;
+        const dy = camF.Y + u * camR.Y + v * camU.Y;
+        const dz = camF.Z + v * camU.Z;
+        const dd = dx * dx + dy * dy + dz * dz;
+        const cd = camC.X * dx + camC.Y * dy + camC.Z * dz;
+        const disc = cd * cd - dd * cc;
+        if (disc <= 0) continue; // outside the silhouette
+        const sq = Math.sqrt(disc);
+        for (let face = 0; face < 2; face++) {
+          const t = face === 0 ? (-cd - sq) / dd : (-cd + sq) / dd; // near, far hit
+          const P = { X: camC.X + t * dx, Y: camC.Y + t * dy, Z: camC.Z + t * dz };
+          const z0 = sourceZ(P);
+          if (z0 === null || z0.re < -PATCH_EXT || z0.re > PATCH_EXT ||
+              z0.im < -PATCH_EXT || z0.im > PATCH_EXT) continue;
+          const rgb = sampleTex(z0.re, z0.im);
+          const depth = CAM_DIST - ((P.X - camC.X) * camF.X + (P.Y - camC.Y) * camF.Y + (P.Z - camC.Z) * camF.Z);
+          if (face === 0) { // front: vivid, shaded toward the rim
+            const fr = Math.max(0, Math.min(1, (depth - invD) / (1 - invD)));
+            pf[k] = rgb[0]; pf[k + 1] = rgb[1]; pf[k + 2] = rgb[2];
+            pf[k + 3] = Math.round(150 + 90 * fr);
+          } else {          // back: dimmed — the picture seen through the glass
+            const bk = Math.max(0, Math.min(1, (depth + 1) / (1 + invD)));
+            pb[k] = rgb[0]; pb[k + 1] = rgb[1]; pb[k + 2] = rgb[2];
+            pb[k + 3] = Math.round(140 + 55 * bk);
+          }
+        }
+      }
+    }
+    sphereCtxF.putImageData(sphImgF, 0, 0);
+    sphereCtxB.putImageData(sphImgB, 0, 0);
+  }
+  function drawSphereLayer(can) {
+    ctx.drawImage(can, sphOx, sphOy, can.width * PLANE_RES, can.height * PLANE_RES);
+  }
+
+  // The transformed grid in the plane: each moved line projected back down.
+  // Break the polyline at ∞ (toPlane null), outside the visible extent, or on
+  // a large jump between consecutive samples. Lines are dark neutral (like the
+  // video's) — the domain-colored fill beneath carries the position encoding.
+  function drawGridPlane(worldLines) {
+    worldLines.forEach(({ line, world }) => {
+      ctx.strokeStyle = `rgba(26,30,44,${line.isAxis ? 0.88 : (line.isEdge ? 0.68 : 0.50)})`;
+      ctx.lineWidth = line.isAxis ? 2.2 : (line.isEdge ? 1.9 : 1.5);
+      ctx.beginPath();
+      let started = false, prev = null;
+      for (let i = 0; i < world.length; i++) {
+        const z = toPlane(world[i]);
+        if (z === null || Math.abs(z.re) > PLANE_CLIP || Math.abs(z.im) > PLANE_CLIP) {
+          started = false; prev = null; continue;
+        }
+        if (prev && Math.hypot(z.re - prev.re, z.im - prev.im) > JUMP_BREAK) started = false;
+        const s = proj({ X: z.re, Y: z.im, Z: 0 });
+        if (!started) { ctx.moveTo(s.x, s.y); started = true; } else { ctx.lineTo(s.x, s.y); }
+        prev = z;
+      }
+      ctx.stroke();
+    });
+  }
+
+  // The same grid painted on the sphere, depth-alpha shaded like the wireframe.
+  function drawGridSphere(worldLines) {
+    worldLines.forEach(({ line, world }) => {
+      const base = line.isAxis ? 0.88 : (line.isEdge ? 0.66 : 0.50);
+      strokePolyline(world,
+        d => `rgba(26,30,44,${(base * (0.22 + 0.78 * depthAlpha(d))).toFixed(3)})`,
+        d => (line.isAxis ? 2.1 : (line.isEdge ? 1.7 : 1.4)) * (depthAlpha(d) > 0.55 ? 1.1 : 0.85));
+    });
+  }
+
   function drawSphereFill() {
-    const g = ctx.createRadialGradient(originX - worldScale * 0.32, originY - worldScale * 0.38, worldScale * 0.08,
-                                        originX, originY, worldScale * 1.04);
-    g.addColorStop(0, 'rgba(122,162,246,0.16)');
-    g.addColorStop(0.55, 'rgba(38,44,64,0.72)');
-    g.addColorStop(1, 'rgba(10,12,18,0.90)');
+    // frosted-glass white sphere, like the video's
+    const g = ctx.createRadialGradient(originX - sphereScreenR * 0.32, originY - sphereScreenR * 0.38, sphereScreenR * 0.08,
+                                        originX, originY, sphereScreenR * 1.04);
+    g.addColorStop(0, 'rgba(255,255,255,0.92)');
+    g.addColorStop(0.55, 'rgba(232,235,241,0.78)');
+    g.addColorStop(1, 'rgba(152,160,178,0.84)');
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.arc(originX, originY, worldScale, 0, TAU);
+    ctx.arc(originX, originY, sphereScreenR, 0, TAU);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(154,160,176,0.35)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(90,96,112,0.50)'; ctx.lineWidth = 1;
     ctx.stroke();
   }
 
@@ -540,59 +828,58 @@
   }
 
   function render() {
-    if (!worldScale) return;
+    if (!focal) return;
     ctx.clearRect(0, 0, cssW, cssH);
-    ctx.fillStyle = '#0b0d14'; ctx.fillRect(0, 0, cssW, cssH);
+    ctx.fillStyle = SCENE_BG; ctx.fillRect(0, 0, cssW, cssH);
 
-    drawPlaneGrid();
+    // move every grid line once per frame; the per-pixel patch layers are
+    // computed from the same current motion
+    const worldLines = gridLines.map(line => ({ line, world: line.bodyPts.map(currentSpherePos) }));
+    computeSpherePatchLayers();
+
+    drawPlaneReference();
+    drawPlanePatchPixels();    // per-pixel domain-colored fill under the patch lines
+    drawGridPlane(worldLines); // plane patch sits under the sphere, like the reference grid
     drawSphereFill();
+    drawSphereLayer(sphereCanB); // back-hemisphere paint, seen through the glass
 
-    // wireframe: meridians + parallels, painter's-algorithm depth dimming
+    // STATIC wireframe: meridians + parallels never move — together with the
+    // static plane grid they are the rigid untransformed reference frame the
+    // moving patch is compared against. Kept faint so the painted patch reads;
+    // painter's-algorithm depth dimming.
     meridians.forEach(m => {
-      const world = m.pts.map(currentSpherePos);
-      strokePolyline(world,
-        d => `rgba(122,162,246,${(depthAlpha(d) * 0.42).toFixed(3)})`,
-        d => depthAlpha(d) > 0.55 ? 1.3 : 0.9);
+      strokePolyline(m.pts,
+        d => `rgba(92,102,130,${(depthAlpha(d) * 0.22).toFixed(3)})`,
+        d => depthAlpha(d) > 0.55 ? 1.1 : 0.8);
     });
     parallels.forEach(p => {
-      const world = p.pts.map(currentSpherePos);
-      const base = p.isEquator ? 0.62 : 0.34;
-      strokePolyline([...world, world[0]],
-        d => `rgba(${p.isEquator ? '154,160,176' : '122,162,246'},${(depthAlpha(d) * base).toFixed(3)})`,
-        d => (p.isEquator ? 1.6 : 1.0) * (depthAlpha(d) > 0.55 ? 1.15 : 0.85));
+      const base = p.isEquator ? 0.68 : 0.18;
+      strokePolyline([...p.pts, p.pts[0]],
+        d => `rgba(${p.isEquator ? '72,78,96' : '92,102,130'},${(depthAlpha(d) * base).toFixed(3)})`,
+        d => (p.isEquator ? 1.6 : 0.9) * (depthAlpha(d) > 0.55 ? 1.15 : 0.85));
     });
 
-    // poles
+    // the moving grid patch painted on the sphere, over the static wireframe:
+    // per-pixel front-hemisphere paint first, dark grid lines on top
+    drawSphereLayer(sphereCanF);
+    drawGridSphere(worldLines);
+
+    // static geometric poles (N = the projection center; neutral gray — amber
+    // is the horizontal grid family's color)
     [{ P: { X: 0, Y: 0, Z: 1 }, lbl: 'N' }, { P: { X: 0, Y: 0, Z: -1 }, lbl: 'S' }].forEach(({ P, lbl }) => {
-      const wp = currentSpherePos(P);
-      const sp = proj(wp);
+      const sp = proj(P);
       const a = depthAlpha(sp.depth);
-      ctx.fillStyle = `rgba(224,175,104,${(0.35 + 0.6 * a).toFixed(3)})`;
+      ctx.fillStyle = `rgba(45,50,64,${(0.35 + 0.6 * a).toFixed(3)})`;
       ctx.beginPath(); ctx.arc(sp.x, sp.y, 3.6, 0, TAU); ctx.fill();
       ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
-      ctx.fillStyle = `rgba(224,175,104,${(0.5 + 0.5 * a).toFixed(3)})`;
+      ctx.fillStyle = `rgba(45,50,64,${(0.5 + 0.5 * a).toFixed(3)})`;
       ctx.fillText(lbl, sp.x + 6, sp.y - 6);
     });
 
-    // projection rays + tracked curve + tracked points, all in accent color
-    const Npos = currentSpherePos({ X: 0, Y: 0, Z: 1 });
-    const NposProj = proj(Npos);
-
-    // tracked curve on the sphere
-    const curveWorld = trackedCurveBody.map(currentSpherePos);
-    strokePolyline(curveWorld, d => `rgba(122,162,246,${(0.30 + 0.55 * depthAlpha(d)).toFixed(3)})`, () => 2.1);
-
-    // tracked curve's image in the plane
-    ctx.strokeStyle = 'rgba(122,162,246,0.85)'; ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    let started = false;
-    curveWorld.forEach(P => {
-      const zimg = toPlane(P);
-      if (zimg === null || Math.abs(zimg.re) > 6 || Math.abs(zimg.im) > 6) { started = false; return; }
-      const s = proj({ X: zimg.re, Y: zimg.im, Z: 0 });
-      if (!started) { ctx.moveTo(s.x, s.y); started = true; } else { ctx.lineTo(s.x, s.y); }
-    });
-    ctx.stroke();
+    // projection rays + tracked points; rays anchor at the STATIC geometric
+    // north pole (0,0,1) — stereographic projection is always from there,
+    // regardless of how the body sphere has moved
+    const NposProj = proj({ X: 0, Y: 0, Z: 1 });
 
     // tracked points: sphere position, ray from N, plane image
     trackedPoints.forEach(tp => {
@@ -603,22 +890,22 @@
 
       if (zimg !== null) {
         const planeP = proj({ X: zimg.re, Y: zimg.im, Z: 0 });
-        ctx.strokeStyle = `rgba(122,162,246,${(0.18 + 0.30 * a).toFixed(3)})`;
+        ctx.strokeStyle = `rgba(70,80,110,${(0.22 + 0.32 * a).toFixed(3)})`;
         ctx.lineWidth = 1;
         ctx.setLineDash([3, 3]);
         ctx.beginPath(); ctx.moveTo(NposProj.x, NposProj.y); ctx.lineTo(planeP.x, planeP.y); ctx.stroke();
         ctx.setLineDash([]);
 
-        ctx.fillStyle = 'rgba(122,162,246,0.95)';
+        ctx.fillStyle = `rgba(${MARKER_BLUE},0.95)`;
         ctx.beginPath(); ctx.arc(planeP.x, planeP.y, 4.6, 0, TAU); ctx.fill();
-        ctx.strokeStyle = '#0b0d14'; ctx.lineWidth = 1.4; ctx.stroke();
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.4; ctx.stroke();
       }
 
-      ctx.fillStyle = `rgba(122,162,246,${(0.45 + 0.55 * a).toFixed(3)})`;
+      ctx.fillStyle = `rgba(${MARKER_BLUE},${(0.45 + 0.55 * a).toFixed(3)})`;
       ctx.beginPath(); ctx.arc(sp.x, sp.y, 5.2, 0, TAU); ctx.fill();
-      ctx.strokeStyle = '#0b0d14'; ctx.lineWidth = 1.4; ctx.stroke();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.4; ctx.stroke();
       ctx.font = 'italic 11.5px Georgia, "Times New Roman", serif';
-      ctx.fillStyle = `rgba(232,233,237,${(0.5 + 0.5 * a).toFixed(3)})`;
+      ctx.fillStyle = `rgba(35,40,56,${(0.55 + 0.45 * a).toFixed(3)})`;
       ctx.fillText(tp.label, sp.x + 8, sp.y - 8);
     });
 
@@ -699,9 +986,14 @@
     lastX = p.x; lastY = p.y;
     const dist = Math.hypot(dx, dy);
     if (dist > 0.0001) {
-      const axis = { x: -dy / dist, y: dx / dist, z: 0 };
+      // trackball axis in the camera frame: horizontal drag spins about
+      // camera-up, vertical drag about camera-right
+      const ax = camU.X * (dx / dist) + camR.X * (dy / dist);
+      const ay = camU.Y * (dx / dist) + camR.Y * (dy / dist);
+      const az = camU.Z * (dx / dist);
+      const L = Math.hypot(ax, ay, az) || 1;
       const angle = dist / DRAG_SENS;
-      const qInc = qFromAxisAngle(axis, angle);
+      const qInc = qFromAxisAngle({ x: ax / L, y: ay / L, z: az / L }, angle);
       freeQuat = qNormalize(qMul(qInc, freeQuat));
     }
     render();
