@@ -66,6 +66,35 @@
   }
   #sphereCanvas:active { cursor:grabbing; }
 
+  /* ---------- camera-distance slider ----------
+     A slim, mostly-transparent control floating over the canvas's right edge
+     so it never blocks the sphere. Built as a normal horizontal range rotated
+     -90° (the reliable cross-browser vertical slider); the container passes
+     pointer events through so the trackball still works everywhere but the
+     slider itself. Up = pull the camera back (far); down = closer (near). */
+  .canvas-wrap { position: relative; }
+  .cam-ctrl {
+    position: absolute; top: 50%; right: 7px; transform: translateY(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    pointer-events: none; z-index: 3;
+  }
+  .cam-ctrl .cam-cap {
+    font-size: 8.5px; color: #eef1f6; text-transform: uppercase; letter-spacing: 0.05em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+  }
+  .cam-slot { position: relative; width: 20px; height: 150px; }
+  #camSlider {
+    position: absolute; left: 50%; top: 50%;
+    width: 150px; height: 18px; margin: 0;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    -webkit-appearance: none; appearance: none; background: transparent;
+    pointer-events: auto; cursor: pointer;
+  }
+  #camSlider::-webkit-slider-runnable-track { height: 5px; border-radius: 3px; background: rgba(150,160,180,0.60); box-shadow: 0 0 0 1px rgba(0,0,0,0.25); }
+  #camSlider::-moz-range-track { height: 5px; border-radius: 3px; background: rgba(150,160,180,0.60); }
+  #camSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; margin-top: -5px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+  #camSlider::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; }
+
   .ctrl-row { display:flex; align-items:center; gap:9px; margin-top:9px; flex-wrap:wrap; min-height:22px; }
   .ctrl-row label { font-size:12px; color:var(--muted); white-space:nowrap; font-family: Georgia, 'Times New Roman', serif; font-style:italic; }
   input[type=range] { flex:1 1 140px; accent-color: var(--accent); min-width:100px; }
@@ -107,6 +136,11 @@
   body.embed .panel h2 { font-size:10.5px; margin-bottom:3px; flex:0 0 auto; }
   body.embed .panel h2 .mono { font-size:9px; }
   body.embed #sphereCanvas { flex:1 1 60px; min-height:60px; height:100%; width:100%; aspect-ratio:auto; display:block; }
+  body.embed .canvas-wrap { flex:1 1 60px; min-height:60px; }
+  body.embed .cam-ctrl { right:5px; gap:4px; }
+  body.embed .cam-ctrl .cam-cap { font-size:7px; }
+  body.embed .cam-slot { height:96px; width:16px; }
+  body.embed #camSlider { width:96px; }
   body.embed .ctrl-row { margin-top:4px; font-size:10.5px; gap:6px; flex:0 0 auto; flex-wrap:nowrap; min-height:0; }
   body.embed .ctrl-row label { font-size:10px; }
   body.embed .ctrl-row .mono { font-size:10px; min-width:40px; }
@@ -139,7 +173,16 @@
   <div class="panels">
     <div class="panel">
       <h2>The Riemann Sphere &nbsp;<span class="mono">unit sphere, projection from N &mdash; drag to rotate</span></h2>
-      <canvas id="sphereCanvas" aria-label="3D Riemann sphere with stereographic projection to the complex plane through its equator"></canvas>
+      <div class="canvas-wrap">
+        <canvas id="sphereCanvas" aria-label="3D Riemann sphere with stereographic projection to the complex plane through its equator"></canvas>
+        <div class="cam-ctrl" role="group" aria-label="camera distance">
+          <span class="cam-cap">far</span>
+          <div class="cam-slot">
+            <input type="range" id="camSlider" min="9" max="24" step="0.5" value="12" aria-label="camera distance — up pulls the camera back, down moves it closer">
+          </div>
+          <span class="cam-cap">near</span>
+        </div>
+      </div>
       <div class="ctrl-row" id="paramRow">
         <label id="paramLbl" for="paramSlider">&theta;</label>
         <input type="range" id="paramSlider" min="-180" max="180" step="1" value="0">
@@ -454,22 +497,31 @@
   const CAM_YAW = 0.55;   // azimuth around the pole axis
   const CAM_ELEV = 0.42;  // elevation above the plane (~24°) — low enough to read
                           // side-on, high enough that the patch shows in front
-  const CAM_DIST = 5.5;   // distance from the origin, world units
-  const camC = {
-    X: CAM_DIST * Math.cos(CAM_ELEV) * Math.cos(CAM_YAW),
-    Y: CAM_DIST * Math.cos(CAM_ELEV) * Math.sin(CAM_YAW),
-    Z: CAM_DIST * Math.sin(CAM_ELEV)
-  };
-  const camF = { X: -camC.X / CAM_DIST, Y: -camC.Y / CAM_DIST, Z: -camC.Z / CAM_DIST }; // forward (unit, at origin)
-  const camR = (() => { // right = forward × worldUp, horizontal
-    const rx = camF.Y, ry = -camF.X, L = Math.hypot(rx, ry) || 1;
-    return { X: rx / L, Y: ry / L, Z: 0 };
-  })();
-  const camU = { // up = right × forward
-    X: camR.Y * camF.Z,
-    Y: -camR.X * camF.Z,
-    Z: camR.X * camF.Y - camR.Y * camF.X
-  };
+  // Camera distance from the origin, world units — USER-ADJUSTABLE via the
+  // vertical slider on the right of the canvas. Larger = pulled further back =
+  // flatter / more orthographic (the sphere is pinned to a fixed screen radius,
+  // so distance zooms the *perspective*, not the sphere's size). 5.5 → 8 → 12
+  // were the earlier hand-tuned values; 12 is the default.
+  const CAM_DIST_MIN = 9, CAM_DIST_MAX = 24, CAM_DIST_DEFAULT = 12;
+  const SPHERE_BASE_FRAC = 0.22; // sphere radius as a fraction of the min canvas dim, AT the default distance
+  let CAM_DIST = CAM_DIST_DEFAULT;
+  let camC, camF, camR, camU;
+  function recomputeCamera() { // rebuild the camera basis after CAM_DIST changes
+    camC = {
+      X: CAM_DIST * Math.cos(CAM_ELEV) * Math.cos(CAM_YAW),
+      Y: CAM_DIST * Math.cos(CAM_ELEV) * Math.sin(CAM_YAW),
+      Z: CAM_DIST * Math.sin(CAM_ELEV)
+    };
+    camF = { X: -camC.X / CAM_DIST, Y: -camC.Y / CAM_DIST, Z: -camC.Z / CAM_DIST }; // forward (unit, at origin)
+    const rx = camF.Y, ry = -camF.X, L = Math.hypot(rx, ry) || 1; // right = forward × worldUp, horizontal
+    camR = { X: rx / L, Y: ry / L, Z: 0 };
+    camU = { // up = right × forward
+      X: camR.Y * camF.Z,
+      Y: -camR.X * camF.Z,
+      Z: camR.X * camF.Y - camR.Y * camF.X
+    };
+  }
+  recomputeCamera();
   function depthAlpha(depth) {
     // depth = CAM_DIST − z_cam; in [-1,1] for sphere points, 1 = nearest
     const t = Math.max(0, Math.min(1, (depth + 1) / 2));
@@ -493,16 +545,27 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     originX = cssW * 0.50;
     originY = cssH * 0.33; // sphere center sits upper-middle; the floor fills the foreground below
-    sphereScreenR = Math.min(cssW, cssH) * 0.22; // sphere silhouette radius on screen
-    focal = sphereScreenR * Math.sqrt(CAM_DIST * CAM_DIST - 1);
+    // Focal length is FIXED (independent of camera distance), anchored so the
+    // sphere is SPHERE_BASE_FRAC·minDim at the default distance. Because focal
+    // no longer compensates for distance, the camera genuinely dollies: moving
+    // it closer enlarges the sphere (and strengthens the plane's perspective),
+    // moving it further shrinks it — see updateSphereMetrics for the silhouette.
+    focal = Math.min(cssW, cssH) * SPHERE_BASE_FRAC * Math.sqrt(CAM_DIST_DEFAULT * CAM_DIST_DEFAULT - 1);
     planeCan.width = Math.ceil(cssW / PLANE_RES);
     planeCan.height = Math.ceil(cssH / PLANE_RES);
+    updateSphereMetrics();
+    render();
+  }
+  // sphere silhouette radius (now varies with distance) + the sub-canvas region
+  // the per-pixel sphere layers are painted into. Recomputed on resize AND on
+  // every camera-distance change.
+  function updateSphereMetrics() {
+    sphereScreenR = focal / Math.sqrt(CAM_DIST * CAM_DIST - 1);
     sphOx = originX - sphereScreenR - 2;
     sphOy = originY - sphereScreenR - 2;
-    const sphSide = Math.ceil((2 * sphereScreenR + 4) / PLANE_RES);
+    const sphSide = Math.max(1, Math.ceil((2 * sphereScreenR + 4) / PLANE_RES));
     sphereCanF.width = sphereCanB.width = sphSide;
     sphereCanF.height = sphereCanB.height = sphSide;
-    render();
   }
   window.addEventListener('resize', resizeCanvas);
   if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(canvas);
@@ -603,7 +666,10 @@
   // picture), so transformed-vs-reference cannot be confused.
   const SCENE_BG = '#dfe1e6';
   const MARKER_BLUE = '38,86,210'; // the 1 / i tracked-point dots
-  const PLANE_CLIP = 6;    // same visible-extent break the tracked curve used
+  const PLANE_CLIP = 9;    // the plane's visible extent (was 6): the single edge
+                           // where the gray baseline grid, the transformed grid
+                           // lines, AND the colored fill all stop — kept in one
+                           // place so they can never drift apart
   const JUMP_BREAK = 2.5;  // legit consecutive-sample steps stay ≲1.5 inside
                            // the clip box; a line that runs out through ∞ and
                            // returns would otherwise draw a ~12-unit false chord
@@ -611,7 +677,7 @@
   function drawPlaneReference() {
     // static untransformed reference grid + unit circle — the fixed frame the
     // transformed grid is compared against; never moves under any motion
-    const EXT = 6.0, STEP = 0.5; // wide enough to cover the near foreground under the low camera
+    const EXT = PLANE_CLIP, STEP = 0.5; // the gray baseline's edge == the clip the transformed lines + fill honor
     for (let v = -EXT; v <= EXT + 1e-9; v += STEP) {
       const emph = Math.abs(v) < 1e-9;
       ctx.strokeStyle = emph ? '#6c7386' : 'rgba(130,136,152,0.55)';
@@ -667,6 +733,12 @@
         // ray from the camera through this pixel, intersected with Z=0
         const wRe = camC.X + t * (camF.X + u * camR.X + v * camU.X);
         const wIm = camC.Y + t * (camF.Y + u * camR.Y + v * camU.Y);
+        // clip the fill to the gray baseline plane's edge, so the colored patch
+        // ends exactly where the transformed grid lines (drawGridPlane) and the
+        // reference grid do — previously the fill kept painting past the plane
+        if (wRe < -PLANE_CLIP || wRe > PLANE_CLIP || wIm < -PLANE_CLIP || wIm > PLANE_CLIP) {
+          px[k + 3] = 0; k += 4; continue;
+        }
         // z = M⁻¹(w)
         const numRe = d.re * wRe - d.im * wIm - b.re, numIm = d.re * wIm + d.im * wRe - b.im;
         const denRe = -(c.re * wRe - c.im * wIm) + a.re, denIm = -(c.re * wIm + c.im * wRe) + a.im;
@@ -951,6 +1023,18 @@
     beginTransitionTo('free');
   });
 
+  /* camera-distance slider — a pure view control, independent of the Möbius
+     motion (does not reset with the Reset button). Recompute the camera basis
+     and the focal length (which pins the sphere's on-screen radius), then redraw. */
+  const camSlider = document.getElementById('camSlider');
+  function setCameraDistance(d) {
+    CAM_DIST = Math.max(CAM_DIST_MIN, Math.min(CAM_DIST_MAX, d));
+    recomputeCamera();
+    updateSphereMetrics(); // focal is fixed, so the silhouette + sphere sub-canvas follow the new distance
+    render();
+  }
+  camSlider.addEventListener('input', () => setCameraDistance(+camSlider.value));
+
   paramSlider.addEventListener('input', () => {
     const v = +paramSlider.value;
     if (mode === 'spin') spinTheta = v * Math.PI / 180;
@@ -1003,6 +1087,7 @@
   canvas.addEventListener('pointercancel', endDrag);
 
   /* ---------- init ---------- */
+  camSlider.value = CAM_DIST;
   updateParamRowUI();
   resizeCanvas(); // also renders
 })();
