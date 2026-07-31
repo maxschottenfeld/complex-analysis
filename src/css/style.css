@@ -17,14 +17,83 @@
   --text: #e8ecf3;
   --muted: #97a1b6;
   --h: 215; /* default page hue; lesson & viz pages override via frontmatter */
-  --accent: hsl(var(--h) 70% 70%);
-  --accent-dim: hsl(var(--h) 55% 62% / 0.5);
   --border: #232838;
   --border-strong: #3a4055;
   --radius: 6px;
   --font-display: "Newsreader", Georgia, serif;
   --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* Two accents, deliberately scoped differently — chrome vs signal.
+
+   --accent is CHROME: links, buttons, focus rings. It is pinned to hue 215 and
+   sits off the per-lesson wheel on purpose. Link color is a learned affordance,
+   and letting it swing to Lesson 1's yellow or Lesson 7's green costs more in
+   legibility than it buys in theme. Note it is written as a literal 215, not as
+   var(--h): chrome deliberately does not track the page hue, and spelling that
+   out stops the next reader assuming it does.
+
+   --hue-accent is SIGNAL: the card stripes, i.e. the site-wide echo of domain
+   coloring. This one does follow --h.
+
+   Scoping matters here and is easy to get wrong. A custom property substitutes
+   its var() references at the element where it is DECLARED, not where it is
+   used — so a --hue-accent declared only on :root would bake in :root's own --h
+   (215) and inherit that single color everywhere, which is exactly the trap the
+   old --accent fell into: it read as per-lesson but rendered 215-blue on every
+   page. So --hue-accent is declared on every element that sets --h: <body>
+   (page hue, base.njk), both card types (per-card hue), and .viz-page-header
+   (viz-pages.njk and gerald.njk). ANYTHING NEW THAT SETS --h MUST BE ADDED TO
+   BOTH --hue-accent SELECTOR LISTS BELOW. */
+:root {
+  --accent: hsl(215 70% 70%);
+  --accent-dim: hsl(215 55% 62% / 0.5);
+}
+
+:root,
+body,
+.lesson-card,
+.viz-card,
+.viz-page-header {
+  --hue-accent: hsl(var(--h) 70% 70%);
+}
+
+/* HSL lightness is not perceptually uniform, so one L% renders at very
+   different brightness per hue: hsl(var(--h) 70% 70%) runs 5.56:1 (hue 240,
+   Lesson 6) to 14.24:1 (hue 55, Lesson 1) against --bg — a 2.56x spread from
+   identical CSS, which made Lesson 1's stripe visibly heavier than Lesson 6's.
+   OKLCH's lightness axis IS perceptually uniform, so pinning it holds every
+   lesson's signal at one apparent weight: 8.64-9.55:1, a 1.11x spread, the
+   residue being WCAG's own green-weighted luminance formula rather than the
+   color system. Chrome is pinned to the same lightness so the two read as one
+   material.
+
+   --h is an HSL hue angle — the domain-coloring convention the hero canvas
+   and every visualization share — and oklch()'s hue axis is a different
+   wheel, so --h can't be handed to oklch() directly. Relative color syntax
+   does the conversion: oklch(from <hsl color> L C h) re-expresses that exact
+   hue at a fixed lightness. Chroma stays under the sRGB gamut ceiling at
+   this lightness (0.1249, set by blue) — clipping would gamut-map lightness
+   back per hue and silently reintroduce the spread this removes.
+
+   Guarded by @supports because a custom property holding an unparseable
+   value stays valid until substitution, so the usual two-declaration
+   fallback does not work here. Browsers without relative color syntax keep
+   the hsl() values above. */
+@supports (color: oklch(from red l c h)) {
+  :root {
+    --accent: oklch(from hsl(215 70% 70%) 0.76 0.115 h);
+    --accent-dim: oklch(from hsl(215 55% 62%) 0.68 0.08 h / 0.5);
+  }
+
+  :root,
+  body,
+  .lesson-card,
+  .viz-card,
+  .viz-page-header {
+    --hue-accent: oklch(from hsl(var(--h) 70% 70%) 0.76 0.115 h);
+  }
 }
 
 * { box-sizing: border-box; }
@@ -318,7 +387,11 @@ main.wide { max-width: 1100px; }
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-/* Spectrum stripe keyed to each viz's hue — the site-wide echo of domain coloring */
+/* Stripe keyed to each viz's hue — the site-wide echo of domain coloring.
+   Flat --hue-accent, not a gradient: the old hue-to-hue+50 ramp read as the
+   generic AI-site gradient rather than as this site's hue system (at the
+   default --h it ran blue to violet), and a single hue states the
+   one-lesson-one-hue idea more plainly than a two-stop sweep. */
 .viz-card::before {
   content: "";
   position: absolute;
@@ -326,7 +399,7 @@ main.wide { max-width: 1100px; }
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, hsl(var(--h) 85% 62%), hsl(calc(var(--h) + 50) 85% 62%));
+  background: var(--hue-accent);
   opacity: 0.85;
 }
 
@@ -426,6 +499,37 @@ main.wide { max-width: 1100px; }
 
 /* ---------- Lessons & content ---------- */
 
+/* Lesson bodies render as flat children of <main> — markdown, no .prose
+   wrapper — so the 68ch cap that .prose p sets on the homepage never reached
+   them. Measured in a browser at 1280x800: 720px of column = 82.3ch, running
+   86 characters per line (median; 92 max), well past the 45-75ch the eye
+   tracks comfortably. 68ch matches what .prose p already declares, so the two
+   page types now agree instead of disagreeing by 14ch.
+   Deliberately not applied to headings (display type wants the width), nor to
+   .scrolly / .lesson-side / .lesson-pager, which sit outside the text column
+   or break out wider on purpose. */
+main > p,
+main > ul,
+main > ol,
+main > blockquote {
+  max-width: 68ch;
+}
+
+/* Display equations keep the full column rather than the prose measure —
+   narrow text, wider math, the usual typesetting split. Capping them with the
+   prose would push 4 of the site's 78 display equations into horizontal
+   scroll (Lesson 6 x3, Lesson 5 x1) where only Lesson 5's already scrolls.
+   720px is main's content box: its 760px max-width less 2.5rem of padding.
+   Descendant selector, not child: KaTeX's auto-render wraps its output in a
+   <span>, so .katex-display is a grandchild of the paragraph, not a child. */
+main > p .katex-display {
+  width: min(720px, 100vw - 2.5rem);
+  /* releases the max-width:100% set above, which would otherwise clamp the
+     equation back to the narrowed paragraph; the width above is already
+     viewport-bounded, so nothing can push the page sideways */
+  max-width: none;
+}
+
 .lesson-list {
   list-style: none;
   padding: 0;
@@ -482,8 +586,9 @@ blockquote strong, blockquote b { color: var(--text); }
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-/* Vertical spectrum stripe keyed to each lesson's hue — same domain-coloring
-   echo as the viz cards, rotated 90° so the two card types read differently */
+/* Vertical stripe keyed to each lesson's hue — same domain-coloring echo as
+   the viz cards, rotated 90° so the two card types read differently. Flat
+   --hue-accent for the same reason as .viz-card::before above. */
 .lesson-card::before {
   content: "";
   position: absolute;
@@ -491,7 +596,7 @@ blockquote strong, blockquote b { color: var(--text); }
   bottom: 0;
   left: 0;
   width: 3px;
-  background: linear-gradient(180deg, hsl(var(--h) 85% 62%), hsl(calc(var(--h) + 50) 85% 62%));
+  background: var(--hue-accent);
   opacity: 0.85;
 }
 
@@ -727,7 +832,12 @@ blockquote strong, blockquote b { color: var(--text); }
   border-radius: var(--radius);
   padding: 1rem 1.2rem;
   font-size: 0.98rem;
-  opacity: 0.35;
+  /* Inactive steps recede, but they are still body text and still have to be
+     readable: 0.35 blended --text over --surface computed to 2.90:1, under the
+     4.5:1 AA floor. 0.489 is the exact break-even; 0.55 clears it at 5.37:1
+     while keeping as much of the active/inactive separation as the dimming
+     affordance needs. (Active steps are unchanged at 15.52:1.) */
+  opacity: 0.55;
   transition: opacity 0.3s ease;
 }
 
