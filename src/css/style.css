@@ -237,12 +237,19 @@ a:hover { text-decoration-color: var(--accent); }
     linear-gradient(180deg, rgba(10, 12, 18, 0.55), rgba(10, 12, 18, 0.3) 45%, var(--bg));
 }
 
+/* Left column, not a centred stack. The old hero put eyebrow, title, tagline,
+   CTAs and caption on one centred axis while every section below it is flush
+   left — the hero was the only centred thing on the page. Width and padding
+   match main.wide (1100px + 1.25rem), which the homepage uses, so the hero's
+   left edge lands exactly on the section headings beneath it.
+   Padding is bottom-heavy on purpose: a hero with equal or top-heavy padding
+   floats above the page instead of settling into the next section. */
 .hero-inner {
   position: relative;
-  max-width: 860px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 6rem 1.5rem 4.5rem;
-  text-align: center;
+  padding: 5rem 1.25rem 6.5rem;
+  text-align: left;
 }
 
 .hero-eyebrow, .section-eyebrow {
@@ -266,25 +273,41 @@ a:hover { text-decoration-color: var(--accent); }
 .hero-tagline {
   font-size: clamp(1.05rem, 2vw, 1.2rem);
   color: var(--text);
-  max-width: 620px;
-  margin: 0 auto 2.2rem;
+  max-width: 46ch;
+  margin: 0 0 2.2rem;
   text-shadow: 0 1px 12px rgba(10, 12, 18, 0.9);
 }
 
 .hero-ctas {
   display: flex;
   gap: 0.9rem;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
+/* The caption annotates the canvas rather than continuing the masthead, so it
+   sits in the opposite corner. That single asymmetry is what keeps the hero
+   from reading as a generic left-aligned stack, and it leaves the middle of
+   the fold showing the domain coloring — which is the subject of the site and
+   the thing Lesson 0 teaches you to read, not empty space. */
 .hero-caption {
-  margin: 3rem auto 0;
-  max-width: 560px;
+  margin: 3rem 0 0 auto;
+  max-width: 54ch;
+  text-align: right;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   line-height: 1.6;
   color: var(--muted);
+}
+
+/* On a phone the hero is one narrow column and the diagonal has no room to
+   read as composition, so the caption returns to the text's own edge instead
+   of sitting ragged-left against it. */
+@media (max-width: 640px) {
+  .hero-caption {
+    margin-left: 0;
+    text-align: left;
+  }
 }
 
 /* ---------- Buttons ---------- */
@@ -1100,7 +1123,7 @@ footer {
 /* ---------- Small screens ---------- */
 
 @media (max-width: 480px) {
-  .hero-inner { padding: 4rem 1.25rem 3.5rem; }
+  .hero-inner { padding: 3.5rem 1.25rem 4.5rem; }
   .nav-links { gap: 1rem; }
   .brand { font-size: 0.95rem; white-space: nowrap; gap: 0.45rem; }
   .brand-mark { width: 1.6rem; height: 1.6rem; font-size: 0.85rem; }
