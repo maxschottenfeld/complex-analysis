@@ -3,3 +3,7 @@ _site/
 .DS_Store
 .claude/
 redesign-prompt.md
+
+# Vendored agent skills (npx skills add) — reinstallable, not source
+.agents/
+skills-lock.json
