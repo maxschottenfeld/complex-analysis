@@ -12,6 +12,9 @@
 
 :root {
   --bg: #0a0c12;
+  /* raw triplet, for rgba(var(--bg-rgb), alpha) — rgba() can't take a hex
+     custom property directly, only comma-separated channel values */
+  --bg-rgb: 10, 12, 18;
   --surface: #11141d;
   --surface-2: #161a26;
   --text: #e8ecf3;
@@ -49,6 +52,18 @@
 :root {
   --accent: hsl(215 70% 70%);
   --accent-dim: hsl(215 55% 62% / 0.5);
+  /* .btn-primary is the only consumer, and .btn-primary only ever renders in
+     hero.njk, which only index.njk includes — a page with no hue frontmatter,
+     so --h is always 215 there. It was written as hsl(var(--h) 75% 76%), which
+     LOOKS like it belongs to the per-lesson signal family but has in fact
+     always evaluated to exactly this literal. Named as chrome, where it
+     actually belongs, not as a --hue-* token: if hero.njk is ever reused on a
+     page with a different --h, this correctly stays put instead of silently
+     drifting off the pinned chrome hue the way the old --accent did (see the
+     comment above). No OKLCH variant, unlike --accent -- OKLCH earns its
+     place when one formula has to hold steady across many hues; this token
+     only ever represents one, so there's no spread here to flatten. */
+  --accent-hover: hsl(215 75% 76%);
 }
 
 :root,
@@ -57,6 +72,24 @@ body,
 .viz-card,
 .viz-page-header {
   --hue-accent: hsl(var(--h) 70% 70%);
+
+  /* The rest of the per-lesson signal family. Each of these was a bare
+     hsl(var(--h) ...) literal repeated at its use sites with no name — eight
+     distinct lightness/saturation pairs across the file, discoverable only by
+     grepping. Naming them doesn't change a single rendered pixel: every value
+     below is copied verbatim from where it used to live inline, not
+     recomputed. They stay plain HSL rather than following --hue-accent
+     through the OKLCH conversion above, for the same reason: this pass is a
+     rename, not a recalculation. Declared on this same selector list, not
+     :root alone, for the reason explained above — anything that resolves
+     var(--h) at its declaration site inherits that trap. */
+  --hue-border-hover: hsl(var(--h) 60% 55% / 0.7);  /* card hover border (viz-card, lesson-card) */
+  --hue-cta: hsl(var(--h) 85% 72%);            /* viz/lesson card CTA + arrow text */
+  --hue-label: hsl(var(--h) 85% 74%);          /* badges, kickers, step tags — the most-reused value */
+  --hue-label-border: hsl(var(--h) 60% 60% / 0.4); /* badge border (lesson-num, viz-card-lesson) */
+  --hue-rule: hsl(var(--h) 70% 62% / 0.8);     /* blockquote / proof / scrolly-step border-left */
+  --hue-dot-border: hsl(var(--h) 70% 62%);     /* lesson-side tracker dot, opaque */
+  --hue-dot-fill: hsl(var(--h) 70% 62% / 0.55);   /* lesson-side tracker dot, filled state */
 }
 
 /* HSL lightness is not perceptually uniform, so one L% renders at very
@@ -121,6 +154,15 @@ h1, h2, h3 {
   letter-spacing: 0.005em;
   line-height: 1.15;
   color: var(--text);
+  /* Defensive, not a fix for an active bug: at 320px, current titles like
+     "Cauchy-Riemann" already break at the hyphen and "Indistinguishability"
+     (the longest word on the site, 20 chars, no hyphen) still fits its box
+     with margin to spare. But Lessons 9-12 don't have titles yet, and
+     nothing here guarantees the next long compound word has a hyphen to
+     break on. break-word only takes over as a last resort, after normal
+     space/hyphen breaks are exhausted, so it costs nothing on every title
+     that already fits. */
+  overflow-wrap: break-word;
 }
 
 a {
@@ -132,6 +174,7 @@ a {
 }
 
 a:hover { text-decoration-color: var(--accent); }
+a:active { color: var(--accent-dim); }
 
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -159,7 +202,7 @@ a:hover { text-decoration-color: var(--accent); }
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(10, 12, 18, 0.96);
+  background: rgba(var(--bg-rgb), 0.96);
   border-bottom: 1px solid var(--border);
 }
 
@@ -194,7 +237,7 @@ a:hover { text-decoration-color: var(--accent); }
   background: conic-gradient(from 90deg,
     hsl(0 65% 52%), hsl(60 65% 45%), hsl(120 65% 42%),
     hsl(180 65% 45%), hsl(240 65% 60%), hsl(300 65% 52%), hsl(360 65% 52%));
-  color: #0a0c12;
+  color: var(--bg);
   font-weight: 700;
   font-size: 1rem;
 }
@@ -211,6 +254,7 @@ a:hover { text-decoration-color: var(--accent); }
 }
 
 .nav-link:hover { color: var(--text); }
+.nav-link:active { color: var(--accent); }
 
 /* ---------- Hero ---------- */
 
@@ -233,8 +277,8 @@ a:hover { text-decoration-color: var(--accent); }
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(70% 90% at 50% 38%, transparent, rgba(10, 12, 18, 0.55)),
-    linear-gradient(180deg, rgba(10, 12, 18, 0.55), rgba(10, 12, 18, 0.3) 45%, var(--bg));
+    radial-gradient(70% 90% at 50% 38%, transparent, rgba(var(--bg-rgb), 0.55)),
+    linear-gradient(180deg, rgba(var(--bg-rgb), 0.55), rgba(var(--bg-rgb), 0.3) 45%, var(--bg));
 }
 
 /* Left column, not a centred stack. The old hero put eyebrow, title, tagline,
@@ -267,7 +311,7 @@ a:hover { text-decoration-color: var(--accent); }
   font-style: italic;
   font-weight: 500;
   margin: 0.4rem 0 1.1rem;
-  text-shadow: 0 2px 24px rgba(10, 12, 18, 0.8);
+  text-shadow: 0 2px 24px rgba(var(--bg-rgb), 0.8);
 }
 
 .hero-tagline {
@@ -275,7 +319,7 @@ a:hover { text-decoration-color: var(--accent); }
   color: var(--text);
   max-width: 46ch;
   margin: 0 0 2.2rem;
-  text-shadow: 0 1px 12px rgba(10, 12, 18, 0.9);
+  text-shadow: 0 1px 12px rgba(var(--bg-rgb), 0.9);
 }
 
 .hero-ctas {
@@ -323,19 +367,26 @@ a:hover { text-decoration-color: var(--accent); }
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
+/* Shared press cue for both button variants. Deliberately doesn't redeclare
+   background/border here: a pointer press keeps :hover true at the same time
+   as :active, so the hover fill already carries over via the cascade for
+   mouse users; this rule only adds the physical "sinks in" cue, which is what
+   keyboard/touch activation (hover never true) still needs on its own. */
+.btn:active { transform: translateY(1px); }
+
 .btn-primary {
   background: var(--accent);
   border: 1px solid var(--accent);
-  color: #0a0c12;
+  color: var(--bg);
   font-weight: 600;
 }
 
-.btn-primary:hover { background: hsl(var(--h) 75% 76%); border-color: hsl(var(--h) 75% 76%); }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
 .btn-ghost {
   border: 1px solid var(--border-strong);
   color: var(--text);
-  background: rgba(10, 12, 18, 0.55);
+  background: rgba(var(--bg-rgb), 0.55);
 }
 
 .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
@@ -377,6 +428,11 @@ main.wide { max-width: 1100px; }
 }
 
 .see-all:hover { text-decoration: underline; }
+/* Color on press comes free from the global a:active rule above (higher
+   specificity, no conflicting declaration here). Underline still needs its
+   own :active — touch/keyboard activation never makes :hover true, so
+   without this the underline would only ever show for mouse users. */
+.see-all:active { text-decoration: underline; }
 
 .muted { color: var(--muted); }
 
@@ -428,8 +484,10 @@ main.wide { max-width: 1100px; }
 
 .viz-card:hover {
   background: var(--surface-2);
-  border-color: hsl(var(--h) 60% 55% / 0.7);
+  border-color: var(--hue-border-hover);
 }
+
+.viz-card:active { transform: translateY(1px); }
 
 .viz-card h2 {
   font-size: 1.2rem;
@@ -445,7 +503,7 @@ main.wide { max-width: 1100px; }
 
 .viz-card-cta {
   font-family: var(--font-mono);
-  color: hsl(var(--h) 85% 72%);
+  color: var(--hue-cta);
   font-size: 0.8rem;
 }
 
@@ -456,8 +514,8 @@ main.wide { max-width: 1100px; }
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: hsl(var(--h) 85% 74%);
-  border: 1px solid hsl(var(--h) 60% 60% / 0.4);
+  color: var(--hue-label);
+  border: 1px solid var(--hue-label-border);
   border-radius: 3px;
   padding: 0.12rem 0.5rem;
   vertical-align: middle;
@@ -477,6 +535,10 @@ main.wide { max-width: 1100px; }
 }
 
 .viz-page-header .crumb a:hover { color: var(--text); }
+/* Needs its own rule rather than inheriting the generic a:active: this
+   selector's higher specificity (two classes + a type) already beats the
+   generic one at rest, so it would also beat it here. */
+.viz-page-header .crumb a:active { color: var(--accent); }
 
 .viz-page-header h1 {
   font-size: clamp(1.8rem, 4vw, 2.6rem);
@@ -567,6 +629,10 @@ main > p .katex-display {
 }
 
 .lesson-list li:hover { border-color: var(--border-strong); }
+/* :active on the li, not the a: the li is what visibly changes, and CSS
+   applies :active to an activated element's ancestors too, so this correctly
+   fires while the .lesson-list a filling it is being pressed. */
+.lesson-list li:active { border-color: var(--accent); }
 
 .lesson-list a {
   display: block;
@@ -577,7 +643,7 @@ main > p .katex-display {
 
 /* Key-takeaway blocks: a rule in the lesson's hue, no panel fill */
 blockquote {
-  border-left: 2px solid hsl(var(--h) 70% 62% / 0.8);
+  border-left: 2px solid var(--hue-rule);
   margin: 1.5rem 0;
   padding: 0.15rem 0 0.15rem 1.15rem;
   color: var(--muted);
@@ -625,8 +691,10 @@ blockquote strong, blockquote b { color: var(--text); }
 
 .lesson-card:hover {
   background: var(--surface-2);
-  border-color: hsl(var(--h) 60% 55% / 0.7);
+  border-color: var(--hue-border-hover);
 }
+
+.lesson-card:active { transform: translateY(1px); }
 
 .lesson-num {
   flex: none;
@@ -639,8 +707,8 @@ blockquote strong, blockquote b { color: var(--text); }
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 1rem;
-  color: hsl(var(--h) 85% 74%);
-  border: 1px solid hsl(var(--h) 60% 60% / 0.4);
+  color: var(--hue-label);
+  border: 1px solid var(--hue-label-border);
 }
 
 .lesson-card-title {
@@ -661,7 +729,7 @@ blockquote strong, blockquote b { color: var(--text); }
 .lesson-card-arrow {
   margin-left: auto;
   align-self: center;
-  color: hsl(var(--h) 85% 72%);
+  color: var(--hue-cta);
   font-family: var(--font-mono);
 }
 
@@ -692,6 +760,8 @@ blockquote strong, blockquote b { color: var(--text); }
   background: var(--surface-2);
   border-color: var(--border-strong);
 }
+
+.aside-card:active { transform: translateY(1px); }
 
 .aside-card h2 {
   font-size: 1.3rem;
@@ -743,7 +813,7 @@ blockquote strong, blockquote b { color: var(--text); }
   font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: hsl(var(--h) 85% 74%);
+  color: var(--hue-label);
   margin: 0 0 0.6rem;
 }
 
@@ -765,8 +835,8 @@ blockquote strong, blockquote b { color: var(--text); }
 }
 
 .lesson-side .side-node.done .dot {
-  border-color: hsl(var(--h) 70% 62%);
-  background: hsl(var(--h) 70% 62% / 0.55);
+  border-color: var(--hue-dot-border);
+  background: var(--hue-dot-fill);
 }
 
 .lesson-side .side-node .lbl { color: var(--text); }
@@ -783,6 +853,9 @@ blockquote strong, blockquote b { color: var(--text); }
 .lesson-side a.side-node .lbl { color: var(--muted); transition: color 0.25s; }
 .lesson-side a.side-node:hover .lbl,
 .lesson-side a.side-node.now .lbl { color: var(--text); }
+/* Separate rule, not folded into the list above: :active reads as a more
+   emphatic accent rather than reusing --text, which :hover and .now share. */
+.lesson-side a.side-node:active .lbl { color: var(--accent); }
 .lesson-side .tracker-card .side-node { padding: 0.18rem 0; }
 
 @media (min-width: 1380px) {
@@ -851,7 +924,7 @@ blockquote strong, blockquote b { color: var(--text); }
 .scrolly-step {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 2px solid hsl(var(--h) 70% 62% / 0.8);
+  border-left: 2px solid var(--hue-rule);
   border-radius: var(--radius);
   padding: 1rem 1.2rem;
   font-size: 0.98rem;
@@ -874,7 +947,7 @@ blockquote strong, blockquote b { color: var(--text); }
   font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: hsl(var(--h) 85% 74%);
+  color: var(--hue-label);
 }
 
 .scrolly-note {
@@ -924,7 +997,7 @@ blockquote strong, blockquote b { color: var(--text); }
 .proof {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 2px solid hsl(var(--h) 70% 62% / 0.8);
+  border-left: 2px solid var(--hue-rule);
   border-radius: var(--radius);
   padding: 1.4rem 1.5rem 1.2rem;
   margin: 2rem 0;
@@ -935,7 +1008,7 @@ blockquote strong, blockquote b { color: var(--text); }
   font-size: 0.68rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: hsl(var(--h) 85% 74%);
+  color: var(--hue-label);
   margin: 0 0 0.6rem;
 }
 
@@ -986,6 +1059,7 @@ blockquote strong, blockquote b { color: var(--text); }
 }
 
 .proof-btn:hover { color: var(--text); border-color: var(--accent); }
+.proof-btn:active { color: var(--accent); border-color: var(--accent); transform: translateY(1px); }
 
 .proof-steps { list-style: none; margin: 0.4rem 0 0; padding: 0; }
 
