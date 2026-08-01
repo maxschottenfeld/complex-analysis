@@ -1,6 +1,9 @@
 # De-AI Pass — Brief for the Claude Code Session
 
 **Written:** 2026-07-31
+
+> **Status as of 2026-08-01: this file is the original prep, kept for its reasoning.** Session 1 (the CSS audit) ran and shipped. Session 2 (the prose pass) has not started. One claim in the prose section below was corrected on 08-01 — see the correction block there. For current state, the plan, and the handoff prompt, read **`DE-AI-STATUS-2026-08-01.md`**.
+
 **Why this exists:** the July 9 redesign was an AI de-AI-ing itself, which is circular — it can only remove tells it already knows to look for. This brief is the prep work for a second pass driven by human-authored rule sets, so the Claude Code session starts from findings instead of from scratch.
 
 **Run this in Claude Code, in the `Website/` repo.** The skills install to `~/.claude/skills/` and operate on the codebase; the build/preview/iterate loop needs a real working directory.
@@ -90,7 +93,18 @@ Humanizer pattern **#14 (em/en dashes)** is a *hard cut*, not a "reduce" — the
 
 Also worth checking against the pattern list: **#17 Title Case Headings**, **#28 signposting** ("Let's dive in", "Here's what you need to know"), **#10 rule of three**, and **#31 manufactured punchlines**.
 
-**Humanizer has voice calibration** — feed it 2–3 paragraphs of your own writing and it matches your rhythm and word choice instead of producing generic clean prose. This maps directly onto item 4 of the Website Future To Do list ("rewrite things to make sure they make sense to the way I understand them"). It also has a no-fabrication rule: it won't invent facts, names, or citations not in the source. That matters for math exposition.
+**Humanizer has voice calibration** — feed it 2–3 paragraphs of your own writing and it matches your rhythm and word choice instead of producing generic clean prose. It also has a no-fabrication rule: it won't invent facts, names, or citations not in the source. That matters for math exposition.
+
+> **Correction, 2026-08-01.** This section originally said voice calibration "maps directly onto" item 4 of the Website Future To Do list ("rewrite things to make sure they make sense to the way I understand them"). That oversells it. Max's own draft says humanizer *"pairs with"* item 4, and his wording is the accurate one.
+>
+> They are two different jobs, and conflating them hides the larger one:
+>
+> - **Job A — the tool pass.** Humanizer strips mechanical tells (em-dash density, bold overuse, signposting) and matches Max's rhythm. Tool drives; Max reviews a diff. This is what the Session 2 prompt below runs.
+> - **Job B — Max's read-through.** Item 4 proper. Max reads each lesson and rewrites so it says what *he* would say, aimed at a reader who isn't him. Max drives.
+>
+> Voice calibration makes prose **sound** like Max. Item 4 makes it **say what he means**. Humanizer structurally cannot do Job B — its no-fabrication rule confines it to rewriting what is already on the page, so it can never reorganize an explanation around his mental model or add the sentence he'd write because he knows where a reader gets stuck.
+>
+> **Sequence decided 2026-08-01: Job A first, then Job B**, so the read-through is spent on meaning rather than punctuation. Job B is the far bigger commitment — ten lessons now, fourteen by completion, all read personally — and it, not the tool run, is what competes with teaching Lessons 9-12. See `DE-AI-STATUS-2026-08-01.md`.
 
 **Caution:** run humanizer on prose only. Do not let it near KaTeX blocks — this repo has a documented markdown-it escaping gotcha (`\,` and `\{` get eaten before KaTeX runs; there's a `checkMathEscapes` build guard for exactly this). Rewrite section by section and run the build after each.
 

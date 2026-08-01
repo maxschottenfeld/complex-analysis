@@ -3,6 +3,8 @@
 **Written:** 2026-07-31, after the hallmark audit came back.
 **Companion to:** `DE-AI-BRIEF.md` (the prep) — this file is the triage.
 
+> **Status as of 2026-08-01: this file is history, not a to-do list.** Tier 1, Tier 2 and the Tier 3 hero were all implemented and pushed to main. The italic `h1` is the only Tier 3 item still open, deliberately. For where things actually stand, what's left, the plan, and the handoff prompt, read **`DE-AI-STATUS-2026-08-01.md`** instead.
+
 ---
 
 ## Verification: the audit is accurate
