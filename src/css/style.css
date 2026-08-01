@@ -308,7 +308,10 @@ a:active { color: var(--accent-dim); }
 
 .hero h1 {
   font-size: clamp(2.9rem, 7vw, 5rem);
-  font-style: italic;
+  /* Was italic. Decided 2026-08-01, by looking at it both ways: display
+     italic on a masthead is one of the most reliable AI tells there is, and
+     that argument didn't get weaker for being reversible. Newsreader's
+     roman cut carries the headline fine on its own. */
   font-weight: 500;
   margin: 0.4rem 0 1.1rem;
   text-shadow: 0 2px 24px rgba(var(--bg-rgb), 0.8);

@@ -22,6 +22,14 @@ KaTeX runs client-side, *after* markdown-it has already processed the page — a
 
 The build fails with a file:line pointer if one of these sneaks in (see `checkMathEscapes` in `.eleventy.js`).
 
+## Writing conventions
+
+Set 2026-08-01, after a prose audit found the lessons running well past normal density on em-dashes and bold. Write new lessons (9-12 and beyond) to these from the start rather than retrofitting later.
+
+- **Em-dashes** — budget roughly one per 250 words. Reach for a colon, a comma, or a sentence break first; an em-dash earns its place only when it's genuinely the clearest way to carry an aside.
+- **Bold** — structural only: a term's first-use definition, a worked-example case label (e.g. `**On the unit circle.**`), or a single "Key takeaway" line per section. Never for mid-sentence emphasis on an ordinary word.
+- **Headings** — `##` and below are sentence case (`## The radius of convergence, formalized`), with named theorems capitalized as proper nouns (`## The Cauchy Integral Formula`). The page `<h1>` title uses Title Case, a separate convention — don't propagate it downward.
+
 ## Adding a visualization
 
 1. Drop the self-contained HTML file into `src/assets/visualizations/`
