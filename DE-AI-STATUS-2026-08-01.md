@@ -3,6 +3,10 @@
 **Written:** 2026-08-01
 **Companion to:** `DE-AI-BRIEF.md` (the prep) and `DE-AI-DECISIONS.md` (the triage). This file is the "where are we actually" check.
 
+> **Update, 2026-08-02.** Phase 1 (below) is actually done — Max ran a Claude Code/Opus session directly in this repo on 2026-08-01, ~2:09–2:52 PM PST, right after this file was written, and it never made it back into the assistant's tracking (robot log/activity log) because that session ran outside Cowork. Confirmed against git: `487f405` (README conventions + hero italic decided) and `9e920f1` (this file + the BRIEF correction) are both on `main`. The Lesson 8 Job A test also ran (`557deed`, branch `de-ai-lesson8-humanizer-test`) — independently re-verified 2026-08-02: build passes, `checkMathEscapes` clean, zero math/notation/proof-order changes, em-dashes 41→11, bold spans 48→38 (structural bold kept, mid-sentence emphasis cut). Sitting unmerged, pending Max's own read of the voice before it ships or extends to the other nine lessons. **"What still needs doing" #2 and #3 below are stale** — see this banner instead. Section 1 (Job A/Job B) and Phase 2/3 are still accurate.
+>
+> **Update, 2026-08-02 (later same day).** Merged. `de-ai-lesson8-humanizer-test` is on `main` as of commit `557deed` — clean fast-forward, one file (`src/lessons/08-conformal-mapping.md`), no other changes, exactly as expected. Build re-run after the merge: passes, `checkMathEscapes` clean, page renders. **Phase 1 is fully closed, no remaining steps.** The branch itself is stale now and can be deleted whenever convenient. Not pushed to `origin/deploy` — that's a separate decision Max hasn't made yet. Next up per the plan below is Phase 2 (Lessons 9/12/10/11, written to convention as they land) and, eventually, Phase 3 (Job A on the other nine lessons, then Job B).
+
 ---
 
 ## The short version
@@ -11,9 +15,9 @@ The de-AI job was always two jobs: how the site **looks** and how it **reads**.
 
 **The looks half is done.** Four commits, all merged to main and pushed to GitHub. Everything the audit called a real defect got fixed, plus the one big aesthetic change.
 
-**The reads half hasn't started.** Not one word of the ten lessons has been touched. This is the half that was flagged as the *bigger* problem, and it's the half a reader actually experiences.
+**The reads half is starting, not stalled.** Conventions are written, the italic call is made, and the Lesson 8 tool-pass test has run, checked out mechanically, been approved by Max, and is merged to `main`. Job A is proven on one lesson; the other nine and Job B (Max's own read-through) are what's left, per Phase 3 below.
 
-That's the whole status in one line: the stylesheet got audited twice and fixed; the writing has never been looked at once.
+That's the whole status in one line: the stylesheet got audited twice and fixed; the writing has conventions, a go/no-go test done, and is waiting on Max's read of one diff.
 
 ---
 
@@ -96,17 +100,15 @@ Unchanged since it was measured:
 
 Em-dash density is the most reliable text-level fingerprint of machine writing, and bold-marker overuse is close behind. Lesson 8 is an outlier on bold and is the natural test case.
 
-The prepared session (humanizer, Lesson 8 only, with a sample of your own writing for voice calibration) is written and ready in `DE-AI-BRIEF.md`. It has never been run.
+The prepared session (humanizer, Lesson 8 only, with a sample of your own writing for voice calibration) is written in `DE-AI-BRIEF.md` and has since been run, approved, and merged — see the 2026-08-02 banner at the top. The table above is the pre-Job-A baseline for all ten lessons; Lesson 8's numbers on `main` are now 11 em-dashes and 38 bold spans, not 41/48.
 
-### 2. The conventions were never written into the README
+### 2. ~~The conventions were never written into the README~~ — done 2026-08-02 update
 
-The brief's own instruction: decide em-dash policy, bold policy, and heading case, then write them into the site README so Lessons 9-12 conform as they land instead of getting retrofitted later.
+Written into `README.md`'s "Writing conventions" section (commit `487f405`, 2026-08-01): em-dashes budgeted ~1/250 words (measured density was ~1/45), bold restricted to structural use only, headings codified as already-consistent sentence case. Lesson 9 is next and unwritten — it lands conforming.
 
-Nothing was written. **Lesson 9 is next and unwritten**, so this is cheap now and expensive later.
+### 3. ~~Italic headline~~ — decided 2026-08-02 update
 
-### 3. Italic headline
-
-Deliberately left alone at your instruction. Still open. It's one reversible line — decide by looking at it both ways, not because a rule said so.
+Decided 2026-08-01 (commit `487f405`): shown both ways, went with roman. `font-style: italic` removed from `.hero h1` in `src/css/style.css`.
 
 ### 4. Two small things flagged and never resolved
 
@@ -149,15 +151,15 @@ Reminder from `CLAUDE.md`: **Aug 24 finishes the lessons, not the project.** Thi
 
 The collision to plan around: Lessons 9, 12, 10 and 11 still need to be taught and written, and a prose pass across every lesson is real work. Those compete for the same three weeks. The sequencing below protects the teaching.
 
-### Phase 1 — this week (before Lesson 9 gets written)
+### Phase 1 — this week (before Lesson 9 gets written) — **done 2026-08-01, confirmed 2026-08-02**
 
-**1. Set the prose conventions, write them into the README.** Under an hour. Three decisions: em-dash policy, bold policy, heading case. This is the highest-leverage item on the list purely because of timing. Set it now and Lessons 9-12 land already conforming. Skip it and four more lessons need the same retrofit as the first ten.
+**1. Set the prose conventions, write them into the README.** ✅ Done — `README.md`, commit `487f405`.
 
-**2. Run the Lesson 8 tool test (Job A).** One file only. Voice calibration from a sample of your writing first. Branch, review the full diff, nothing merges blind. This is a go/no-go on whether the tool is worth using at all, not a commitment to ten lessons.
+**2. Run the Lesson 8 tool test (Job A).** ✅ Run — branch `de-ai-lesson8-humanizer-test`, commit `557deed`. Mechanically verified 2026-08-02 (build passes, `checkMathEscapes` clean, no math/notation/proof-order changes, em-dashes 41→11, bold spans 48→38 with structural bold kept). **Approved by Max, 2026-08-02** — reviewed rendered side-by-side (both branches built through the real Eleventy/KaTeX pipeline, not just the raw markdown diff). Verdict: **go.** **Merged to `main` 2026-08-02** — clean fast-forward, re-verified after the merge (build passes, `checkMathEscapes` clean, page renders).
 
-**3. Decide the italic headline.** Five minutes. Look at it both ways and pick. Not a defect, just an open question.
+**3. Decide the italic headline.** ✅ Decided — roman, commit `487f405`.
 
-**Phase 1 exit condition:** conventions in the README, a Lesson 8 diff you've either approved or rejected, headline settled.
+**Phase 1 exit condition: fully closed 2026-08-02.** Conventions in the README ✅, headline settled ✅, Lesson 8 diff run, verified, approved, and merged to `main` ✅. Nothing left in Phase 1. Not pushed to `origin/deploy` — that's Max's call, separate from the merge.
 
 ### Phase 2 — Aug 1 to Aug 24, alongside teaching
 
