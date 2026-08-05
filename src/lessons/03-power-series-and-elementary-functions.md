@@ -8,25 +8,25 @@ description: "Power series take over: the exponential defined by its series, Eul
 
 # Lesson 3: Power Series & Elementary Functions
 
-$e^{i\pi}=-1$ is a familiar fact, usually justified via the polar-multiplication picture from Lesson 1 — rotate by $\pi$, land on $-1$. This lesson gets there a different way: from the power series definition of $e^z$ itself, which turns out to be the more fundamental route.
+$e^{i\pi}=-1$ is a familiar fact, usually justified via the polar-multiplication picture from Lesson 1: rotate by $\pi$, land on $-1$. This lesson gets there a different way: from the power series definition of $e^z$ itself, which turns out to be the more fundamental route.
 
 ## Convergence
 
 The complex exponential is defined the same way as its real counterpart, as a power series:
 $$e^z = \sum_{n=0}^\infty \frac{z^n}{n!}$$
-Applying the ratio test, the ratio of consecutive terms $\to 0$ as $n\to\infty$ for *any* $z$, so the radius of convergence is $R=\infty$ — $e^z$ is **entire** (holomorphic on all of $\mathbb{C}$). Contrast with $\sum n!\\,z^n$, whose ratio $\to\infty$: radius of convergence $R=0$, converging only at $z=0$.
+Applying the ratio test, the ratio of consecutive terms $\to 0$ as $n\to\infty$ for *any* $z$, so the radius of convergence is $R=\infty$: $e^z$ is **entire** (holomorphic on all of $\mathbb{C}$). Contrast with $\sum n!\\,z^n$, whose ratio $\to\infty$: radius of convergence $R=0$, converging only at $z=0$.
 
-But what does a complex series *converging* actually look like? The simplest testbed is the geometric series $\sum_{n=0}^\infty z^n$, radius of convergence exactly $1$ — and its partial sums can be watched directly:
+But what does a complex series *converging* actually look like? The simplest testbed is the geometric series $\sum_{n=0}^\infty z^n$, radius of convergence exactly $1$, and its partial sums can be watched directly:
 
 <iframe class="viz-embed" src="/assets/visualizations/03b-geometric-series-partial-sums.html?embed" title="Geometric series partial sums visualization"></iframe>
 
-Each partial sum $S_N = 1 + z + \dots + z^N$ is a point in the plane, and consecutive sums differ by one term $z^N$ — a step that rotates by $\arg z$ and rescales by $|z|$ every time. Inside the unit circle the steps shrink geometrically and the path spirals into $\frac{1}{1-z}$; outside, each step is longer than the last and the path escapes; on the circle itself the steps never shrink and the sums circle forever. That threshold — shrinking terms inside, growing terms outside — is what "radius of convergence" *means*, and the $\varepsilon$-disk overlay turns the definition of convergence into something you can find with a slider: for every $\varepsilon$ there's an $N$ past which the path never leaves the disk. (That definition gets its full treatment in [Lesson 5a](/lessons/05a-real-analysis-bridge/).)
+Each partial sum $S_N = 1 + z + \dots + z^N$ is a point in the plane, and consecutive sums differ by one term $z^N$, a step that rotates by $\arg z$ and rescales by $|z|$ every time. Inside the unit circle the steps shrink geometrically and the path spirals into $\frac{1}{1-z}$; outside, each step is longer than the last and the path escapes; on the circle itself the steps never shrink and the sums circle forever. That threshold (shrinking terms inside, growing terms outside) is what "radius of convergence" *means*, and the $\varepsilon$-disk overlay turns the definition of convergence into something you can find with a slider: for every $\varepsilon$ there's an $N$ past which the path never leaves the disk. (That definition gets its full treatment in [Lesson 5a](/lessons/05a-real-analysis-bridge/).)
 
 ## Euler's formula, derived rather than assumed
 
 Substitute $z=iy$ into the series and write out the first several terms of $e^{iy}$. Separating them by whether $i$'s power is even or odd — using $i^2=-1$, $i^3=-i$, $i^4=1,\dots$ — the even-indexed terms reassemble into $\cos y$'s Taylor series, and the odd-indexed terms (each carrying one factor of $i$) reassemble into $i\sin y$'s. That is,
 $$e^{iy} = \cos y + i\sin y.$$
-Euler's formula isn't a separate assumed identity — it's a *consequence* of the power series definition of $e^z$, which is exactly what resolves the gap the polar-multiplication picture leaves open.
+Euler's formula isn't a separate assumed identity: it's a *consequence* of the power series definition of $e^z$, which is exactly what resolves the gap the polar-multiplication picture leaves open.
 
 ## Cauchy-Riemann check for $e^z$
 
@@ -42,20 +42,20 @@ Once $e^z$ is defined, $\cos z$ and $\sin z$ follow by inverting Euler's formula
 $$\cos z = \frac{e^{iz}+e^{-iz}}{2}, \qquad \sin z = \frac{e^{iz}-e^{-iz}}{2i}$$
 These are genuinely different from their real counterparts in one striking way: they're **unbounded**. Take $z=i$:
 $$\cos(i) = \frac{e^{i\cdot i}+e^{-i\cdot i}}{2} = \frac{e^{-1}+e^{1}}{2} \approx 1.543$$
-$\cos(i)>1$ — impossible for real cosine, perfectly fine for the complex version, since the usual $[-1,1]$ bound was a fact about restricting to the real line, not a fact about the function itself.
+$\cos(i)>1$: impossible for real cosine, perfectly fine for the complex version, since the usual $[-1,1]$ bound was a fact about restricting to the real line, not a fact about the function itself.
 
-> **Key takeaway:** $\cos z = \frac{e^{iz}+e^{-iz}}{2}$, $\sin z = \frac{e^{iz}-e^{-iz}}{2i}$ — unbounded on $\mathbb{C}$, e.g. $\cos(i)=\frac{e^{-1}+e}{2}>1$.
+> **Key takeaway:** $\cos z = \frac{e^{iz}+e^{-iz}}{2}$, $\sin z = \frac{e^{iz}-e^{-iz}}{2i}$, unbounded on $\mathbb{C}$, e.g. $\cos(i)=\frac{e^{-1}+e}{2}>1$.
 
 ## The complex logarithm and branch cuts
 
-Defining $\log z$ means solving $e^w=z$ for $w$. Writing $z=re^{i\theta}$ and using the same "match in polar form" reasoning as the roots-of-unity derivation in Lesson 1: $e^w=z$ needs $w=\ln r + i\theta$, but since $\theta$ is only defined mod $2\pi$, so is $w$ — there are infinitely many valid values of $w$, differing by $2\pi ik$:
+Defining $\log z$ means solving $e^w=z$ for $w$. Writing $z=re^{i\theta}$ and using the same "match in polar form" reasoning as the roots-of-unity derivation in Lesson 1: $e^w=z$ needs $w=\ln r + i\theta$, but since $\theta$ is only defined mod $2\pi$, so is $w$: there are infinitely many valid values of $w$, differing by $2\pi ik$:
 $$\log z = \ln|z| + i(\theta+2\pi k), \qquad k\in\mathbb{Z}$$
 $\log z$ is genuinely **multivalued**. Picking the principal argument gives the **principal branch**,
 $$\operatorname{Log} z = \ln|z| + i\\,\operatorname{Arg}(z), \qquad \operatorname{Arg}(z)\in(-\pi,\pi].$$
 
-This forces a discontinuity. As $z$ crosses the negative real axis, $\operatorname{Arg}(z)$ jumps from just under $\pi$ to just above $-\pi$ — a jump of nearly $2\pi$ in an otherwise continuous function. The ray where this happens (the negative real axis, for the principal branch) is called a **branch cut**: removing it from the domain is exactly what makes $\operatorname{Log}$ single-valued and continuous everywhere else.
+This forces a discontinuity. As $z$ crosses the negative real axis, $\operatorname{Arg}(z)$ jumps from just under $\pi$ to just above $-\pi$, a jump of nearly $2\pi$ in an otherwise continuous function. The ray where this happens (the negative real axis, for the principal branch) is called a **branch cut**: removing it from the domain is exactly what makes $\operatorname{Log}$ single-valued and continuous everywhere else.
 
-The four views below make each piece of that story visible. As you scroll, the pinned demo switches views to follow the argument — and every view stays fully interactive (drag the probe, spin the surface) the whole way.
+The four views below make each piece of that story visible. As you scroll, the pinned demo switches views to follow the argument, and every view stays fully interactive (drag the probe, spin the surface) the whole way.
 
 <section class="scrolly scrolly-static" data-scrolly>
   <div class="scrolly-figure">
@@ -64,27 +64,27 @@ The four views below make each piece of that story visible. As you scroll, the p
   <div class="scrolly-steps">
     <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":1}'>
       <span class="step-tag">1 · the seam, seen from above</span>
-      <p>Domain coloring of $\operatorname{Log} z$: hue is $\operatorname{Arg} z$, brightness is $\ln|z|$. Everywhere else the hues blend smoothly — but along the negative real axis the color snaps straight to its opposite. That hard seam <em>is</em> the discontinuity forced by choosing $\operatorname{Arg}(z)\in(-\pi,\pi]$.</p>
+      <p>Domain coloring of $\operatorname{Log} z$: hue is $\operatorname{Arg} z$, brightness is $\ln|z|$. Everywhere else the hues blend smoothly, but along the negative real axis the color snaps straight to its opposite. That hard seam <em>is</em> the discontinuity forced by choosing $\operatorname{Arg}(z)\in(-\pi,\pi]$.</p>
     </div>
     <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":2,"z":[1.4,1.0]}'>
       <span class="step-tag">2 · one point, infinitely many logs</span>
-      <p>Probe a generic point. The readout lists three of the infinitely many values of $\log z$ — the $k=-1,0,1$ rungs of a ladder spaced exactly $2\pi i$ apart. The principal value $\operatorname{Log} z$ is just the $k=0$ rung. Drag the point yourself; the ladder follows.</p>
+      <p>Probe a generic point. The readout lists three of the infinitely many values of $\log z$: the $k=-1,0,1$ rungs of a ladder spaced exactly $2\pi i$ apart. The principal value $\operatorname{Log} z$ is just the $k=0$ rung. Drag the point yourself; the ladder follows.</p>
     </div>
     <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":2,"z":[-1.8,0.12]}'>
       <span class="step-tag">3 · sneak up on the cut</span>
-      <p>Now the probe sits just <em>above</em> the negative real axis: $\operatorname{Arg} z \approx +\pi$. Drag it a hair downward, across the axis, and watch the readout: $\operatorname{Arg}$ flips to $\approx -\pi$ — a jump of nearly $2\pi$ from an infinitesimal move. Every $k$-rung shifts by one. This is what "discontinuous across the cut" means concretely.</p>
+      <p>Now the probe sits just <em>above</em> the negative real axis: $\operatorname{Arg} z \approx +\pi$. Drag it a hair downward, across the axis, and watch the readout: $\operatorname{Arg}$ flips to $\approx -\pi$, a jump of nearly $2\pi$ from an infinitesimal move. Every $k$-rung shifts by one. This is what "discontinuous across the cut" means concretely.</p>
     </div>
     <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":3,"play":true}'>
       <span class="step-tag">4 · walk the loop</span>
-      <p>A point circles the origin counterclockwise while $\operatorname{Arg} z$ is plotted against the angle traveled. It climbs smoothly toward $+\pi$… and the instant the walker crosses the negative real axis it snaps back to $-\pi$. No single-valued, continuous choice of argument can survive a full loop around $0$ — <em>that forced jump is why the cut exists</em>.</p>
+      <p>A point circles the origin counterclockwise while $\operatorname{Arg} z$ is plotted against the angle traveled. It climbs smoothly toward $+\pi$… and the instant the walker crosses the negative real axis it snaps back to $-\pi$. No single-valued, continuous choice of argument can survive a full loop around $0$: <em>that forced jump is why the cut exists</em>.</p>
     </div>
     <div class="scrolly-step" data-state='{"type":"logbranch-state","panel":4}'>
       <span class="step-tag">5 · the honest picture</span>
-      <p>Let the argument keep climbing instead of resetting and the graph becomes a helicoid — the Riemann surface of $\log$. Up here the logarithm is perfectly continuous; each full turn is another sheet, another $k$. The branch cut is nothing intrinsic: it's just the scissors-line where one sheet is cut free and flattened back onto the plane. (Drag to spin it.)</p>
+      <p>Let the argument keep climbing instead of resetting and the graph becomes a helicoid, the Riemann surface of $\log$. Up here the logarithm is perfectly continuous; each full turn is another sheet, another $k$. The branch cut is nothing intrinsic: it's just the scissors-line where one sheet is cut free and flattened back onto the plane. (Drag to spin it.)</p>
     </div>
   </div>
 </section>
 
-Every full loop around the origin shifts $\operatorname{Arg}(z)$ by a full $2\pi$ — the multivaluedness of $\log z$ made visible — and the branch cut is precisely the ray where that walk gets interrupted to force a single, consistent choice.
+Every full loop around the origin shifts $\operatorname{Arg}(z)$ by a full $2\pi$ (the multivaluedness of $\log z$ made visible), and the branch cut is precisely the ray where that walk gets interrupted to force a single, consistent choice.
 
-> **Key takeaways:** $\log z$: if $e^w=z$, $w=\ln|z|+i(\theta+2\pi k)$, $k\in\mathbb{Z}$ — multivalued. Principal branch: $\operatorname{Log}z=\ln|z|+i\operatorname{Arg}(z)$, $\operatorname{Arg}(z)\in(-\pi,\pi]$. Branch cut: the ray (negative real axis, for the principal branch) where $\operatorname{Arg}(z)$ — and hence $\operatorname{Log}z$ — is discontinuous.
+> **Key takeaways:** $\log z$: if $e^w=z$, $w=\ln|z|+i(\theta+2\pi k)$, $k\in\mathbb{Z}$, multivalued. Principal branch: $\operatorname{Log}z=\ln|z|+i\operatorname{Arg}(z)$, $\operatorname{Arg}(z)\in(-\pi,\pi]$. Branch cut: the ray (negative real axis, for the principal branch) where $\operatorname{Arg}(z)$ (and hence $\operatorname{Log}z$) is discontinuous.
