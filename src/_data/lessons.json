@@ -68,5 +68,12 @@
     "title": "Conformal Mapping & Möbius Transformations",
     "hue": 292,
     "description": "What complex functions *do* to shapes. Möbius transformations send circles and lines to circles and lines, are conformal everywhere, and are pinned down by three points — building to the Riemann Mapping Theorem, where nearly every simply connected region turns out to be the unit disk in disguise."
+  },
+  {
+    "num": "9",
+    "slug": "09-gamma-function",
+    "title": "The Gamma Function",
+    "hue": 25,
+    "description": "An explicit, computable extension of the factorial to almost all of the complex plane — built from one integration by parts, one Gaussian integral, and an algebraic chain that reaches every non-integer point in finitely many steps, ending in a reflection formula that ties Γ to sine itself."
   }
 ]
