@@ -30,6 +30,19 @@ Set 2026-08-01, after a prose audit found the lessons running well past normal d
 - **Bold** — structural only: a term's first-use definition, a worked-example case label (e.g. `**On the unit circle.**`), or a single "Key takeaway" line per section. Never for mid-sentence emphasis on an ordinary word.
 - **Headings** — `##` and below are sentence case (`## The radius of convergence, formalized`), with named theorems capitalized as proper nouns (`## The Cauchy Integral Formula`). The page `<h1>` title uses Title Case, a separate convention — don't propagate it downward.
 
+## Verifying a content pass before shipping
+
+Added 2026-08-05, after a review caught what a plain build check missed. On 2026-08-04, a Job A humanizer pass (em-dash/bold trim) across nine lessons plus a new lesson port both showed `npm run build` clean and `checkMathEscapes` clean — and still shipped with 6 prose regressions (em-dashes replaced by commas where the dash was carrying real sentence-boundary or bracketing work) and 1 real math error (a wrong exponent inside the one sentence warning the reader to be careful with that exact exponent). Both were caught only by a deeper independent check before merging, not by the build.
+
+**Before trusting any pass over lesson content — a humanizer run, a port, an edit — whether it's this session's own output or a handoff from another one:**
+
+1. **Diff every math span, not just skim it.** Extract every `$...$` / `$$...$$` span before and after; confirm byte-identical and same-order. A prose pass should never touch math — if a span changed, that's the first thing to look at, not the last.
+2. **Render the actual page, not just the build.** `npm run build` passing (including `checkMathEscapes`) only proves the *markup* is well-formed — KaTeX renders client-side, so it proves nothing about whether the math actually displays. Load each changed lesson page and confirm: 0 `katex-error` elements, 0 leftover unrendered `$`, and the rendered `.katex` count matches the source span count.
+3. **Read prose changes for meaning, not just style.** An em-dash-to-comma swap can silently turn a bracketed aside into a comma splice, or bury an either/or inside a four-comma run. Skimming for "does this still sound like a sentence" isn't enough — read what each changed sentence is actually claiming.
+4. **Independently re-derive anything reported as a number** (em-dash counts, bold-span counts, verification claims from a handoff) rather than trusting the report. The report itself can be wrong about what it checked.
+
+This isn't required for every tiny edit — it's for any pass that touches many lines or many files, or anything ported from teaching notes into public-facing prose, where an error would ship silently to a real reader.
+
 ## Adding a visualization
 
 1. Drop the self-contained HTML file into `src/assets/visualizations/`
