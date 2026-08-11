@@ -75,5 +75,19 @@
     "title": "The Gamma Function",
     "hue": 25,
     "description": "An explicit, computable extension of the factorial to almost all of the complex plane — built from one integration by parts, one Gaussian integral, and an algebraic chain that reaches every non-integer point in finitely many steps, ending in a reflection formula that ties Γ to sine itself."
+  },
+  {
+    "num": "10",
+    "slug": "10-riemann-zeta-and-the-riemann-hypothesis",
+    "title": "The Riemann Zeta Function & the Riemann Hypothesis",
+    "hue": 77,
+    "description": "A series that converges nowhere useful, extended to the whole plane and made to say something about prime numbers. Basel's problem falls out of a residue computation, the Euler product links the series to the primes, and the whole apparatus builds to a precise statement of what the Riemann Hypothesis actually claims."
+  },
+  {
+    "num": "12",
+    "slug": "12-branch-cuts-and-the-keyhole-contour",
+    "title": "Branch Cuts & the Keyhole Contour",
+    "hue": 122,
+    "description": "Lesson 7's semicircular contour rested on three quiet assumptions. This one breaks single-valuedness: branch cuts built from the ground up, the keyhole contour that turns the branch jump into the answer, and — finally — the reflection formula Lesson 9 had to leave open."
   }
 ]
