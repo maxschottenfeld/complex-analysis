@@ -96,6 +96,6 @@ It's worth checking that CR really does force agreement along *every* direction,
 
 It falls straight out of CR: differentiate $u_x=v_y$ with respect to $x$ and $u_y=-v_x$ with respect to $y$, then add:
 $$u_{xx}+u_{yy} = v_{yx} - v_{xy} = 0$$
-(assuming mixed partials commute). The same argument applies to $v$. So the real and imaginary parts of *any* holomorphic function are automatically harmonic. They're called **harmonic conjugates** of each other.
+(assuming mixed partials commute). The same argument applies to $v$. So the real and imaginary parts of *any* holomorphic function are automatically harmonic. Given holomorphic $f=u+iv$, $v$ is called **a harmonic conjugate of** $u$ — a one-way relation, not a mutual one. Swapping them generally breaks it: $v+iu$ holomorphic would require $u_y=v_x$, while CR for $u+iv$ gives $u_y=-v_x$. What does hold is that $-u$ is a harmonic conjugate of $v$, since $v-iu=-i(u+iv)$.
 
 This is the seed of a genuinely useful bridge: complex analysis becomes a tool for solving Laplace's equation, one that pays off directly when conformal mapping enters later in the syllabus.

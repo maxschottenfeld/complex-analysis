@@ -77,7 +77,7 @@ which leaves a Gaussian. Using $\int_{-\infty}^{\infty}e^{-ax^2}\\,dx=\sqrt{\pi/
 
 $$n! \sim \sqrt{2\pi n}\left(\frac ne\right)^n$$
 
-Numerically the relative errors at $n=5,10,20,100$ are $1.65\times10^{-2}$, $8.30\times10^{-3}$, $4.16\times10^{-3}$, and $8.33\times10^{-4}$. Each matches $\frac1{12n}$ to three digits, which is the next term in the full Stirling series.
+Numerically the relative errors at $n=5,10,20,100$ are $1.65\times10^{-2}$, $8.30\times10^{-3}$, $4.16\times10^{-3}$, and $8.33\times10^{-4}$. Each sits within about 1% of $\frac1{12n}$ — two significant digits at $n=5$, three only by $n=100$ — and $\frac1{12n}$ is the next term in the full Stirling series. The gap that remains is the term after that.
 
 Two things were quietly assumed and are worth naming rather than skating past. Extending the range from $(0,\infty)$ to $(-\infty,\infty)$ and discarding the higher Taylor terms are both real bounding arguments, not bookkeeping. And $\sim$ means the *ratio* tends to $1$, not the difference: the absolute gap between $n!$ and its approximation grows without bound even while the relative error shrinks to nothing.
 

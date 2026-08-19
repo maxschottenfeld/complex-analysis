@@ -46,7 +46,7 @@ Underneath it all sits the **completeness axiom**: every nonempty subset of $\ma
 
 Every "$R\to\infty$" and "$\varepsilon\to0$" move in earlier lessons was leaning on a definition I'd never written down:
 
-$$a_n\to L \quad\text{means}\quad \forall\varepsilon>0\ \exists N\ \forall n>N:\ |a_n-L|<\varepsilon.$$
+$$a_n\to L \quad\text{means}\quad \forall\varepsilon>0\ \exists N\ \forall n\ge N:\ |a_n-L|<\varepsilon.$$
 
 $\varepsilon$ is a challenge ("get within this tolerance"); $N$ is the response — one fixed cutoff, depending on $\varepsilon$, past which every term complies. The index $n$ walks; the post $N$ stands still.
 
@@ -86,7 +86,7 @@ The continuous version swaps $\delta$ into $N$'s role: $f$ is **continuous at $c
 
 And the fact tying this section to the last: **a bounded monotone sequence converges** — increasing and bounded above means it converges to the supremum of its terms. Completeness manufactures the limit; this is the engine that makes series converge below.
 
-> **Key takeaway:** $a_n\to L$ iff $\forall\varepsilon>0\ \exists N\ \forall n>N: |a_n-L|<\varepsilon$, "for every $\varepsilon$" rules out oscillation. Bounded monotone sequences converge: completeness is what makes limits exist.
+> **Key takeaway:** $a_n\to L$ iff $\forall\varepsilon>0\ \exists N\ \forall n\ge N: |a_n-L|<\varepsilon$, "for every $\varepsilon$" rules out oscillation. Bounded monotone sequences converge: completeness is what makes limits exist.
 
 ## The triangle inequality, three ways
 

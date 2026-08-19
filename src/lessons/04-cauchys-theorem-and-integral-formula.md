@@ -17,7 +17,7 @@ $$\int_\gamma f(z)\\,dz := \int_a^b f(\gamma(t))\\,\gamma'(t)\\,dt$$
 
 Two worked examples on the unit circle, $\gamma(t)=e^{it}$, $t\in[0,2\pi]$:
 
-**$\oint_{|z|=1} z\\,dz = 0$.** With $z=e^{it}$, $dz=ie^{it}dt$, the integral is $\int_0^{2\pi} e^{it}\cdot ie^{it}\\,dt = i\int_0^{2\pi}e^{2it}\\,dt = 0$, since $e^{2it}$ completes exactly one full cycle.
+**$\oint_{|z|=1} z\\,dz = 0$.** With $z=e^{it}$, $dz=ie^{it}dt$, the integral is $\int_0^{2\pi} e^{it}\cdot ie^{it}\\,dt = i\int_0^{2\pi}e^{2it}\\,dt = 0$, since $e^{2it}$ runs through two full cycles over $[0,2\pi]$, and a whole number of cycles integrates to zero.
 
 **$\oint_{|z|=1}\dfrac{dz}{z}=2\pi i$.** Same setup: $\int_0^{2\pi}\frac{ie^{it}}{e^{it}}dt = \int_0^{2\pi} i\\,dt = 2\pi i$. This one is nonzero because the integrand has a singularity at $z=0$, and that singularity sits *inside* the contour. It doesn't need to touch the contour itself, only to be enclosed by it. That distinction (inside the region a contour bounds, versus on the contour) turns out to matter enormously.
 
