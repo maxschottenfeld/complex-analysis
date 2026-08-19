@@ -95,6 +95,6 @@
     "slug": "12-branch-cuts-and-the-keyhole-contour",
     "title": "Branch Cuts & the Keyhole Contour",
     "hue": 122,
-    "description": "Lesson 7's semicircular contour rested on three quiet assumptions. This one breaks single-valuedness: branch cuts built from the ground up, the keyhole contour that turns the branch jump into the answer, and — finally — the reflection formula Lesson 9 had to leave open."
+    "description": "Lesson 7's semicircular contour rested on three quiet assumptions. This one breaks single-valuedness: branch cuts built from the ground up, the keyhole contour that turns the branch jump into the answer, and the integral that Lesson 9's reflection formula imports from outside."
   }
 ]

@@ -2,7 +2,7 @@
 layout: base.njk
 hue: 122
 title: "Lesson 12 — Branch Cuts & the Keyhole Contour"
-description: "Lesson 7's semicircular contour rested on three quiet assumptions. This lesson breaks the second one — single-valuedness — and builds the branch cut and the keyhole contour from the ground up, ending by finally proving the reflection formula that Lesson 9 had to leave open."
+description: "Lesson 7's semicircular contour rested on three quiet assumptions. This lesson breaks the second one — single-valuedness — and builds the branch cut and the keyhole contour from the ground up — the contour that supplies the one integral Lesson 9's reflection formula imports from outside."
 ---
 
 # Lesson 12: Branch Cuts & the Keyhole Contour
@@ -75,36 +75,16 @@ Checking against the running instance: at $a=\frac12$, the right side of the res
 
 $$\int_0^\infty\frac{x^{-1/2}}{1+x}\\,dx=\pi$$
 
-a real integral that real-variable calculus alone does not reach.
+For general $a\in(0,1)$ this is a family of real integrals that real-variable calculus alone does not reach. The $a=\frac12$ instance shown here is an exception rather than the evidence: $x=u^2$ turns it into $2\int_0^\infty\frac{du}{1+u^2}$, which is elementary. The keyhole earns its keep on the rest of the family, which is what the reflection formula needs.
 
 > **Key takeaway:** the keyhole contour puts the cut where the integral lives, and the branch jump (the very thing that broke single-valuedness) becomes the factor $\left(1-e^{2\pi ia}\right)$ that makes the two segments add instead of cancel.
 
 ## The reflection formula
 
-Lesson 9 built the Gamma function's meromorphic continuation and located every pole, then stopped short of one result: the reflection formula $\Gamma(s)\Gamma(1-s)=\pi/\sin(\pi s)$, whose standard proof needs exactly the machinery above. Notice that $\frac{\pi}{\sin\pi a}$, the answer just computed, is already the right-hand side of it. What remains is a bridge from that integral to a product of two Gammas.
+The answer just computed, $\frac{\pi}{\sin\pi a}$, is already the right-hand side of the Gamma function's reflection formula, $\Gamma(s)\Gamma(1-s)=\frac{\pi}{\sin(\pi s)}$. That is not a coincidence, and it is the reason this contour was worth building.
 
-**The Beta function supplies the bridge.** Define
+The bridge from this integral to a product of two Gammas runs through the Beta function, and [Lesson 9](/lessons/09-gamma-function/) walks it in full: the substitution $t=\frac{x}{1+x}$ turns $B(p,1-p)$ into exactly the keyhole integral above, the Beta–Gamma relation converts that into $\Gamma(p)\Gamma(1-p)$, and the identity theorem carries the result off the strip $0<p<1$ to all of $\mathbb{C}\setminus\mathbb{Z}$.
 
-$$B(p,q)=\int_0^1t^{p-1}(1-t)^{q-1}\\,dt$$
+The one ingredient Lesson 9 could not produce for itself is the keyhole integral. That is this lesson.
 
-Substituting $t=\frac{x}{1+x}$, so that $1-t=\frac1{1+x}$ and $dt=\frac{dx}{(1+x)^2}$, and collecting the powers of $x$ and of $(1+x)$ separately before combining them:
-
-$$B(p,1-p)=\int_0^\infty\frac{x^{p-1}}{1+x}\\,dx=\frac{\pi}{\sin(\pi p)}$$
-
-which is the keyhole integral with $a=p$.
-
-**Relating Beta to Gamma.** Write $\Gamma(p)\Gamma(q)$ as a double integral over the first quadrant and change variables to $s=u+v$ and $t=\frac{u}{u+v}$, whose Jacobian is $s$. The $s$-dependence and $t$-dependence separate cleanly, leaving
-
-$$\Gamma(p)\Gamma(q)=\Gamma(p+q)\cdot B(p,q) \\;\Longrightarrow\\; B(p,q)=\frac{\Gamma(p)\Gamma(q)}{\Gamma(p+q)}$$
-
-**Assembly.** Set $q=1-p$, so $\Gamma(p+q)=\Gamma(1)=1$, and the two expressions for $B(p,1-p)$ meet:
-
-$$\Gamma(p)\Gamma(1-p)=\frac{\pi}{\sin(\pi p)}, \qquad 0<p<1$$
-
-**Extending past the strip.** The identity theorem carries this to all $s\in\mathbb{C}\setminus\mathbb{Z}$, and it is worth being precise about what the theorem is and is not doing. It is not needed for the equality on the strip: nothing in the derivation above ever used the fact that $p$ is real, so the strip-equality stands on its own. The theorem's only job is the extension *past* the strip: both sides are holomorphic off the integers and agree on a set with an accumulation point, so they agree everywhere they are both defined.
-
-$$\boxed{\Gamma(s)\Gamma(1-s)=\frac{\pi}{\sin(\pi s)}}$$
-
-**Sanity check.** At $s=\tfrac12$ the formula gives $\Gamma(1/2)^2=\pi/\sin(\pi/2)=\pi$, so $\Gamma(1/2)=\sqrt\pi$, matching the value Lesson 9 obtained by an entirely independent route, squaring a Gaussian integral and converting to polar coordinates. Two unrelated derivations landing on the same number is the cheapest real check available, and it passes.
-
-> **Key takeaway:** the keyhole integral *is* the reflection formula's right-hand side; the Beta function bridges it to $\Gamma(p)\Gamma(1-p)$, and the identity theorem extends the result off the strip. This completes the one result Lesson 9 had to leave open.
+> **Key takeaway:** the keyhole integral *is* the right-hand side of the reflection formula. Lesson 9 builds the Beta bridge between the two; the keyhole contour is what makes the far end of that bridge computable.
