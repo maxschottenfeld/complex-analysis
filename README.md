@@ -20,7 +20,15 @@ KaTeX runs client-side, *after* markdown-it has already processed the page — a
 - Thin space: write `\\,`, never `\,` (which renders as a literal comma)
 - Matrix row breaks: write `\\\\`, never `\\`
 
-The build fails with a file:line pointer if one of these sneaks in (see `checkMathEscapes` in `.eleventy.js`).
+Markdown also claims one character that has nothing to do with backslashes, and it fails the same way:
+
+- Superscript star: write `\ast`, never a bare `*` (as in `z^*`)
+
+That one is **emphasis**, not backslash-stripping. Markdown pairs the asterisks, so two starred quantities in the same paragraph consume each other and break *both* math spans at once. Found 2026-08-18 porting Lesson 11, which is the first lesson to use starred notation: 13 occurrences, a completely clean build, and 121 rendered spans against 123 in source.
+
+The build fails with a file:line pointer if any of these sneak in (see `checkMathEscapes` in `.eleventy.js`). The asterisk scan runs inside math spans only, since `*` is legal in prose.
+
+**A clean build is necessary and not sufficient.** Every rule here is a static scan of the markdown; KaTeX itself runs in the browser. Only the render check in the next section can tell you whether the math actually displayed, and the Lesson 11 case shipped a green build with two broken formulas.
 
 ## Writing conventions
 

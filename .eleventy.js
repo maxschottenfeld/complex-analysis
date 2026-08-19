@@ -19,24 +19,49 @@ const MATH_ESCAPE_PATTERNS = [
   { re: /(?<!\\)\\\\(?=\s|$)/, fix: "row breaks need four: \\\\\\\\" },
 ];
 
+// A SECOND, different failure with the same symptom, found 2026-08-18 porting
+// Lesson 11. The patterns above are all backslash-stripping. This one is
+// markdown *emphasis*: a bare `*` inside a math span (e.g. `z^*` for a critical
+// point) is claimed by markdown-it before KaTeX ever runs, and because emphasis
+// needs a pair, two asterisks in the same paragraph take each other out and
+// break BOTH math spans. Lesson 11 shipped 121 rendered spans against 123 in
+// source and the build was completely clean, because none of the rules above
+// look for it. Write \ast instead.
+//
+// This cannot be checked line-by-line like the others: `*` is legal and common
+// in prose, so the scan has to run inside math spans only.
+const MATH_SPAN_RE = /\$\$[\s\S]*?\$\$|(?<!\$)\$(?!\$)[\s\S]*?(?<!\$)\$(?!\$)/g;
+const BARE_ASTERISK_RE = /(?<!\\)\*/;
+
 function checkMathEscapes() {
   const dirs = [path.join(__dirname, "src"), path.join(__dirname, "src", "lessons")];
   const problems = [];
   for (const dir of dirs) {
     for (const file of fs.readdirSync(dir).filter(f => f.endsWith(".md"))) {
       const rel = path.relative(__dirname, path.join(dir, file));
-      const lines = fs.readFileSync(path.join(dir, file), "utf8").split("\n");
-      lines.forEach((line, i) => {
+      const src = fs.readFileSync(path.join(dir, file), "utf8");
+
+      src.split("\n").forEach((line, i) => {
         for (const { re, fix } of MATH_ESCAPE_PATTERNS) {
           const m = line.match(re);
           if (m) problems.push(`  ${rel}:${i + 1} — "${m[0]}" (${fix})`);
         }
       });
+
+      for (const m of src.matchAll(MATH_SPAN_RE)) {
+        if (!BARE_ASTERISK_RE.test(m[0])) continue;
+        const line = src.slice(0, m.index).split("\n").length;
+        const snippet = m[0].replace(/\s+/g, " ").slice(0, 60);
+        problems.push(
+          `  ${rel}:${line} — bare "*" inside math: "${snippet}" ` +
+          `(markdown eats it as emphasis; write \\ast)`
+        );
+      }
     }
   }
   if (problems.length) {
     throw new Error(
-      "Single-escaped math sequences found — markdown-it will strip the backslash before KaTeX runs:\n" +
+      "Math that markdown-it will damage before KaTeX runs:\n" +
       problems.join("\n")
     );
   }
