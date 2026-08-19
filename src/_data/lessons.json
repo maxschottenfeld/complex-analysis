@@ -84,6 +84,13 @@
     "description": "A series that converges nowhere useful, extended to the whole plane and made to say something about prime numbers. Basel's problem falls out of a residue computation, the Euler product links the series to the primes, and the whole apparatus builds to a precise statement of what the Riemann Hypothesis actually claims."
   },
   {
+    "num": "11",
+    "slug": "11-saddle-point-and-generating-functions",
+    "title": "Saddle-Point Method & Generating Functions",
+    "hue": 165,
+    "description": "Every previous lesson used a series to understand a function. This one runs the machinery backwards: a sequence encoded as a function, its nearest singularity read off as a growth rate, and Stirling's formula derived twice over, once along the real line and once through a saddle point in the complex plane."
+  },
+  {
     "num": "12",
     "slug": "12-branch-cuts-and-the-keyhole-contour",
     "title": "Branch Cuts & the Keyhole Contour",
