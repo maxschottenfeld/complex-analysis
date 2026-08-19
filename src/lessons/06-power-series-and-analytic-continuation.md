@@ -65,13 +65,13 @@ Play with the toy instance directly: drag $z$, watch $g(z)$ track through the ou
 
 ## The identity theorem
 
-If two holomorphic functions agree on a set with an accumulation point (a point every neighborhood of which contains another point of the set), do they agree everywhere? Set $F=f-h$ and ask the same question of $F$'s zeros instead.
+If two holomorphic functions agree on a set with an accumulation point *in the domain* (a point every neighborhood of which contains another point of the set), do they agree everywhere? Set $F=f-h$ and ask the same question of $F$'s zeros instead.
 
 Since zeros of $F$ accumulate at some point $p$, there's a sequence $z_n\to p$ (each $z_n\ne p$) with $F(z_n)=0$; $F$ is continuous, so $F(p)=\lim F(z_n)=0$ too. Apply the isolated-zeros dichotomy to $F$ at $p$: either $F\equiv0$ on a whole disk around $p$, or $p$ is an isolated zero. Suppose the second, for contradiction: the Isolated Zeros Theorem then guarantees a punctured disk around $p$ with no other zeros in it. But $p$ being an accumulation point means *every* neighborhood of $p$, including that exact punctured disk, contains another zero. Contradiction, so $F\equiv0$ on a whole disk around $p$, not merely at the point.
 
 **Spreading the zero set to the whole domain.** Since the domain is connected, any two points $p,q$ in it can be joined by a continuous path; cover the path with a chain of overlapping disks small enough that $F$ is holomorphic on each. $F\equiv0$ on the first disk, centered at $p$. Pick the next disk's center $z_1$ inside the first disk. Since the whole first disk is zero, $z_1$ is completely surrounded by zeros of $F$, making it an accumulation point of zeros for free. So $z_1$ can't be an isolated zero: the same dichotomy forces $F\equiv0$ on the *entire* second disk. Repeat along the chain to $q$. Since $q$ was arbitrary, $F\equiv0$ on the whole domain: $f\equiv h$.
 
-> **Key takeaway:** **Identity theorem:** if $f,h$ are holomorphic on a connected domain and agree on a set with an accumulation point, $f\equiv h$ on that whole domain (not beyond it, nothing in the argument ever leaves it).
+> **Key takeaway:** **Identity theorem:** if $f,h$ are holomorphic on a connected domain and agree on a set with an accumulation point **that lies in the domain**, $f\equiv h$ on that whole domain (not beyond it, nothing in the argument ever leaves it).
 
 **Uniqueness of analytic continuation.** If a holomorphic extension of $f$ to a larger connected domain exists, it is the *only* one. Suppose $h_1,h_2$ both extend $f$ to a larger connected domain $\Omega'\supseteq\Omega$. Let $H=h_1-h_2$; both agree with $f$ on $\Omega$, so $H\equiv0$ there, and $\Omega$, being open, trivially has an accumulation point (every point of an open set is surrounded entirely by other points of it). The identity theorem then forces $H\equiv0$ on all of $\Omega'$: $h_1\equiv h_2$.
 
