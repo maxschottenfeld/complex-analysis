@@ -1,4 +1,5 @@
-/* Scroll-driven visualization sections.
+/* Scroll-driven visualization sections, plus the sidebar-hide watch for any
+ * wide-breakout content on the page (see the wideEmbeds block below).
  *
  * Markup contract (see lesson 02 for the pilot):
  *   <section class="scrolly scrolly-static" data-scrolly>
@@ -31,24 +32,35 @@
   "use strict";
 
   const sections = document.querySelectorAll("[data-scrolly]");
-  if (!sections.length) return;
+  // .viz-embed-wide-wrap breaks out to the same wide column as a pinned
+  // scrolly figure and sits in the same screen region as the fixed sidebar
+  // below — found 2026-08-20: every lesson that ships one (09, 11, plus
+  // 01 and 08) has zero [data-scrolly] sections, so the early return above
+  // used to bail out before the sidebar-hide observer was even built, and
+  // the sidebar sat on top of the embed for the whole page. Watching both
+  // kinds together is what actually matches the visual claim the class
+  // name makes: something wide is on screen right now.
+  const wideEmbeds = document.querySelectorAll(".viz-embed-wide-wrap");
+  if (!sections.length && !wideEmbeds.length) return;
 
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   if (!("IntersectionObserver" in window)) return;
 
-  // The "on this page" tracker card floats via position:sticky/fixed at
-  // wide viewports and visually overlaps the pinned scrolly figure's
-  // screen region — hide it for as long as any scrolly section is on
-  // screen, independent of the per-step observer below.
+  // The "on this page" tracker card floats via position:fixed at wide
+  // viewports and visually overlaps anything that breaks out past the
+  // 760px prose column — the pinned scrolly figure and a standalone wide
+  // viz embed both do. Hide it for as long as either kind is on screen,
+  // independent of the per-step observer below.
   const activeSections = new Set();
   const visibilityIO = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (entry.isIntersecting) activeSections.add(entry.target);
       else activeSections.delete(entry.target);
     });
-    document.body.classList.toggle("scrolly-active", activeSections.size > 0);
+    document.body.classList.toggle("wide-content-active", activeSections.size > 0);
   }, { threshold: 0 });
   sections.forEach(section => visibilityIO.observe(section));
+  wideEmbeds.forEach(wrap => visibilityIO.observe(wrap));
 
   sections.forEach(section => {
     const iframe = section.querySelector(".scrolly-figure iframe");

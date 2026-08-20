@@ -39,7 +39,7 @@
       });
     });
   </script>
-  {% if scrolly %}<script defer src="/js/scrolly.js"></script>{% endif %}
+  {% if '/lessons/' in page.url %}<script defer src="/js/scrolly.js"></script>{% endif %}
   {% if proofstepper %}<script defer src="/js/proof-stepper.js"></script>{% endif %}
   {% if '/lessons/' in page.url %}<script defer src="/js/page-tracker.js"></script>{% endif %}
 </head>

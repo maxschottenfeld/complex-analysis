@@ -873,10 +873,12 @@ blockquote strong, blockquote b { color: var(--text); }
     transition: opacity 0.2s ease;
   }
 
-  /* The pinned scrolly figure breaks out to a wider column than the prose
-     and can occupy the same screen region as this fixed sidebar — hide it
-     for as long as any scrolly section is on screen (see scrolly.js). */
-  body.scrolly-active .lesson-side {
+  /* A pinned scrolly figure and a standalone wide viz-embed (.viz-embed-
+     wide-wrap) both break out to a wider column than the prose and can
+     occupy the same screen region as this fixed sidebar — hide it for as
+     long as either kind is on screen (see scrolly.js, which despite the
+     name now watches both). */
+  body.wide-content-active .lesson-side {
     opacity: 0;
     pointer-events: none;
   }

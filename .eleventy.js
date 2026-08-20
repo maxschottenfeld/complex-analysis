@@ -16,6 +16,7 @@ const markdownItAnchor = require("markdown-it-anchor");
 const MATH_ESCAPE_PATTERNS = [
   { re: /(?<!\\)\\[{}]/, fix: "use \\lbrace / \\rbrace" },
   { re: /(?<!\\)\\[,;:!]/, fix: "double it, e.g. \\\\," },
+  { re: /(?<!\\)\\%/, fix: "double it, e.g. \\\\%" },
   { re: /(?<!\\)\\\\(?=\s|$)/, fix: "row breaks need four: \\\\\\\\" },
 ];
 
@@ -32,6 +33,16 @@ const MATH_ESCAPE_PATTERNS = [
 // in prose, so the scan has to run inside math spans only.
 const MATH_SPAN_RE = /\$\$[\s\S]*?\$\$|(?<!\$)\$(?!\$)[\s\S]*?(?<!\$)\$(?!\$)/g;
 const BARE_ASTERISK_RE = /(?<!\\)\*/;
+
+// A THIRD failure, same family, found 2026-08-20 fixing Lesson 11:80. KaTeX
+// itself (not markdown-it) treats an unescaped % as a LaTeX comment marker,
+// truncating everything after it in the span. A single backslash (\%) gets
+// stripped bare by markdown-it same as \, \; \: \! above -- caught by the
+// pattern in MATH_ESCAPE_PATTERNS -- but a % typed with NO backslash at all
+// (easy to do; percentages are common prose) is just as fatal and only shows
+// up inside a math span, so it needs the same span-scoped scan as the
+// asterisk check above.
+const BARE_PERCENT_RE = /(?<!\\)%/;
 
 function checkMathEscapes() {
   const dirs = [path.join(__dirname, "src"), path.join(__dirname, "src", "lessons")];
@@ -55,6 +66,16 @@ function checkMathEscapes() {
         problems.push(
           `  ${rel}:${line} — bare "*" inside math: "${snippet}" ` +
           `(markdown eats it as emphasis; write \\ast)`
+        );
+      }
+
+      for (const m of src.matchAll(MATH_SPAN_RE)) {
+        if (!BARE_PERCENT_RE.test(m[0])) continue;
+        const line = src.slice(0, m.index).split("\n").length;
+        const snippet = m[0].replace(/\s+/g, " ").slice(0, 60);
+        problems.push(
+          `  ${rel}:${line} — bare "%" inside math: "${snippet}" ` +
+          `(KaTeX reads it as a comment to end of line; write \\\\%)`
         );
       }
     }
