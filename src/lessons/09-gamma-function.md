@@ -63,6 +63,10 @@ $$\Gamma(s) = \frac{\Gamma(s+n+1)}{s(s+1)\cdots(s+n)} = \frac{\Gamma(s+n+1)}{\pr
 
 This makes $\Gamma$ meromorphic on all of $\mathbb{C}$, with simple poles exactly at $s=0,-1,-2,\ldots$, nowhere else.
 
+Step through it below. Each step extends the colored domain one unit to the left and puts a new pole at the next non-positive integer, so every strip gained costs exactly one pole. The probe reports $\Gamma(s)$ and how many steps that point needed: none at $s=\tfrac12$, one at $s=-\tfrac12$, three at $s=-\tfrac52$. Everything left of the dashed boundary is undefined rather than zero, since the integral has nothing to say there until the recursion reaches it.
+
+<div class="viz-embed-wide-wrap"><iframe class="viz-embed" src="/assets/visualizations/09-gamma-recursion-crawl.html?embed" title="Analytic continuation of the Gamma function, one recursion step at a time"></iframe></div>
+
 **Residues.** Lesson 7's simple-pole formula is $\mathrm{Res}(f,z_0)=\lim_{z\to z_0}(z-z_0)f(z)$. Substituting the extension formula in *before* taking the limit avoids the false read that $s\cdot\Gamma(s)\to0$ near the pole:
 
 $$\mathrm{Res}(\Gamma,0)=\lim_{s\to0}s\cdot\frac{\Gamma(s+1)}{s}=\Gamma(1)=1$$

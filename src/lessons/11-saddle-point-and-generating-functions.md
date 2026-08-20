@@ -135,4 +135,8 @@ $$n! \sim \frac{\sqrt{2\pi}\\,(n+1)^{1/2}\\,(n+1)^{n+1}\\,e^{-(n+1)}}{n+1} = \sq
 
 using $\sqrt{n+1}/(n+1)=(n+1)^{-1/2}$. That is the saddle-point result exactly, not approximately.
 
+Both routes run below on one $n$ slider. The left panel is the real integrand with its peak at $t^\ast=n$ and the fitted Gaussian over it; the right is the saddle at $z^\ast=n+1$, with the circle $|z|=n+1$ meeting the real axis at a right angle. Drag the handle on the right panel to swing the contour off the descent direction: $|e^{h}|$ along it stops decaying and starts growing, and the value of the integral does not move while you do it.
+
+<div class="viz-embed-wide-wrap"><iframe class="viz-embed" src="/assets/visualizations/11-stirling-two-routes.html?embed" title="Stirling's formula by Laplace's method and by steepest descent, side by side"></iframe></div>
+
 > **Key takeaway:** Laplace's method on the real line and steepest descent in the complex plane are the same idea wearing different clothes. The real version finds a peak; the complex version finds a saddle and then chooses a path through it that turns the saddle back into a peak. Two pictures with nothing obvious in common, agreeing term for term, is about as much confirmation as a derivation can offer.

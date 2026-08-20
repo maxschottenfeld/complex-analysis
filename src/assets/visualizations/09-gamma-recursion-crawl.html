@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Gamma Recursion Crawl</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d29;
+    --border: #2a2e3f;
+    --text: #e8e9ed;
+    --muted: #9aa0b0;
+    --accent: #7aa2f7;
+    --warn: #e0af68;
+    --bad: #f7768e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 22px; }
+
+  .page-header h1 { font-size: 20px; margin: 0 0 4px; }
+  .page-header .sub  { color: var(--muted); font-size: 13.5px; margin: 0 0 4px; }
+  .page-header .sub2 { color: var(--muted); font-size: 12.5px; margin: 0 0 16px; }
+
+  .controlBar {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+    flex: 0 0 auto;
+  }
+  .controlBar label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .controlBar label .readout { color: var(--accent); font-weight: 600; }
+  .stepRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .stepBtn {
+    font-family: inherit; font-size: 13px; color: var(--text);
+    background: #222536; border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 12px; cursor: pointer;
+  }
+  .stepBtn:hover:not(:disabled) { border-color: var(--accent); }
+  .stepBtn:disabled { opacity: 0.4; cursor: default; }
+  .stepBtn.primary { border-color: var(--accent); color: var(--accent); }
+  .stepSpacer { flex: 1 1 auto; }
+  .zoomHints { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+  .panels { display: flex; gap: 14px; flex-wrap: wrap; }
+  .panel {
+    flex: 1 1 100%; min-width: 0; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+    display: flex; flex-direction: column;
+  }
+  .panel-head { flex: 0 0 auto; margin-bottom: 8px; }
+  .panel h2 { margin: 0 0 2px; font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel .formula { font-size: 12.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .canvas-wrap { position: relative; flex: 1 1 320px; min-height: 0; }
+  canvas { display: block; width: 100%; aspect-ratio: 3 / 2; background: #000; border-radius: 6px; cursor: crosshair; }
+  .caption { flex: 0 0 auto; margin: 8px 0 0; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .eqStrip {
+    margin-top: 14px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 11px 16px; flex: 0 0 auto;
+  }
+  .eqStrip .eqLine { font-size: 12.5px; color: var(--muted); margin: 0; padding: 3px 0; }
+  .eqStrip .eqLine.mono { color: var(--text); }
+  .eqStrip .eqLine .accent { color: var(--accent); }
+  .eqStrip .eqLine.fixed { color: var(--muted); font-style: normal; }
+  .eqStrip .eqLine + .eqLine { border-top: 1px solid var(--border); }
+
+  /* ---------------- embed mode ---------------- */
+  body.embed { height: 100vh; overflow: hidden; }
+  body.embed .wrap { height: 100vh; max-width: none; padding: 5px; display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+  body.embed .page-header { display: none; }
+  body.embed .controlBar { flex: 0 0 auto; margin-bottom: 0; padding: 4px 8px; }
+  body.embed .controlBar label { margin-bottom: 2px; font-size: 10px; line-height: 1.2; }
+  body.embed .stepBtn { padding: 3px 7px; font-size: 10px; }
+  body.embed .zoomHints { margin-top: 2px; font-size: 8.5px; line-height: 1.2; }
+  body.embed .panels { flex: 1 1 auto; min-height: 0; flex-wrap: nowrap; gap: 5px; }
+  body.embed .panel { flex: 1 1 0; min-width: 0; min-height: 0; padding: 5px; }
+  body.embed .panel-head { margin-bottom: 2px; }
+  body.embed .panel h2 { font-size: 10px; line-height: 1.2; }
+  body.embed .panel .formula { font-size: 9px; line-height: 1.2; }
+  body.embed .canvas-wrap { flex: 1 1 auto; min-height: 0; display: flex; }
+  body.embed canvas { width: 100%; height: 100%; aspect-ratio: auto; flex: 1 1 auto; min-height: 0; }
+  body.embed .caption { font-size: 9px; margin-top: 2px; line-height: 1.2; }
+  body.embed .eqStrip { margin-top: 0; flex: 0 0 auto; padding: 4px 8px; }
+  body.embed .eqStrip .eqLine { font-size: 9px; padding: 1px 0; line-height: 1.25; }
+
+  @media (max-width: 720px) { .panels { flex-direction: column; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="page-header">
+      <h1>The Gamma Recursion Crawl</h1>
+      <p class="sub">Lesson 9 &middot; The Gamma function &mdash; meromorphic continuation, poles, and residues</p>
+      <p class="sub2">Step the recursion to watch the domain of &Gamma; grow one strip at a time, and a pole appear at the price of each strip.</p>
+    </div>
+
+    <div class="controlBar">
+      <label for="stepBack">Step <span class="mono readout" id="kReadout">k = 0</span> &mdash; domain <span class="mono readout" id="domReadout">Re(s) &gt; 0</span></label>
+      <div class="stepRow">
+        <button class="stepBtn" id="btnReset" type="button">Reset</button>
+        <button class="stepBtn" id="btnBack" type="button">&#9664; step</button>
+        <button class="stepBtn" id="btnFwd" type="button">step &#9654;</button>
+        <div class="stepSpacer"></div>
+        <button class="stepBtn primary" id="btnAnimate" type="button">Animate</button>
+      </div>
+      <div class="zoomHints"><span>k = 0 &hellip; 5</span><span>poles land at s = 0, &minus;1, &minus;2, &hellip;</span></div>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>&Gamma;(s) over the complex s-plane</h2>
+          <div class="formula mono">&Gamma;(s) = &int;&#8320;^&infin; t^(s&minus;1) e^(&minus;t) dt, &nbsp; Re(s) &gt; 0</div>
+        </div>
+        <div class="canvas-wrap"><canvas id="plane" aria-label="Domain coloring of the Gamma function over the complex plane, with a probe point and unlocking region"></canvas></div>
+        <p class="caption" id="caption">Re(s) &gt; 0: the integral converges here and nowhere else.</p>
+      </div>
+    </div>
+
+    <div class="eqStrip">
+      <p class="eqLine mono" id="eqIdentity">&Gamma;(s) = &int;&#8320;^&infin; t^(s&minus;1) e^(&minus;t) dt</p>
+      <p class="eqLine mono" id="eqDomain">Domain: Re(s) &gt; 0</p>
+      <p class="eqLine fixed">Algebra supplies existence and agreement; the identity theorem supplies uniqueness.</p>
+      <p class="eqLine mono" id="eqProbe">Drag the point on the plane to read &Gamma;(s) there.</p>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var isEmbed = new URLSearchParams(location.search).has("embed");
+  if (isEmbed) document.body.classList.add("embed");
+
+  // ======================================================================
+  // Complex arithmetic + Lanczos gamma. This block knows NOTHING about the
+  // recursion-crawl staging (k). It is the same analytic continuation of
+  // Gamma across the whole plane no matter what k is set to. The k-driven
+  // mask that hides "not yet reached" territory lives entirely in the
+  // render loop below, as a separate check on pixel coordinates -- see
+  // "STEP MASK" there. Keeping these two concerns apart is deliberate:
+  // the evaluator must not be the thing dramatizing the continuation.
+  // ======================================================================
+
+  var _re = 0, _im = 0;
+
+  function cmul(ar, ai, br, bi) { _re = ar * br - ai * bi; _im = ar * bi + ai * br; }
+  function cdiv(ar, ai, br, bi) {
+    var d = br * br + bi * bi;
+    _re = (ar * br + ai * bi) / d;
+    _im = (ai * br - ar * bi) / d;
+  }
+  function cexp(ar, ai) {
+    var e = Math.exp(ar);
+    _re = e * Math.cos(ai);
+    _im = e * Math.sin(ai);
+  }
+  function clog(ar, ai) {
+    _re = Math.log(Math.hypot(ar, ai));
+    _im = Math.atan2(ai, ar);
+  }
+  function csin(ar, ai) {
+    _re = Math.sin(ar) * Math.cosh(ai);
+    _im = Math.cos(ar) * Math.sinh(ai);
+  }
+  function cpow(br, bi, er, ei) {
+    clog(br, bi);
+    var lr = _re, li = _im;
+    cmul(er, ei, lr, li);
+    cexp(_re, _im);
+  }
+
+  var LG = 7;
+  var LC = [
+    0.99999999999980993,
+    676.5203681218851,
+    -1259.1392167224028,
+    771.32342877765313,
+    -176.61502916214059,
+    12.507343278686905,
+    -0.13857109526572012,
+    9.9843695780195716e-6,
+    1.5056327351493116e-7
+  ];
+
+  // Lanczos sum, valid for Re(z) >= 0.5
+  function gammaLanczos(zr, zi) {
+    zr -= 1;
+    var xr = LC[0], xi = 0;
+    for (var i = 1; i <= LG + 1; i++) {
+      cdiv(LC[i], 0, zr + i, zi);
+      xr += _re; xi += _im;
+    }
+    var tr = zr + LG + 0.5, ti = zi;
+    cpow(tr, ti, zr + 0.5, zi);
+    var powr = _re, powi = _im;
+    cexp(-tr, -ti);
+    var er = _re, ei = _im;
+    cmul(powr, powi, er, ei);
+    var pr = _re, pi = _im;
+    cmul(pr, pi, xr, xi);
+    var s2pi = Math.sqrt(2 * Math.PI);
+    _re = s2pi * _re; _im = s2pi * _im;
+  }
+
+  // Full Gamma over the whole plane: reflection formula handles Re(z) < 0.5,
+  // Lanczos handles the rest. This is the entire, already-continued function --
+  // the visualization's job is to choose how much of it to reveal, not to
+  // compute a partial version of it.
+  function gammaComplex(zr, zi) {
+    if (zr < 0.5) {
+      gammaLanczos(1 - zr, -zi);
+      var gr = _re, gi = _im;
+      csin(Math.PI * zr, Math.PI * zi);
+      var sr = _re, si = _im;
+      cmul(sr, si, gr, gi);
+      cdiv(Math.PI, 0, _re, _im);
+    } else {
+      gammaLanczos(zr, zi);
+    }
+  }
+
+  // ======================================================================
+  // Domain-coloring palette (copied verbatim from the style reference).
+  // ======================================================================
+
+  var _cr = 0, _cg = 0, _cb = 0;
+
+  function setColor(hueAngle, logMag, whitenK){
+    var hue = hueAngle / (2*Math.PI);
+    hue -= Math.floor(hue);
+
+    var frac = logMag - Math.floor(logMag);
+    var ringV = 0.5 + 0.4 * Math.sin(frac * 2*Math.PI);
+    ringV = Math.max(0.15, Math.min(1, ringV + 0.4));
+
+    var baseS = 0.85;
+    var m = Math.abs(logMag);
+    var t = 1 - Math.exp(-m / whitenK);
+
+    var v, s;
+    if (logMag >= 0) {
+      // approaching a pole / blow-up -> fade toward true white
+      v = ringV + (1 - ringV) * t;
+      s = baseS * (1 - t);
+    } else {
+      // approaching a zero / vanishing -> fade toward true black
+      v = ringV * (1 - t);
+      s = baseS;
+    }
+
+    var i = Math.floor(hue * 6);
+    var f = hue * 6 - i;
+    var p = v * (1 - s);
+    var q = v * (1 - f*s);
+    var tt = v * (1 - (1-f)*s);
+    switch (i % 6) {
+      case 0: _cr=v; _cg=tt; _cb=p; break;
+      case 1: _cr=q; _cg=v;  _cb=p; break;
+      case 2: _cr=p; _cg=v;  _cb=tt; break;
+      case 3: _cr=p; _cg=q;  _cb=v; break;
+      case 4: _cr=tt;_cg=p;  _cb=v; break;
+      default:_cr=v; _cg=p;  _cb=q; break;
+    }
+    _cr *= 255; _cg *= 255; _cb *= 255;
+  }
+
+  // Undefined region (not yet reached by the continuation): a flat,
+  // desaturated neutral drawn from --border, with a faint hatch for
+  // texture. Never passed through setColor -- it must not be able to
+  // look like any value the colormap produces, especially not a zero.
+  var UNDEF_BASE = [42, 46, 63];   // --border
+  var UNDEF_LO = [39, 43, 59];
+  var UNDEF_HI = [46, 50, 68];
+
+  // ======================================================================
+  // View / canvas setup
+  // ======================================================================
+
+  var XMIN = -5, XMAX = 4, YMIN = -3, YMAX = 3;
+  var K_MAX = 5;
+  var WHITEN_K = 2.6;
+
+  var canvas = document.getElementById("plane");
+  var ctx = canvas.getContext("2d");
+
+  var MAX_SIDE = 440;
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  function fitCanvas(){
+    var rect = canvas.getBoundingClientRect();
+    var w = Math.max(1, Math.min(MAX_SIDE, Math.round(rect.width  * DPR)));
+    var h = Math.max(1, Math.min(MAX_SIDE, Math.round(rect.height * DPR)));
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; return true; }
+    return false;
+  }
+
+  function xToPx(x){ return (x - XMIN) / (XMAX - XMIN) * canvas.width; }
+  function yToPy(y){ return (YMAX - y) / (YMAX - YMIN) * canvas.height; }
+  function pxToX(px){ return XMIN + (px + 0.5) / canvas.width * (XMAX - XMIN); }
+  function pyToY(py){ return YMAX - (py + 0.5) / canvas.height * (YMAX - YMIN); }
+
+  // ======================================================================
+  // State
+  // ======================================================================
+
+  var state = {
+    k: 0,
+    animating: false,
+    probe: { re: 1.6, im: 0.9 },
+    dragging: false,
+    poleAnim: null   // { m: int, start: timestamp } for the newest pole's pop-in
+  };
+
+  var fieldImage = null;   // cached ImageData for the current k + canvas size
+
+  // ======================================================================
+  // Field computation
+  // ======================================================================
+
+  function computeField(){
+    var W = canvas.width, H = canvas.height;
+    var img = ctx.createImageData(W, H);
+    var data = img.data;
+    var idx = 0;
+    var boundaryPx = xToPx(-state.k);
+
+    for (var py = 0; py < H; py++) {
+      var y = pyToY(py);
+      for (var px = 0; px < W; px++) {
+        // ---- STEP MASK ----------------------------------------------
+        // This is the ONLY place k affects what gets displayed. It is a
+        // plain comparison on the pixel's real coordinate against the
+        // current threshold, made before gammaComplex is ever called.
+        // The evaluator above has no k in it and never will.
+        if (px < boundaryPx - 0.5) {
+          var hatch = (((px - py) / 3) | 0) % 2 === 0;
+          var c = hatch ? UNDEF_LO : UNDEF_HI;
+          data[idx] = c[0]; data[idx+1] = c[1]; data[idx+2] = c[2]; data[idx+3] = 255;
+          idx += 4;
+          continue;
+        }
+        // -----------------------------------------------------------------
+        var x = pxToX(px);
+        gammaComplex(x, y);
+        var mag = Math.hypot(_re, _im);
+        var hue = Math.atan2(_im, _re);
+        if (hue < 0) hue += 2 * Math.PI;
+        var logMag = Math.log(Math.max(mag, 1e-12));
+        if (logMag > 30) logMag = 30;
+        setColor(hue, logMag, WHITEN_K);
+        data[idx] = _cr; data[idx+1] = _cg; data[idx+2] = _cb; data[idx+3] = 255;
+        idx += 4;
+      }
+    }
+    fieldImage = img;
+  }
+
+  // ======================================================================
+  // Overlay drawing: axis ticks, boundary line, pole markers, probe.
+  // ======================================================================
+
+  function factorial(n){ var r = 1; for (var i = 2; i <= n; i++) r *= i; return r; }
+
+  function residueFraction(m){
+    // Res_{s=-m} Gamma = (-1)^m / m!
+    var sign = (m % 2 === 0) ? "" : "−";
+    var f = factorial(m);
+    if (f === 1) return sign + "1";
+    return sign + "1/" + f;
+  }
+
+  function stepsNeeded(re){
+    if (re > 0) return 0;
+    return Math.floor(-re) + 1;
+  }
+
+  function isOnPole(re, im){
+    if (Math.abs(im) > 0.02) return false;
+    var nearest = Math.round(re);
+    return nearest <= 0 && Math.abs(re - nearest) < 0.02;
+  }
+
+  function drawOverlay(now){
+    ctx.putImageData(fieldImage, 0, 0);
+
+    var W = canvas.width, H = canvas.height;
+
+    // faint integer ticks on both axes
+    ctx.strokeStyle = "rgba(154,160,176,0.22)";
+    ctx.lineWidth = 1;
+    var y0 = yToPy(0);
+    if (y0 >= 0 && y0 <= H) {
+      ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke();
+    }
+    var x0 = xToPx(0);
+    if (x0 >= 0 && x0 <= W) {
+      ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, H); ctx.stroke();
+    }
+    for (var xi = Math.ceil(XMIN); xi <= Math.floor(XMAX); xi++) {
+      var tx = xToPx(xi);
+      ctx.beginPath(); ctx.moveTo(tx, y0 - 4); ctx.lineTo(tx, y0 + 4); ctx.stroke();
+    }
+
+    // boundary line at Re(s) = -k
+    var bx = xToPx(-state.k);
+    ctx.save();
+    ctx.strokeStyle = "rgba(224,175,104,0.9)";
+    ctx.lineWidth = Math.max(1.5, W / 300);
+    ctx.setLineDash([6 * DPR, 4 * DPR]);
+    ctx.beginPath(); ctx.moveTo(bx, 0); ctx.lineTo(bx, H); ctx.stroke();
+    ctx.restore();
+
+    // pole markers, s = 0, -1, ..., -(k-1). The newest pole gets a full
+    // "s = -m, Res = ..." label above it; older poles collapse to a small
+    // tag below, so labels never stack into an unreadable row.
+    var fontPx = Math.max(9, Math.round(W / 34));
+    var smallFontPx = Math.max(8, Math.round(W / 46));
+    ctx.textAlign = "center";
+    var newest = state.k - 1;
+    for (var m = 0; m < state.k; m++) {
+      var px = xToPx(-m), py = yToPy(0);
+      var scale = 1;
+      if (state.poleAnim && state.poleAnim.m === m) {
+        var t = (now - state.poleAnim.start) / 480;
+        if (t < 1) {
+          scale = t < 0 ? 0 : Math.sin(t * Math.PI * 0.5);
+          // slight overshoot for a "pop" feel
+          scale = scale + 0.35 * Math.sin(t * Math.PI) * (1 - t);
+        } else {
+          state.poleAnim = null;
+        }
+      }
+      var r = Math.max(3, W / 70) * scale;
+      if (r <= 0.2) continue;
+
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, scale + 0.15);
+      ctx.strokeStyle = "#f7768e";
+      ctx.lineWidth = Math.max(1.5, W / 260);
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(px, py, Math.max(1, r * 0.28), 0, 2 * Math.PI);
+      ctx.fillStyle = "#f7768e";
+      ctx.fill();
+
+      if (m === newest) {
+        ctx.font = fontPx + "px ui-monospace, SFMono-Regular, Menlo, monospace";
+        var label = "s=" + (m === 0 ? "0" : "−" + m) + "  Res " + residueFraction(m);
+        var labelY = py - r - fontPx * 0.9;
+        var tw = ctx.measureText(label).width;
+        var lcx = Math.max(tw/2 + 6, Math.min(W - tw/2 - 6, px));
+        ctx.fillStyle = "rgba(15,17,23,0.78)";
+        ctx.fillRect(lcx - tw/2 - 4, labelY - fontPx, tw + 8, fontPx * 1.3);
+        ctx.fillStyle = "#f7768e";
+        ctx.fillText(label, lcx, labelY);
+      } else {
+        ctx.font = smallFontPx + "px ui-monospace, SFMono-Regular, Menlo, monospace";
+        var tag = m === 0 ? "0" : "−" + m;
+        var tagY = py + r + smallFontPx * 1.15;
+        ctx.fillStyle = "rgba(247,118,142,0.75)";
+        ctx.fillText(tag, px, tagY);
+      }
+      ctx.restore();
+    }
+
+    // probe marker
+    var ppx = xToPx(state.probe.re), ppy = yToPy(state.probe.im);
+    ctx.save();
+    ctx.strokeStyle = "#7aa2f7";
+    ctx.lineWidth = Math.max(1.5, W / 260);
+    var cr = Math.max(4, W / 60);
+    ctx.beginPath(); ctx.arc(ppx, ppy, cr, 0, 2 * Math.PI); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ppx - cr - 4, ppy); ctx.lineTo(ppx + cr + 4, ppy);
+    ctx.moveTo(ppx, ppy - cr - 4); ctx.lineTo(ppx, ppy + cr + 4);
+    ctx.strokeStyle = "rgba(122,162,247,0.55)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ======================================================================
+  // Redraw orchestration
+  // ======================================================================
+
+  var animFrame = null;
+  function scheduleFrame(){
+    if (animFrame) return;
+    animFrame = requestAnimationFrame(function(now){
+      animFrame = null;
+      drawOverlay(now);
+      if (state.poleAnim) scheduleFrame();
+    });
+  }
+
+  function recompute(){
+    fitCanvas();
+    computeField();
+    scheduleFrame();
+  }
+
+  window.addEventListener("resize", recompute);
+
+  // ======================================================================
+  // UI text
+  // ======================================================================
+
+  var kReadout = document.getElementById("kReadout");
+  var domReadout = document.getElementById("domReadout");
+  var caption = document.getElementById("caption");
+  var eqIdentity = document.getElementById("eqIdentity");
+  var eqDomain = document.getElementById("eqDomain");
+  var eqProbe = document.getElementById("eqProbe");
+  var btnBack = document.getElementById("btnBack");
+  var btnFwd = document.getElementById("btnFwd");
+  var btnReset = document.getElementById("btnReset");
+  var btnAnimate = document.getElementById("btnAnimate");
+
+  function ordinalList(n){
+    // "s(s+1)" style product string for the denominator, n factors
+    var parts = [];
+    for (var i = 0; i < n; i++) parts.push(i === 0 ? "s" : "(s+" + i + ")");
+    return parts.join("");
+  }
+
+  function updateText(){
+    kReadout.textContent = "k = " + state.k;
+    domReadout.innerHTML = state.k === 0 ? "Re(s) &gt; 0" : "Re(s) &gt; −" + state.k;
+
+    if (state.k === 0) {
+      eqIdentity.innerHTML = "&Gamma;(s) = &int;&#8320;^&infin; t^(s&minus;1) e^(&minus;t) dt";
+      eqDomain.innerHTML = "Domain: Re(s) &gt; 0";
+      caption.innerHTML = "Re(s) &gt; 0: the integral converges here and nowhere else.";
+    } else {
+      var denom = state.k === 1 ? "s" : "(" + ordinalList(state.k) + ")";
+      eqIdentity.innerHTML = "&Gamma;(s) = &Gamma;(s+" + state.k + ") / " + denom;
+      eqDomain.innerHTML = "Domain: Re(s) &gt; −" + state.k;
+      var poleAt = state.k - 1;
+      caption.innerHTML = "Re(s) &gt; −" + state.k + ": step " + state.k + " extended the domain by one strip and put a pole at s = " + (poleAt === 0 ? "0" : "−" + poleAt) + ".";
+    }
+
+    btnBack.disabled = state.k === 0 || state.animating;
+    btnFwd.disabled = state.k === K_MAX || state.animating;
+    btnReset.disabled = state.animating;
+    btnAnimate.textContent = state.animating ? "Animating…" : "Animate";
+    btnAnimate.disabled = state.animating;
+
+    updateProbeText();
+  }
+
+  function fmtNum(x){
+    if (Math.abs(x) < 0.0005) return "0";
+    return x.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');
+  }
+
+  function updateProbeText(){
+    var p = state.probe;
+    var sLabel = "s = " + fmtNum(p.re) + (p.im >= 0 ? " + " : " − ") + fmtNum(Math.abs(p.im)) + "i";
+    if (isOnPole(p.re, p.im)) {
+      var m = Math.max(0, Math.round(-p.re));
+      eqProbe.innerHTML = sLabel + " sits on a pole: Γ(s) is undefined there, Res = " + residueFraction(m) + ".";
+      return;
+    }
+    gammaComplex(p.re, p.im);
+    var gr = _re, gi = _im;
+    var n = stepsNeeded(p.re);
+    var stepWord = n === 1 ? "step" : "steps";
+    var valStr = fmtNum(gr) + (gi >= 0 ? " + " : " − ") + fmtNum(Math.abs(gi)) + "i";
+    eqProbe.innerHTML = sLabel + " → Γ(s) ≈ " + valStr + ", needs " + n + " " + stepWord + ".";
+  }
+
+  // ======================================================================
+  // Step control
+  // ======================================================================
+
+  function setK(newK, animatePole){
+    var oldK = state.k;
+    state.k = Math.max(0, Math.min(K_MAX, newK));
+    if (state.k > oldK) {
+      state.poleAnim = { m: state.k - 1, start: performance.now() };
+    } else {
+      state.poleAnim = null;
+    }
+    updateText();
+    recompute();
+  }
+
+  btnFwd.addEventListener("click", function(){ if (!state.animating) setK(state.k + 1); });
+  btnBack.addEventListener("click", function(){ if (!state.animating) setK(state.k - 1); });
+  btnReset.addEventListener("click", function(){ if (!state.animating) setK(0); });
+
+  var animateTimer = null;
+  btnAnimate.addEventListener("click", function(){
+    if (state.animating) return;
+    state.animating = true;
+    setK(0);
+    var target = 1;
+    function stepOnce(){
+      if (target > K_MAX) {
+        state.animating = false;
+        updateText();
+        return;
+      }
+      setK(target);
+      target++;
+      animateTimer = setTimeout(stepOnce, 750);
+    }
+    animateTimer = setTimeout(stepOnce, 550);
+  });
+
+  // ======================================================================
+  // Probe dragging
+  // ======================================================================
+
+  function clientToComplex(clientX, clientY){
+    var rect = canvas.getBoundingClientRect();
+    var px = (clientX - rect.left) / rect.width * canvas.width;
+    var py = (clientY - rect.top) / rect.height * canvas.height;
+    return { re: pxToX(px), im: pyToY(py) };
+  }
+
+  function setProbeFromEvent(e){
+    var pt = e.touches && e.touches.length ? e.touches[0] : e;
+    var c = clientToComplex(pt.clientX, pt.clientY);
+    c.re = Math.max(XMIN, Math.min(XMAX, c.re));
+    c.im = Math.max(YMIN, Math.min(YMAX, c.im));
+    state.probe = c;
+    updateProbeText();
+    scheduleFrame();
+  }
+
+  canvas.addEventListener("pointerdown", function(e){
+    state.dragging = true;
+    canvas.setPointerCapture(e.pointerId);
+    setProbeFromEvent(e);
+  });
+  canvas.addEventListener("pointermove", function(e){
+    if (state.dragging) setProbeFromEvent(e);
+  });
+  canvas.addEventListener("pointerup", function(e){
+    state.dragging = false;
+  });
+  canvas.addEventListener("pointercancel", function(){ state.dragging = false; });
+
+  // ======================================================================
+  // Init
+  // ======================================================================
+
+  updateText();
+  recompute();
+
+})();
+</script>
+</body>
+</html>

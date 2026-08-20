@@ -1,12 +1,5 @@
 [
   {
-    "slug": "00-overview-domain-coloring-and-conformal-maps",
-    "title": "The Big Picture: Domain Coloring & Conformal Maps",
-    "lesson": "Lesson 0",
-    "hue": 355,
-    "description": "A complex function maps a plane to a plane — a literal graph would need 4 dimensions. This opener introduces the two substitute pictures used all through the subject: domain coloring (color each input by the angle of its output) and side-by-side input/output planes."
-  },
-  {
     "slug": "00-grid-deformation-z-squared",
     "title": "Grid Deformation Under f(z) = z²",
     "lesson": "Lesson 0",
@@ -14,11 +7,11 @@
     "description": "Watch a square grid deform under z². Vertical and horizontal lines map to two families of parabolas that stay perpendicular everywhere — except at the origin, where f′(0) = 0 and conformality visibly breaks down."
   },
   {
-    "slug": "01-roots-of-unity",
-    "title": "Roots of Unity",
-    "lesson": "Lesson 1",
-    "hue": 55,
-    "description": "The n solutions of zⁿ = 1 sit at the vertices of a regular n-gon on the unit circle. Explore how polar form turns multiplication into rotate-and-scale, and why raising each root to the nth power walks it around the circle back to 1."
+    "slug": "00-overview-domain-coloring-and-conformal-maps",
+    "title": "The Big Picture: Domain Coloring & Conformal Maps",
+    "lesson": "Lesson 0",
+    "hue": 355,
+    "description": "A complex function maps a plane to a plane — a literal graph would need 4 dimensions. This opener introduces the two substitute pictures used all through the subject: domain coloring (color each input by the angle of its output) and side-by-side input/output planes."
   },
   {
     "slug": "01-open-sets-explorer",
@@ -26,6 +19,13 @@
     "lesson": "Lesson 1",
     "hue": 145,
     "description": "The topology vocabulary of ℂ, made draggable: test points with ε-disks to see what interior, boundary, open, and closed actually mean — the definitions every later theorem quietly relies on."
+  },
+  {
+    "slug": "01-roots-of-unity",
+    "title": "Roots of Unity",
+    "lesson": "Lesson 1",
+    "hue": 55,
+    "description": "The n solutions of zⁿ = 1 sit at the vertices of a regular n-gon on the unit circle. Explore how polar form turns multiplication into rotate-and-scale, and why raising each root to the nth power walks it around the circle back to 1."
   },
   {
     "slug": "02-conformality-jacobian",
@@ -70,18 +70,18 @@
     "description": "Why continuity forces g(z) away from 0 near z₀, so a zero of a holomorphic function can never have another zero arbitrarily close by. Drag z and watch the reverse-triangle-inequality floor hold live, synced to the general proof it's demonstrating."
   },
   {
-    "slug": "06-vary-the-circle-radius-of-convergence",
-    "title": "Vary the Circle — Why R = 3, Exactly",
-    "lesson": "Lesson 6",
-    "hue": 240,
-    "description": "Deriving, not asserting, that a power series' radius of convergence equals the distance to the nearest singularity. Grow a certifying circle toward the singularity for the R≥3 half; watch |f(z)| blow up approaching it for the R≤3 half."
-  },
-  {
     "slug": "06-singularity-zoo-domain-coloring",
     "title": "Singularity Zoo — Domain Coloring",
     "lesson": "Lesson 6",
     "hue": 240,
     "description": "Three isolated singularities, same domain-coloring convention, one shared zoom slider: removable stays smooth, a pole brightens to a clean double-wound white center, and an essential singularity cycles through every color at every zoom level — Casorati-Weierstrass made visible."
+  },
+  {
+    "slug": "06-vary-the-circle-radius-of-convergence",
+    "title": "Vary the Circle — Why R = 3, Exactly",
+    "lesson": "Lesson 6",
+    "hue": 240,
+    "description": "Deriving, not asserting, that a power series' radius of convergence equals the distance to the nearest singularity. Grow a certifying circle toward the singularity for the R≥3 half; watch |f(z)| blow up approaching it for the R≤3 half."
   },
   {
     "slug": "07-crosscut-construction",
@@ -110,5 +110,19 @@
     "lesson": "Lesson 8",
     "hue": 292,
     "description": "Every Möbius map is a rigid rotation of the Riemann sphere. Grab the sphere and spin it — the induced transformation plays out on the plane below, 1/z is a 180° flip, and lines and circles trade places because on the sphere they're all just circles. Scalings and translations are the maps that need a non-rigid flow instead — the reason the sphere's rotations are only a subgroup of all Möbius maps."
+  },
+  {
+    "slug": "09-gamma-recursion-crawl",
+    "title": "The Gamma Recursion Crawl",
+    "lesson": "Lesson 9",
+    "hue": 77,
+    "description": "The integral defining Γ(s) converges only on Re(s) > 0. Step the recursion Γ(s) = Γ(s+1)/s and watch the domain extend one strip left at a time, each step putting a new pole at the next non-positive integer. Analytic continuation as something built rather than asserted."
+  },
+  {
+    "slug": "11-stirling-two-routes",
+    "title": "Stirling's Formula, Two Routes",
+    "hue": 122,
+    "lesson": "Lesson 11",
+    "description": "Laplace's method on the real line beside steepest descent in the complex plane, sharing one n slider. The real integrand has a peak; the complex integrand has a saddle. Swing the contour off the descent direction and the decaying bump turns into growth while the integral's value stays put."
   }
 ]

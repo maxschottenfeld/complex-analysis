@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stirling's Formula, Two Routes</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d29;
+    --panel2: #12141c;
+    --text: #e8e9ed;
+    --muted: #9aa0b0;
+    --accent: #7aa2f7;
+    --accent-dim: rgba(122,162,246,0.14);
+    --border: #2a2e3f;
+    --grid: #232838;
+    --axis: #3a4055;
+    --ok: #9ece6a;
+    --warn: #e0af68;
+    --bad: #f7768e;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+  }
+  i.mv { font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; }
+
+  /* ---------- top controls (also reused, positioned below panels here) ---------- */
+  .top-controls { display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+  .ctrl-group { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .ctrl-group .glabel { font-size:11px; color:var(--muted); margin-right:2px; white-space:nowrap; }
+  .btn {
+    background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    padding:6px 11px; border-radius:6px; font-size:12px; cursor:pointer; white-space:nowrap;
+  }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn:disabled { opacity:0.5; cursor:default; }
+  .btn.small { padding:4px 9px; font-size:11.5px; }
+  .btn.active { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); font-weight:600; }
+
+  /* ---------- panels ---------- */
+  .panels { display:flex; gap:14px; flex-wrap:wrap; align-items:stretch; }
+  .panel {
+    flex:1 1 460px; background:var(--panel); border:1px solid var(--border);
+    border-radius:10px; padding:13px; display:flex; flex-direction:column;
+  }
+  .panel h2 { font-size:14px; margin:0 0 8px; color:var(--accent); font-weight:600; display:flex; align-items:center; flex-wrap:wrap; gap:2px; }
+  .panel h2 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--text); font-weight:400; font-size:12px; }
+
+  svg.plane { width:100%; height:auto; display:block; background:#0b0d14; border-radius:6px; touch-action:none; }
+  .handle { cursor:grab; } .handle:active { cursor:grabbing; }
+  .lbl-txt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:11px; }
+
+  /* ---------- equation strip (the ENTIRE algebraic surface area, per design rule) ---------- */
+  .eqn-strip {
+    margin-top:12px; padding:10px 14px; background:var(--panel2); border:1px solid var(--border);
+    border-radius:8px; position:relative;
+  }
+  .eqn-line {
+    font-family: Georgia, 'Times New Roman', serif; font-size:14px; color:var(--muted);
+    line-height:1.7; white-space:nowrap; overflow-x:auto;
+  }
+  .eqn-line .num { color:var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px; padding:0 1px; border-radius:3px; transition:background .3s ease, color .3s ease; }
+  .eqn-line .num.flash { background:var(--accent-dim); color:var(--accent); }
+  .eqn-line .arrow { color:var(--accent); margin:0 10px; font-family:sans-serif; }
+  .eqn-note { font-size:10.5px; color:var(--muted); margin-top:5px; font-style:italic; }
+
+  /* ---------- one payoff sentence ---------- */
+  .type-caption {
+    margin-top:8px; padding:9px 14px; border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
+    background:rgba(122,162,246,0.07); font-size:13.5px; line-height:1.5; color:var(--text);
+  }
+  .type-caption b { color:var(--accent); }
+  .type-caption .note { color:var(--muted); font-style:italic; }
+
+  /* ---------- additions for this build: panel note, agree badge, substrip ---------- */
+  .panel-note { font-size:10.5px; color:var(--muted); font-style:italic; margin:-2px 0 6px; flex:0 0 auto; }
+  .agree-badge { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:11px; color:var(--ok); font-weight:600; }
+  .agree-badge.bad { color:var(--bad); }
+
+  .substrip { margin-top:7px; display:flex; flex-direction:column; gap:3px; flex:0 0 auto; }
+  .substrip-label { display:flex; justify-content:space-between; align-items:baseline; font-size:10.5px; color:var(--muted); gap:6px; }
+  .substrip-label span:first-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .snap-label { color:var(--ok); font-weight:600; white-space:nowrap; opacity:0; transition:opacity .15s ease; }
+  .snap-label.show { opacity:1; }
+  svg.substrip-plot { width:100%; height:64px; display:block; background:#0b0d14; border-radius:4px; touch-action:none; }
+  .substrip-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .cos-readout { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:11px; color:var(--text); white-space:nowrap; }
+  .cos-readout .val.neg { color:var(--ok); }
+  .cos-readout .val.pos { color:var(--bad); }
+  .cos-readout .val.zero { color:var(--muted); }
+
+  /* ================= EMBED MODE ================= */
+  body.embed { height:100vh; overflow:hidden; padding:8px; }
+  body.embed .wrap { height:100%; max-width:none; display:flex; flex-direction:column; min-height:0; gap:4px; }
+  body.embed h1, body.embed .sub { display:none; }
+  body.embed .top-controls { margin-bottom:0; gap:8px; flex:0 0 auto; }
+  body.embed .ctrl-group .glabel { font-size:9.5px; }
+  body.embed .btn.small { padding:3px 7px; font-size:9.5px; }
+  body.embed .panels { flex:1 1 0; min-height:0; flex-wrap:nowrap; gap:8px; }
+  body.embed .panel { flex:1 1 0; min-width:0; min-height:0; padding:7px; overflow:hidden; }
+  body.embed .panel h2 { font-size:10.5px; margin-bottom:3px; flex:0 0 auto; }
+  body.embed .panel h2 .mono { font-size:9.5px; }
+  body.embed svg.plane { flex:1 1 60px; min-height:60px; height:100%; width:100%; display:block; }
+  body.embed .eqn-strip { margin-top:4px; padding:5px 9px; flex:0 0 auto; }
+  body.embed .eqn-line { font-size:9.5px; line-height:1.55; }
+  body.embed .eqn-line .num { font-size:8.7px; }
+  body.embed .eqn-note { font-size:8px; margin-top:2px; }
+  body.embed .type-caption { margin-top:4px; padding:5px 10px; font-size:10.2px; flex:0 0 auto; }
+  body.embed .panel-note { font-size:8.7px; margin:-1px 0 3px; }
+  body.embed .agree-badge { font-size:9px; }
+  body.embed .substrip { margin-top:3px; gap:1px; flex:0 0 auto; }
+  body.embed .substrip-label { font-size:8.7px; }
+  body.embed svg.substrip-plot { height:38px; }
+  body.embed .cos-readout { font-size:9px; }
+</style>
+</head>
+<body>
+<script>
+  const isEmbed = new URLSearchParams(location.search).has("embed");
+  if (isEmbed) document.body.classList.add("embed");
+</script>
+
+<div class="wrap">
+  <h1>Stirling's Formula, Two Routes</h1>
+  <p class="sub">Lesson 11 &middot; a real peak and a complex saddle, same critical point, same formula</p>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>Laplace's method &nbsp;<span class="mono">(real line)</span></h2>
+      <div class="panel-note">t<sup>n</sup>e<sup>&minus;t</sup> normalized to peak height 1</div>
+      <svg class="plane" id="leftPlane" viewBox="0 0 400 320" aria-label="integrand and its Gaussian fit near t = n">
+        <path id="shadeRegion" fill="var(--accent-dim)" stroke="none"></path>
+        <line id="axisLine" stroke="var(--axis)" stroke-width="1"></line>
+        <path id="integrandCurve" fill="none" stroke="var(--text)" stroke-width="2"></path>
+        <path id="gaussianCurve" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-dasharray="5 3"></path>
+        <line id="dropLine" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="3 3"></line>
+        <circle id="peakMarker" r="3.5" fill="var(--accent)"></circle>
+        <text id="tStarLabel" class="lbl-txt" fill="var(--muted)">t*</text>
+        <text id="tAxisLabel" class="lbl-txt" fill="var(--muted)" text-anchor="end">t</text>
+      </svg>
+    </div>
+
+    <div class="panel">
+      <h2>steepest descent &nbsp;<span class="mono">(complex plane)</span></h2>
+      <svg class="plane" id="rightPlane" viewBox="0 0 340 340" aria-label="level curves of Re h(z) near the saddle z* = n+1, with a draggable contour direction">
+        <g id="shadeLayer"></g>
+        <g id="contourLayer"></g>
+        <line id="realAxisLine" stroke="var(--axis)" stroke-width="1"></line>
+        <path id="circleArc" fill="none" stroke="var(--text)" stroke-width="1.4" opacity="0.85"></path>
+        <path id="rightAngleGlyph" fill="none" stroke="var(--accent)" stroke-width="1.2"></path>
+        <line id="dragLine" stroke="var(--accent)" stroke-width="2"></line>
+        <circle id="saddleMarker" r="4" fill="var(--accent)"></circle>
+        <text id="zStarLabel" class="lbl-txt" fill="var(--muted)">z*</text>
+        <circle id="dragHandle" class="handle" r="7" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"></circle>
+      </svg>
+
+      <div class="substrip">
+        <div class="substrip-label">
+          <span>|e^(h(z)&minus;h(z*))| along the line</span>
+          <span id="snapLabel" class="snap-label">steepest descent</span>
+        </div>
+        <svg class="substrip-plot" id="substripPlane" viewBox="0 0 340 64" aria-label="modulus of e to the h along the dragged line, normalized to 1 at the saddle">
+          <line id="subAxisLine" stroke="var(--axis)" stroke-width="1"></line>
+          <path id="subCurve" fill="none" stroke="var(--accent)" stroke-width="1.8"></path>
+        </svg>
+        <div class="substrip-foot">
+          <button class="btn small" id="resetTheta" type="button">reset to &pi;/2</button>
+          <span class="cos-readout">cos&nbsp;2&theta; = <span id="cos2thetaVal" class="val zero">&mdash;</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-controls" id="nControls" style="margin-top:10px;">
+    <div class="ctrl-group">
+      <span class="glabel">n</span>
+      <input type="range" id="nSlider" min="2" max="40" step="1" value="10">
+      <span class="glabel mono" id="nVal">10</span>
+    </div>
+  </div>
+
+  <div class="eqn-strip" id="eqnStrip">
+    <div class="eqn-line" id="lineLeft">n! ~ &radic;(2&pi;n) (n/e)<sup>n</sup> &nbsp;=&nbsp; <span class="num" id="leftVal">&mdash;</span> &nbsp;&nbsp; rel. err <span class="num" id="leftErr">&mdash;</span></div>
+    <div class="eqn-line" id="lineTrue">n! &nbsp;=&nbsp; <span class="num" id="trueVal">&mdash;</span> &nbsp;&nbsp; <span class="agree-badge" id="agreeBadge">&mdash;</span></div>
+    <div class="eqn-line" id="lineRight">n! &approx; &radic;(2&pi;) (n+1)<sup>n+&frac12;</sup> e<sup>&minus;(n+1)</sup> &nbsp;=&nbsp; <span class="num" id="rightVal">&mdash;</span> &nbsp;&nbsp; rel. err <span class="num" id="rightErr">&mdash;</span></div>
+    <div class="eqn-note" id="eqnNote"></div>
+  </div>
+
+  <div class="type-caption" id="caption">In the right-hand formula the exponent is &minus;(n+1), not &minus;n+1: drag the line off &theta;=&pi;/2 and the circle's own decaying direction inverts into growth.</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------- numerics: everything in log-space, exponentiated only for display. ----------------
+  // n is capped at 40 by the slider, where n! itself (~8.16e47) is still a safe double, so the
+  // exponentiation step below never overflows for this range. lnFactorial is an exact log-sum
+  // (not a formula), so relative-error comparisons are stable even though n! is astronomically large.
+  function lnFactorial(n) {
+    let s = 0;
+    for (let k = 2; k <= n; k++) s += Math.log(k);
+    return s;
+  }
+  function lnLaplace(n) { return 0.5 * Math.log(2 * Math.PI * n) + n * Math.log(n) - n; }
+  function lnSaddle(n) { return 0.5 * Math.log(2 * Math.PI) + (n + 0.5) * Math.log(n + 1) - (n + 1); }
+  function relErr(lnApprox, lnTrue) { return Math.expm1(lnApprox - lnTrue); }
+
+  function fmtBig(x) {
+    const s = x.toExponential(4);
+    const parts = s.split('e');
+    const expNum = parseInt(parts[1], 10);
+    return parts[0] + '&times;10<sup>' + expNum + '</sup>';
+  }
+  function fmtPct(x) { return (Math.abs(x) * 100).toFixed(2) + '%'; }
+
+  function flash(el) {
+    el.classList.remove('flash');
+    void el.offsetWidth;
+    el.classList.add('flash');
+  }
+
+  // ---------------- left panel: integrand / Gaussian ----------------
+  const LW = 400, LH = 320, LmL = 30, LmR = 14, LmT = 14, LmB = 26;
+  const LplotW = LW - LmL - LmR, LplotH = LH - LmT - LmB;
+  const LvMax = 1.08;
+
+  function leftDomain(n) { return { tMin: 0, tMax: n + 6 * Math.sqrt(n) + 3 }; }
+  function LX(t, dom) { return LmL + (t - dom.tMin) / (dom.tMax - dom.tMin) * LplotW; }
+  function LY(v) { return LH - LmB - (v / LvMax) * LplotH; }
+
+  function integrandNorm(t, n) {
+    if (t <= 0) return 0;
+    return Math.exp(n * Math.log(t / n) + (n - t));
+  }
+  function gaussianNorm(t, n) {
+    const d = t - n;
+    return Math.exp(-(d * d) / (2 * n));
+  }
+
+  const elIntegrand = document.getElementById('integrandCurve');
+  const elGaussian = document.getElementById('gaussianCurve');
+  const elShade = document.getElementById('shadeRegion');
+  const elAxis = document.getElementById('axisLine');
+  const elDrop = document.getElementById('dropLine');
+  const elPeak = document.getElementById('peakMarker');
+  const elTStar = document.getElementById('tStarLabel');
+  const elTAxis = document.getElementById('tAxisLabel');
+
+  function drawLeftPanel(n) {
+    const dom = leftDomain(n);
+    const N = 260;
+    let dCurve = '', dGauss = '';
+    for (let i = 0; i <= N; i++) {
+      const t = dom.tMin + (dom.tMax - dom.tMin) * i / N;
+      const x = LX(t, dom);
+      const yC = LY(integrandNorm(t, n));
+      const yG = LY(gaussianNorm(t, n));
+      dCurve += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + yC.toFixed(2) + ' ';
+      dGauss += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + yG.toFixed(2) + ' ';
+    }
+    elIntegrand.setAttribute('d', dCurve);
+    elGaussian.setAttribute('d', dGauss);
+
+    // shaded band: +/- 2 std of the fitted Gaussian, under the actual curve
+    const std = Math.sqrt(n);
+    const bandLo = Math.max(dom.tMin, n - 2 * std);
+    const bandHi = Math.min(dom.tMax, n + 2 * std);
+    const M = 48;
+    let dShade = 'M' + LX(bandLo, dom).toFixed(2) + ' ' + LY(0).toFixed(2) + ' ';
+    for (let i = 0; i <= M; i++) {
+      const t = bandLo + (bandHi - bandLo) * i / M;
+      dShade += 'L' + LX(t, dom).toFixed(2) + ' ' + LY(integrandNorm(t, n)).toFixed(2) + ' ';
+    }
+    dShade += 'L' + LX(bandHi, dom).toFixed(2) + ' ' + LY(0).toFixed(2) + ' Z';
+    elShade.setAttribute('d', dShade);
+
+    elAxis.setAttribute('x1', LmL); elAxis.setAttribute('x2', LW - LmR);
+    elAxis.setAttribute('y1', LY(0)); elAxis.setAttribute('y2', LY(0));
+
+    const px = LX(n, dom);
+    elDrop.setAttribute('x1', px); elDrop.setAttribute('x2', px);
+    elDrop.setAttribute('y1', LY(0)); elDrop.setAttribute('y2', LY(1));
+    elPeak.setAttribute('cx', px); elPeak.setAttribute('cy', LY(1));
+    elTStar.setAttribute('x', px + 5); elTStar.setAttribute('y', LY(1) - 6);
+    elTAxis.setAttribute('x', LW - LmR); elTAxis.setAttribute('y', LY(0) + 16);
+  }
+
+  // ---------------- right panel: saddle geometry ----------------
+  const RW = 340, RH = 340, Rm = 20;
+  const RplotSize = RW - 2 * Rm;
+
+  function rightWindow(n) {
+    const x0 = n + 1;
+    const R = Math.min(3.2 * Math.sqrt(n + 1) + 1, 0.8 * (n + 1));
+    return { x0: x0, R: R };
+  }
+  function RX(x, win) { return Rm + (x - (win.x0 - win.R)) / (2 * win.R) * RplotSize; }
+  function RY(y, win) { return Rm + (win.R - y) / (2 * win.R) * RplotSize; }
+  function RXinv(X, win) { return (X - Rm) / RplotSize * (2 * win.R) + (win.x0 - win.R); }
+  function RYinv(Y, win) { return win.R - (Y - Rm) / RplotSize * (2 * win.R); }
+
+  function reH(x, y, n) {
+    const r2 = x * x + y * y;
+    return x - (n + 1) * 0.5 * Math.log(r2);
+  }
+  function fieldVal(x, y, n, win) {
+    return reH(x, y, n) - (win.x0 - (n + 1) * Math.log(win.x0));
+  }
+
+  // grid pools, built once and reused
+  const SHADE_N = 27;   // -> 26x26 rects
+  const CONTOUR_N = 64; // -> 63x63 cells, path-only (cheap)
+  const LEVELS = [-4, -2, -1, -0.4, 0.4, 1, 2, 4];
+
+  const shadeLayer = document.getElementById('shadeLayer');
+  const contourLayer = document.getElementById('contourLayer');
+  const shadeRects = [];
+  for (let j = 0; j < SHADE_N - 1; j++) {
+    for (let i = 0; i < SHADE_N - 1; i++) {
+      const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      shadeLayer.appendChild(r);
+      shadeRects.push(r);
+    }
+  }
+  const contourPaths = [];
+  for (let k = 0; k < LEVELS.length; k++) {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('fill', 'none');
+    p.setAttribute('stroke-width', '1.1');
+    p.setAttribute('opacity', '0.55');
+    p.setAttribute('stroke', LEVELS[k] < 0 ? 'var(--ok)' : 'var(--bad)');
+    contourLayer.appendChild(p);
+    contourPaths.push(p);
+  }
+
+  function buildGrid(N, win, n) {
+    const xs = new Array(N), ys = new Array(N), val = [];
+    for (let i = 0; i < N; i++) xs[i] = (win.x0 - win.R) + i * (2 * win.R) / (N - 1);
+    for (let j = 0; j < N; j++) ys[j] = -win.R + j * (2 * win.R) / (N - 1);
+    for (let j = 0; j < N; j++) {
+      const row = new Array(N);
+      for (let i = 0; i < N; i++) row[i] = fieldVal(xs[i], ys[j], n, win);
+      val.push(row);
+    }
+    return { xs: xs, ys: ys, val: val };
+  }
+
+  function marchLevel(grid, level) {
+    const xs = grid.xs, ys = grid.ys, val = grid.val, N = xs.length;
+    let d = '';
+    function interp(xa, ya, va, xb, yb, vb) {
+      const t = (level - va) / (vb - va);
+      return [xa + (xb - xa) * t, ya + (yb - ya) * t];
+    }
+    for (let j = 0; j < N - 1; j++) {
+      for (let i = 0; i < N - 1; i++) {
+        const v00 = val[j][i], v10 = val[j][i + 1], v01 = val[j + 1][i], v11 = val[j + 1][i + 1];
+        const x0 = xs[i], x1 = xs[i + 1], y0 = ys[j], y1 = ys[j + 1];
+        const pts = [];
+        if ((v00 - level) * (v10 - level) < 0) pts.push(interp(x0, y0, v00, x1, y0, v10));
+        if ((v10 - level) * (v11 - level) < 0) pts.push(interp(x1, y0, v10, x1, y1, v11));
+        if ((v01 - level) * (v11 - level) < 0) pts.push(interp(x0, y1, v01, x1, y1, v11));
+        if ((v00 - level) * (v01 - level) < 0) pts.push(interp(x0, y0, v00, x0, y1, v01));
+        if (pts.length === 2 || pts.length === 4) {
+          d += 'M' + pts[0][0].toFixed(2) + ' ' + pts[0][1].toFixed(2) + 'L' + pts[1][0].toFixed(2) + ' ' + pts[1][1].toFixed(2) + ' ';
+          if (pts.length === 4) {
+            d += 'M' + pts[2][0].toFixed(2) + ' ' + pts[2][1].toFixed(2) + 'L' + pts[3][0].toFixed(2) + ' ' + pts[3][1].toFixed(2) + ' ';
+          }
+        }
+      }
+    }
+    return d;
+  }
+
+  const elRealAxis = document.getElementById('realAxisLine');
+  const elCircle = document.getElementById('circleArc');
+  const elRAGlyph = document.getElementById('rightAngleGlyph');
+  const elSaddle = document.getElementById('saddleMarker');
+  const elZStar = document.getElementById('zStarLabel');
+
+  let curWin = null; // updated on every n-redraw, read by the drag handler
+
+  function redrawRightGeometry(n) {
+    const win = rightWindow(n);
+    curWin = win;
+
+    // math-space screen conversion helper for contour/shading grid points
+    function toScreenSeg(mathPath) {
+      // mathPath is a string of "M x y L x y ..." in MATH coords; convert to screen coords
+      return mathPath.replace(/([ML])([-\d.]+) ([-\d.]+)/g, function (m, cmd, x, y) {
+        return cmd + RX(parseFloat(x), win).toFixed(2) + ' ' + RY(parseFloat(y), win).toFixed(2);
+      });
+    }
+
+    // shading, coarse grid
+    const sg = buildGrid(SHADE_N, win, n);
+    let idx = 0;
+    for (let j = 0; j < SHADE_N - 1; j++) {
+      for (let i = 0; i < SHADE_N - 1; i++) {
+        const avg = (sg.val[j][i] + sg.val[j][i + 1] + sg.val[j + 1][i] + sg.val[j + 1][i + 1]) / 4;
+        const x0m = sg.xs[i], x1m = sg.xs[i + 1], y0m = sg.ys[j], y1m = sg.ys[j + 1];
+        const X0 = RX(x0m, win), X1 = RX(x1m, win), Y0 = RY(y1m, win), Y1 = RY(y0m, win);
+        const rct = shadeRects[idx++];
+        rct.setAttribute('x', Math.min(X0, X1).toFixed(2));
+        rct.setAttribute('y', Math.min(Y0, Y1).toFixed(2));
+        rct.setAttribute('width', Math.abs(X1 - X0).toFixed(2));
+        rct.setAttribute('height', Math.abs(Y1 - Y0).toFixed(2));
+        const mag = Math.min(Math.abs(avg) / 4, 1);
+        const op = (mag * 0.16).toFixed(3);
+        rct.setAttribute('fill', avg < 0 ? 'var(--ok)' : 'var(--bad)');
+        rct.setAttribute('fill-opacity', op);
+      }
+    }
+
+    // contour lines, fine grid
+    const cg = buildGrid(CONTOUR_N, win, n);
+    for (let k = 0; k < LEVELS.length; k++) {
+      const dMath = marchLevel(cg, LEVELS[k]);
+      contourPaths[k].setAttribute('d', toScreenSeg(dMath));
+    }
+
+    // real axis
+    elRealAxis.setAttribute('x1', RX(win.x0 - win.R, win)); elRealAxis.setAttribute('x2', RX(win.x0 + win.R, win));
+    elRealAxis.setAttribute('y1', RY(0, win)); elRealAxis.setAttribute('y2', RY(0, win));
+
+    // circle |z| = n+1, sampled across the window
+    const CN = 60;
+    let dCirc = '';
+    for (let i = 0; i <= CN; i++) {
+      const y = -win.R + 2 * win.R * i / CN;
+      const x = Math.sqrt(win.x0 * win.x0 - y * y);
+      const X = RX(x, win), Y = RY(y, win);
+      dCirc += (i === 0 ? 'M' : 'L') + X.toFixed(2) + ' ' + Y.toFixed(2) + ' ';
+    }
+    elCircle.setAttribute('d', dCirc);
+
+    // right-angle glyph at z* between the real axis (toward origin) and the tangent (vertical)
+    const Vx = RX(win.x0, win), Vy = RY(0, win);
+    const s = 9;
+    elRAGlyph.setAttribute('d', 'M' + (Vx - s) + ' ' + Vy + ' L' + (Vx - s) + ' ' + (Vy - s) + ' L' + Vx + ' ' + (Vy - s));
+
+    elSaddle.setAttribute('cx', Vx); elSaddle.setAttribute('cy', Vy);
+    elZStar.setAttribute('x', Vx + 6); elZStar.setAttribute('y', Vy - 8);
+  }
+
+  // ---------------- drag line + substrip ----------------
+  const SW = 340, SH = 64, SmL = 8, SmR = 8, SmT = 6, SmB = 8;
+  const SplotW = SW - SmL - SmR, SplotH = SH - SmT - SmB;
+  const SvMax = 1.15;
+
+  const elDragLine = document.getElementById('dragLine');
+  const elHandle = document.getElementById('dragHandle');
+  const elSubAxis = document.getElementById('subAxisLine');
+  const elSubCurve = document.getElementById('subCurve');
+  const elSnapLabel = document.getElementById('snapLabel');
+  const elCosVal = document.getElementById('cos2thetaVal');
+
+  let theta = Math.PI / 2;
+
+  function snapTheta() {
+    const HALF_PI = Math.PI / 2;
+    let tm = theta % Math.PI;
+    if (tm < 0) tm += Math.PI;
+    const diff = tm - HALF_PI;
+    if (Math.abs(diff) < 0.09) theta -= diff;
+  }
+
+  function drawDragAndSubstrip(n) {
+    const win = curWin || rightWindow(n);
+    snapTheta();
+
+    const dx = Math.cos(theta), dy = Math.sin(theta);
+    const ax = win.x0 - win.R * dx, ay = 0 - win.R * dy;
+    const bx = win.x0 + win.R * dx, by = 0 + win.R * dy;
+    elDragLine.setAttribute('x1', RX(ax, win)); elDragLine.setAttribute('y1', RY(ay, win));
+    elDragLine.setAttribute('x2', RX(bx, win)); elDragLine.setAttribute('y2', RY(by, win));
+
+    const rho = win.R * 0.6;
+    const hx = win.x0 + rho * dx, hy = 0 + rho * dy;
+    elHandle.setAttribute('cx', RX(hx, win)); elHandle.setAttribute('cy', RY(hy, win));
+
+    // substrip: normalized |e^(h(z)-h(z*))| along s in [-R, R] in the theta direction
+    const N = 160;
+    let d = '';
+    let maxYscreen = SH - SmB;
+    for (let i = 0; i <= N; i++) {
+      const s = -win.R + 2 * win.R * i / N;
+      const x = win.x0 + s * dx, y = 0 + s * dy;
+      const v = Math.exp(fieldVal(x, y, n, win));
+      const vClamped = Math.min(v, SvMax);
+      const X = SmL + (s + win.R) / (2 * win.R) * SplotW;
+      const Y = SH - SmB - (vClamped / SvMax) * SplotH;
+      d += (i === 0 ? 'M' : 'L') + X.toFixed(2) + ' ' + Y.toFixed(2) + ' ';
+    }
+    elSubCurve.setAttribute('d', d);
+    elSubAxis.setAttribute('x1', SmL); elSubAxis.setAttribute('x2', SW - SmR);
+    elSubAxis.setAttribute('y1', SH - SmB); elSubAxis.setAttribute('y2', SH - SmB);
+
+    let tm = theta % Math.PI; if (tm < 0) tm += Math.PI;
+    elSnapLabel.classList.toggle('show', Math.abs(tm - Math.PI / 2) < 0.01);
+
+    const c2 = Math.cos(2 * theta);
+    elCosVal.textContent = (c2 >= 0 ? '+' : '') + c2.toFixed(2);
+    elCosVal.className = 'val ' + (c2 < -0.02 ? 'neg' : (c2 > 0.02 ? 'pos' : 'zero'));
+  }
+
+  // pointer dragging on the handle
+  const rightSvg = document.getElementById('rightPlane');
+  let dragging = false;
+
+  function svgPoint(evt) {
+    const pt = rightSvg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = rightSvg.getScreenCTM();
+    return pt.matrixTransform(ctm.inverse());
+  }
+
+  function onPointerMove(evt) {
+    if (!dragging || !curWin) return;
+    const p = svgPoint(evt);
+    const mx = RXinv(p.x, curWin), my = RYinv(p.y, curWin);
+    const dx = mx - curWin.x0, dy = my - 0;
+    let a = Math.atan2(dy, dx);
+    if (a < 0) a += 2 * Math.PI;
+    theta = a;
+    drawDragAndSubstrip(curN);
+  }
+
+  elHandle.addEventListener('pointerdown', function (evt) {
+    dragging = true;
+    elHandle.setPointerCapture(evt.pointerId);
+    evt.preventDefault();
+  });
+  elHandle.addEventListener('pointermove', onPointerMove);
+  elHandle.addEventListener('pointerup', function (evt) {
+    dragging = false;
+    try { elHandle.releasePointerCapture(evt.pointerId); } catch (e) {}
+  });
+  rightSvg.addEventListener('pointermove', onPointerMove);
+
+  document.getElementById('resetTheta').addEventListener('click', function () {
+    theta = Math.PI / 2;
+    drawDragAndSubstrip(curN);
+  });
+
+  // ---------------- equation strip ----------------
+  const elLeftVal = document.getElementById('leftVal');
+  const elLeftErr = document.getElementById('leftErr');
+  const elRightVal = document.getElementById('rightVal');
+  const elRightErr = document.getElementById('rightErr');
+  const elTrueVal = document.getElementById('trueVal');
+  const elAgree = document.getElementById('agreeBadge');
+  const elNote = document.getElementById('eqnNote');
+
+  function updateEqnStrip(n) {
+    const lnT = lnFactorial(n);
+    const lnL = lnLaplace(n);
+    const lnS = lnSaddle(n);
+    const errL = relErr(lnL, lnT);
+    const errS = relErr(lnS, lnT);
+
+    elLeftVal.innerHTML = fmtBig(Math.exp(lnL));
+    elLeftErr.textContent = fmtPct(errL);
+    elRightVal.innerHTML = fmtBig(Math.exp(lnS));
+    elRightErr.textContent = fmtPct(errS);
+    elTrueVal.innerHTML = fmtBig(Math.exp(lnT));
+
+    const agree = Math.abs(errL) < 0.06 && Math.abs(errS) < 0.06;
+    elAgree.textContent = agree ? 'agree to order 1/(12n)' : 'diverging';
+    elAgree.classList.toggle('bad', !agree);
+
+    // The deviation from 1/(12n) is reported live rather than as a fixed figure:
+    // it is ~2.8% at n=2 and only reaches ~1% by n=5, so any single stated
+    // percentage is wrong somewhere on this slider's range.
+    const twelfth = 1 / (12 * n);
+    const dev = Math.abs(Math.abs(errL) - twelfth) / twelfth * 100;
+    elNote.textContent = 'left-hand relative error vs 1/(12n) at this n: '
+      + dev.toFixed(1) + '% apart';
+
+    [elLeftVal, elLeftErr, elRightVal, elRightErr, elTrueVal].forEach(flash);
+  }
+
+  // ---------------- master redraw ----------------
+  let curN = 10;
+  const nSlider = document.getElementById('nSlider');
+  const nVal = document.getElementById('nVal');
+  let pending = false;
+
+  function redraw(n) {
+    drawLeftPanel(n);
+    redrawRightGeometry(n);
+    drawDragAndSubstrip(n);
+    updateEqnStrip(n);
+  }
+
+  function scheduleRedraw() {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(function () {
+      pending = false;
+      redraw(curN);
+    });
+  }
+
+  nSlider.addEventListener('input', function () {
+    curN = parseInt(nSlider.value, 10);
+    nVal.textContent = String(curN);
+    scheduleRedraw();
+  });
+
+  nSlider.value = String(curN);
+  nVal.textContent = String(curN);
+  redraw(curN);
+})();
+</script>
+</body>
+</html>
