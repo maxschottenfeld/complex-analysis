@@ -293,13 +293,26 @@
   var canvas = document.getElementById("plane");
   var ctx = canvas.getContext("2d");
 
-  var MAX_SIDE = 440;
+  // Budget total pixels rather than capping each side. A per-side cap makes the
+  // backing store SQUARE on a wide box (440x440 upscaled to ~1064x600), which
+  // both blurs the field and squashes it: poles stop looking radially symmetric.
+  var MAX_PIXELS = 620000;
   var DPR = Math.min(window.devicePixelRatio || 1, 2);
 
   function fitCanvas(){
     var rect = canvas.getBoundingClientRect();
-    var w = Math.max(1, Math.min(MAX_SIDE, Math.round(rect.width  * DPR)));
-    var h = Math.max(1, Math.min(MAX_SIDE, Math.round(rect.height * DPR)));
+    var w = Math.max(1, Math.round(rect.width  * DPR));
+    var h = Math.max(1, Math.round(rect.height * DPR));
+    var over = (w * h) / MAX_PIXELS;
+    if (over > 1) { var s = Math.sqrt(over); w = Math.max(1, Math.round(w / s)); h = Math.max(1, Math.round(h / s)); }
+
+    // Keep the horizontal range fixed (it has to hold five continuation steps)
+    // and DERIVE the vertical range from the box aspect, so one unit is the same
+    // number of pixels in both directions and circles render as circles.
+    var halfY = ((XMAX - XMIN) / 2) * (h / w);
+    if (!isFinite(halfY) || halfY <= 0) halfY = 3;
+    YMIN = -halfY; YMAX = halfY;
+
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; return true; }
     return false;
   }
@@ -409,6 +422,23 @@
     for (var xi = Math.ceil(XMIN); xi <= Math.floor(XMAX); xi++) {
       var tx = xToPx(xi);
       ctx.beginPath(); ctx.moveTo(tx, y0 - 4); ctx.lineTo(tx, y0 + 4); ctx.stroke();
+    }
+
+    // Label the hatched strip so the empty half reads as a statement rather
+    // than a half-loaded image. Hidden once the strip is too narrow to hold it.
+    var bxLabel = xToPx(-state.k);
+    if (bxLabel > W * 0.16) {
+      ctx.save();
+      var undefPx = Math.max(11, Math.round(W / 42));
+      ctx.font = "600 " + undefPx + "px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(154,160,176,0.72)";
+      ctx.fillText("not yet defined", bxLabel / 2, H / 2 - undefPx * 0.75);
+      ctx.font = Math.max(9, Math.round(W / 56)) + "px ui-monospace, SFMono-Regular, Menlo, monospace";
+      ctx.fillStyle = "rgba(154,160,176,0.5)";
+      ctx.fillText("the recursion has not reached here", bxLabel / 2, H / 2 + undefPx * 0.75);
+      ctx.restore();
     }
 
     // boundary line at Re(s) = -k
