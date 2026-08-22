@@ -4,97 +4,111 @@
     "slug": "00-big-picture-overview",
     "title": "The Big Picture: What Is Complex Analysis About?",
     "hue": 355,
-    "description": "Where I started: a complex function maps a plane to a plane, so an honest graph would need four dimensions. Domain coloring and grid deformation are the workaround pictures — every later lesson leans on them."
+    "description": "Where I started: a complex function maps a plane to a plane, so an honest graph would need four dimensions. Domain coloring and grid deformation are the workaround pictures — every later lesson leans on them.",
+    "glyph": "ℂ"
   },
   {
     "num": "1",
     "slug": "01-complex-numbers-and-topology",
     "title": "Complex Numbers, the Plane, and Basic Topology",
     "hue": 55,
-    "description": "The ground floor. Arithmetic and geometry of complex numbers, polar form, roots of unity, and just enough topology — open sets, boundaries, regions — to state the later theorems honestly."
+    "description": "The ground floor. Arithmetic and geometry of complex numbers, polar form, roots of unity, and just enough topology — open sets, boundaries, regions — to state the later theorems honestly.",
+    "glyph": "ℂ"
   },
   {
     "num": "2",
     "slug": "02-holomorphic-functions-and-cauchy-riemann",
     "title": "Holomorphic Functions & the Cauchy-Riemann Equations",
     "hue": 185,
-    "description": "The first real theorem. What complex differentiability actually demands, the Cauchy-Riemann equations that fall out of it, and why passing that test forces a map to preserve angles."
+    "description": "The first real theorem. What complex differentiability actually demands, the Cauchy-Riemann equations that fall out of it, and why passing that test forces a map to preserve angles.",
+    "glyph": "∂"
   },
   {
     "num": "3",
     "slug": "03-power-series-and-elementary-functions",
     "title": "Power Series & Elementary Functions",
     "hue": 215,
-    "description": "Power series take over: $e^z$ defined by its series, Euler's formula derived instead of assumed, and the logarithm turning multivalued — the first branch cut."
+    "description": "Power series take over: $e^z$ defined by its series, Euler's formula derived instead of assumed, and the logarithm turning multivalued — the first branch cut.",
+    "glyph": "Σ"
   },
   {
     "num": "4",
     "slug": "04-cauchys-theorem-and-integral-formula",
     "title": "Cauchy's Theorem & the Cauchy Integral Formula",
     "hue": 265,
-    "description": "The centerpiece. Contour integrals, deformation invariance, Cauchy's theorem, and the integral formula: the values of a holomorphic function on a boundary determine every value inside."
+    "description": "The centerpiece. Contour integrals, deformation invariance, Cauchy's theorem, and the integral formula: the values of a holomorphic function on a boundary determine every value inside.",
+    "glyph": "∮"
   },
   {
     "num": "5",
     "slug": "05-consequences-of-cauchys-formula",
     "title": "Consequences of Cauchy's Formula",
     "hue": 320,
-    "description": "The payoff. One formula cascades into infinite differentiability, Cauchy's estimates, Liouville's theorem, and a proof of the Fundamental Theorem of Algebra with no algebra in it."
+    "description": "The payoff. One formula cascades into infinite differentiability, Cauchy's estimates, Liouville's theorem, and a proof of the Fundamental Theorem of Algebra with no algebra in it.",
+    "glyph": "∮"
   },
   {
     "num": "5a",
     "slug": "05a-real-analysis-bridge",
     "title": "The Real-Analysis Bridge",
     "hue": 145,
-    "description": "The bridge. Five lessons in, the proofs had shifted from computing things to bounding things — so before series took over the subject, I paused to build the analysis underneath: sup and inf, rigorous limits, the triangle inequality, and the ML-estimate derived from scratch."
+    "description": "The bridge. Five lessons in, the proofs had shifted from computing things to bounding things — so before series took over the subject, I paused to build the analysis underneath: sup and inf, rigorous limits, the triangle inequality, and the ML-estimate derived from scratch.",
+    "glyph": "ℝ"
   },
   {
     "num": "6",
     "slug": "06-power-series-and-analytic-continuation",
     "title": "Power Series Representations & Analytic Continuation",
     "hue": 240,
-    "description": "The biggest structural fact yet: a holomorphic function equals its own Taylor series. That forces zeros to be isolated, gives at most one analytic continuation, and turns a singularity into something with an exact, measurable location — removable, pole, or essential."
+    "description": "The biggest structural fact yet: a holomorphic function equals its own Taylor series. That forces zeros to be isolated, gives at most one analytic continuation, and turns a singularity into something with an exact, measurable location — removable, pole, or essential.",
+    "glyph": "Σ"
   },
   {
     "num": "7",
     "slug": "07-residues-and-contour-integration",
     "title": "Residues & Contour Integration",
     "hue": 100,
-    "description": "Of the infinitely many coefficients in a Laurent series, exactly one is worth computing for contour integration. That single coefficient becomes the Residue Theorem, and — via a semicircular contour and an ML-estimate — a genuine way to evaluate a real integral with no antiderivative in sight."
+    "description": "Of the infinitely many coefficients in a Laurent series, exactly one is worth computing for contour integration. That single coefficient becomes the Residue Theorem, and — via a semicircular contour and an ML-estimate — a genuine way to evaluate a real integral with no antiderivative in sight.",
+    "glyph": "Res"
   },
   {
     "num": "8",
     "slug": "08-conformal-mapping",
     "title": "Conformal Mapping & Möbius Transformations",
     "hue": 292,
-    "description": "What complex functions *do* to shapes. Möbius transformations send circles and lines to circles and lines, are conformal everywhere, and are pinned down by three points — building to the Riemann Mapping Theorem, where nearly every simply connected region turns out to be the unit disk in disguise."
+    "description": "What complex functions *do* to shapes. Möbius transformations send circles and lines to circles and lines, are conformal everywhere, and are pinned down by three points — building to the Riemann Mapping Theorem, where nearly every simply connected region turns out to be the unit disk in disguise.",
+    "glyph": "↦"
   },
   {
     "num": "9",
     "slug": "09-gamma-function",
     "title": "The Gamma Function",
     "hue": 25,
-    "description": "An explicit, computable extension of the factorial to almost all of the complex plane — built from one integration by parts, one Gaussian integral, and an algebraic chain that reaches every non-integer point in finitely many steps, ending in a reflection formula that ties Γ to sine itself."
+    "description": "An explicit, computable extension of the factorial to almost all of the complex plane — built from one integration by parts, one Gaussian integral, and an algebraic chain that reaches every non-integer point in finitely many steps, ending in a reflection formula that ties Γ to sine itself.",
+    "glyph": "Γ"
   },
   {
     "num": "10",
     "slug": "10-riemann-zeta-and-the-riemann-hypothesis",
     "title": "The Riemann Zeta Function & the Riemann Hypothesis",
     "hue": 77,
-    "description": "A series that converges nowhere useful, extended to the whole plane and made to say something about prime numbers. Basel's problem falls out of a residue computation, the Euler product links the series to the primes, and the whole apparatus builds to a precise statement of what the Riemann Hypothesis actually claims."
+    "description": "A series that converges nowhere useful, extended to the whole plane and made to say something about prime numbers. Basel's problem falls out of a residue computation, the Euler product links the series to the primes, and the whole apparatus builds to a precise statement of what the Riemann Hypothesis actually claims.",
+    "glyph": "ζ"
   },
   {
     "num": "11",
     "slug": "11-saddle-point-and-generating-functions",
     "title": "Saddle-Point Method & Generating Functions",
     "hue": 165,
-    "description": "Every previous lesson used a series to understand a function. This one runs the machinery backwards: a sequence encoded as a function, its nearest singularity read off as a growth rate, and Stirling's formula derived twice over, once along the real line and once through a saddle point in the complex plane."
+    "description": "Every previous lesson used a series to understand a function. This one runs the machinery backwards: a sequence encoded as a function, its nearest singularity read off as a growth rate, and Stirling's formula derived twice over, once along the real line and once through a saddle point in the complex plane.",
+    "glyph": "∼"
   },
   {
     "num": "12",
     "slug": "12-branch-cuts-and-the-keyhole-contour",
     "title": "Branch Cuts & the Keyhole Contour",
     "hue": 122,
-    "description": "Lesson 7's semicircular contour rested on three quiet assumptions. This one breaks single-valuedness: branch cuts built from the ground up, the keyhole contour that turns the branch jump into the answer, and the integral that Lesson 9's reflection formula imports from outside."
+    "description": "Lesson 7's semicircular contour rested on three quiet assumptions. This one breaks single-valuedness: branch cuts built from the ground up, the keyhole contour that turns the branch jump into the answer, and the integral that Lesson 9's reflection formula imports from outside.",
+    "glyph": "Res"
   }
 ]

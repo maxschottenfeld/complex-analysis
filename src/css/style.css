@@ -678,9 +678,9 @@ blockquote strong, blockquote b { color: var(--text); }
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-/* Vertical stripe keyed to each lesson's hue — same domain-coloring echo as
-   the viz cards, rotated 90° so the two card types read differently. Flat
-   --hue-accent for the same reason as .viz-card::before above. */
+/* No hue stripe here on purpose (mockup, 2026-08-22): a per-lesson hue was
+   the thing that read as templated when scrolling the list. Border color is
+   a plain neutral now; the lesson-glyph span below is the differentiator. */
 .lesson-card::before {
   content: "";
   position: absolute;
@@ -688,13 +688,12 @@ blockquote strong, blockquote b { color: var(--text); }
   bottom: 0;
   left: 0;
   width: 3px;
-  background: var(--hue-accent);
-  opacity: 0.85;
+  background: var(--border);
 }
 
 .lesson-card:hover {
   background: var(--surface-2);
-  border-color: var(--hue-border-hover);
+  border-color: var(--text);
 }
 
 .lesson-card:active { transform: translateY(1px); }
@@ -710,8 +709,23 @@ blockquote strong, blockquote b { color: var(--text); }
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 1rem;
-  color: var(--hue-label);
-  border: 1px solid var(--hue-label-border);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* Topic-family glyph — replaces per-lesson hue as the visual differentiator.
+   Same glyph across lessons in the same arc (e.g. the two Sigma lessons are
+   both power-series lessons); grounded in the actual math, not decoration. */
+.lesson-glyph {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  margin-top: 0.1rem;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--muted);
 }
 
 .lesson-card-title {
@@ -732,7 +746,7 @@ blockquote strong, blockquote b { color: var(--text); }
 .lesson-card-arrow {
   margin-left: auto;
   align-self: center;
-  color: var(--hue-cta);
+  color: var(--muted);
   font-family: var(--font-mono);
 }
 

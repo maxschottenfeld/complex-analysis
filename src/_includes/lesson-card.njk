@@ -1,5 +1,6 @@
-<a class="lesson-card" href="/lessons/{{ lesson.slug }}/" style="--h: {{ lesson.hue }}">
+<a class="lesson-card" href="/lessons/{{ lesson.slug }}/">
   <span class="lesson-num" aria-hidden="true">{{ lesson.num }}</span>
+  <span class="lesson-glyph" aria-hidden="true">{{ lesson.glyph }}</span>
   <span class="lesson-card-body">
     <span class="lesson-card-title">Lesson {{ lesson.num }} — {{ lesson.title }}</span>
     <span class="lesson-card-desc">{{ lesson.description }}</span>
