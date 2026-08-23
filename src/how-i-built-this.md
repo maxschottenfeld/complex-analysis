@@ -8,6 +8,17 @@ description: "The actual workflow behind the site: Socratic sessions with Claude
 
 I taught myself complex analysis the summer before starting college, using Claude as a tutor. This doesn't just mean asking for practice questions or explanations of topics, but rather a tutor running on a written system that gets refined as I go. It plans each lesson in advance, teaches by asking questions, and stores everything in markdown files with folder structure as the architecture. This page is a showcase of the actual workflow.
 
+## The notebook
+
+Every lesson was worked out by hand before any of it was written up. This is the notebook.
+
+<figure class="notebook-figure">
+  <video class="notebook-video" controls preload="metadata" playsinline muted
+         poster="/assets/video/notebook-poster.jpg">
+    <source src="/assets/video/notebook-flipthrough.mp4" type="video/mp4">
+  </video>
+</figure>
+
 ## The rule every lesson follows
 
 Most topics started with something concrete and verifiable: a computation done by hand. That usually led to a visualization of the idea. Only then came the rigorous version: definitions, theorems, proof. This kept me from getting lost in ε-δ. I understood what a concept meant before I ever saw its formal statement.
