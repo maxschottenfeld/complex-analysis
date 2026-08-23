@@ -95,7 +95,7 @@ $$\boxed{\zeta(s)=\frac{\eta(s)}{1-2^{1-s}}}$$
 
 One honest gap, worth naming rather than skating past: $1-2^{1-s}$ also vanishes at other points on the line $\mathrm{Re}(s)=1$, the complex solutions of $2^{1-s}=1$. Zeta is known to be perfectly regular there, which forces $\eta$ to vanish at exactly those points too — a fact this lesson states rather than proves.
 
-**The pole.** Near $s=1$, write $2^{1-s}=e^{(1-s)\ln2}\approx1+(1-s)\ln2$, so $1-2^{1-s}\approx(s-1)\ln2$. Meanwhile $\eta(1)=\ln2$, being the alternating harmonic series, which is $\ln(1+x)$'s Taylor series from Lesson 3 evaluated at $x=1$. So near $s=1$,
+**The pole.** Near $s=1$, write $2^{1-s}=e^{(1-s)\ln2}\approx1+(1-s)\ln2$, so $1-2^{1-s}\approx(s-1)\ln2$. Meanwhile $\eta(1)=\ln2$, being the alternating harmonic series, which is $\ln(1+x)$'s Taylor series evaluated at $x=1$. So near $s=1$,
 
 $$\zeta(s)\approx\frac{\ln2}{(s-1)\ln2}=\frac1{s-1}$$
 
