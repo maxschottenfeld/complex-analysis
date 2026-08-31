@@ -33,13 +33,11 @@ The build fails with a file:line pointer if any of these sneak in (see `checkMat
 
 ## Writing conventions
 
-The lessons were running about one em-dash every 45 words and leaning hard on bold. Both read as machine-written. New lessons get written to these from the start rather than retrofitted later.
+House style for lesson prose. New lessons get written to these from the start rather than retrofitted later.
 
 - **Em-dashes.** Budget roughly one per 250 words. Reach for a colon, a comma, or a sentence break first. An em-dash earns its place only when it is genuinely the clearest way to carry an aside.
 - **Bold.** Structural only: a term's first-use definition, a worked-example case label (e.g. `**On the unit circle.**`), or a single "Key takeaway" line per section. Never for mid-sentence emphasis on an ordinary word.
 - **Headings.** `##` and below are sentence case (`## The radius of convergence, formalized`), with named theorems capitalized as proper nouns (`## The Cauchy Integral Formula`). The page `<h1>` title uses Title Case, a separate convention; don't propagate it downward.
-
-This file counts too. It was the last thing in the repo still breaking the rule it states.
 
 ## Verifying a content pass before shipping
 
